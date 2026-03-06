@@ -1,0 +1,17 @@
+{
+  "name": "supabase-guard",
+  "version": "1.0.0",
+  "description": "Supabase Defensive Audit Console - Security Scanner",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "node-fetch": "^2.7.0",
+    "crypto": "^1.0.1",
+    "uuid": "^9.0.0"
+  }
+}
