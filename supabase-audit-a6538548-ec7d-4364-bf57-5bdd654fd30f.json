@@ -1,0 +1,3001 @@
+{
+  "projectUrl": "https://estevamsouza.com.br",
+  "projectRef": null,
+  "score": 0,
+  "grade": {
+    "grade": "F",
+    "color": "#ff0040",
+    "label": "Crítico"
+  },
+  "totalChecks": 82,
+  "passed": 7,
+  "failed": 9,
+  "warnings": 57,
+  "errors": 0,
+  "info": 9,
+  "duration": "107.1s",
+  "results": [
+    {
+      "check": "DNS — Connectivity",
+      "status": "PASS",
+      "severity": "info",
+      "message": "Projeto acessível. Status: 200",
+      "details": {
+        "url": "https://estevamsouza.com.br",
+        "status": 200,
+        "server": "Vercel",
+        "via": null,
+        "cfRay": null
+      }
+    },
+    {
+      "check": "DNS — HTTPS",
+      "status": "PASS",
+      "severity": "info",
+      "message": "Projeto usa HTTPS. ✓",
+      "details": null
+    },
+    {
+      "check": "REST API — Table Exposure",
+      "status": "PASS",
+      "severity": "info",
+      "message": "Nenhuma tabela comum encontrada exposta via REST API (GUEST).",
+      "details": null
+    },
+    {
+      "check": "REST API — No Auth Access",
+      "status": "WARN",
+      "severity": "high",
+      "message": "REST API responde sem apikey/Authorization header.",
+      "details": {
+        "status": 200,
+        "hint": "Verifique se o endpoint requer autenticação."
+      }
+    },
+    {
+      "check": "RPC — Function Exposure",
+      "status": "FAIL",
+      "severity": "high",
+      "message": "24 função(ões) RPC descoberta(s). 0 retornam dados.",
+      "details": {
+        "functions": [
+          {
+            "function": "get_users",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "get_all_users",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "list_users",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "search_users",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "get_admin",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "admin_query",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "run_query",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "exec_sql",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "get_secret",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "get_config",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "get_settings",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "get_env",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "delete_user",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "update_role",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "grant_admin",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "get_orders",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "get_payments",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "get_transactions",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "export_data",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "backup",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "get_logs",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "create_user",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "reset_password",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "generate_token",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          }
+        ],
+        "recommendation": "Revogue EXECUTE no role anon para funções sensíveis. Use SECURITY DEFINER com cuidado."
+      }
+    },
+    {
+      "check": "Storage — Public Path \"avatars\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/avatars/",
+      "details": {
+        "url": "https://estevamsouza.com.br/storage/v1/object/public/avatars/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"uploads\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/uploads/",
+      "details": {
+        "url": "https://estevamsouza.com.br/storage/v1/object/public/uploads/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"images\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/images/",
+      "details": {
+        "url": "https://estevamsouza.com.br/storage/v1/object/public/images/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"documents\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/documents/",
+      "details": {
+        "url": "https://estevamsouza.com.br/storage/v1/object/public/documents/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"public\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/public/",
+      "details": {
+        "url": "https://estevamsouza.com.br/storage/v1/object/public/public/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"files\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/files/",
+      "details": {
+        "url": "https://estevamsouza.com.br/storage/v1/object/public/files/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"backups\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/backups/",
+      "details": {
+        "url": "https://estevamsouza.com.br/storage/v1/object/public/backups/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"exports\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/exports/",
+      "details": {
+        "url": "https://estevamsouza.com.br/storage/v1/object/public/exports/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"media\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/media/",
+      "details": {
+        "url": "https://estevamsouza.com.br/storage/v1/object/public/media/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"assets\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/assets/",
+      "details": {
+        "url": "https://estevamsouza.com.br/storage/v1/object/public/assets/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Functions — Discovery",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "35 Edge Function(s) descoberta(s). 35 acessível(is).",
+      "details": {
+        "functions": [
+          {
+            "name": "hello",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "test",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "ping",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "health",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "status",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "webhook",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "stripe-webhook",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "payment",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "checkout",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "send-email",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "notify",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "notification",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "admin",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "auth",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "login",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "register",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "signup",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "api",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "proxy",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "cors-proxy",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "generate",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "process",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "upload",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "cron",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "scheduler",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "sync",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "export",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "import",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "backup",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "search",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "AI",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "openai",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "chat",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "resend",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "send-sms",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 9266,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          }
+        ],
+        "recommendation": "Verifique se Edge Functions sensíveis requerem auth. Use verify JWT no handler."
+      }
+    },
+    {
+      "check": "Edge Function — \"hello\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"hello\" acessível sem Authorization header.",
+      "details": {
+        "name": "hello",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"test\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"test\" acessível sem Authorization header.",
+      "details": {
+        "name": "test",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"ping\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"ping\" acessível sem Authorization header.",
+      "details": {
+        "name": "ping",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"health\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"health\" acessível sem Authorization header.",
+      "details": {
+        "name": "health",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"status\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"status\" acessível sem Authorization header.",
+      "details": {
+        "name": "status",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"webhook\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"webhook\" acessível sem Authorization header.",
+      "details": {
+        "name": "webhook",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"stripe-webhook\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"stripe-webhook\" acessível sem Authorization header.",
+      "details": {
+        "name": "stripe-webhook",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"payment\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"payment\" acessível sem Authorization header.",
+      "details": {
+        "name": "payment",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"checkout\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"checkout\" acessível sem Authorization header.",
+      "details": {
+        "name": "checkout",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"send-email\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"send-email\" acessível sem Authorization header.",
+      "details": {
+        "name": "send-email",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"notify\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"notify\" acessível sem Authorization header.",
+      "details": {
+        "name": "notify",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"notification\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"notification\" acessível sem Authorization header.",
+      "details": {
+        "name": "notification",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"admin\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"admin\" acessível sem Authorization header.",
+      "details": {
+        "name": "admin",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"auth\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"auth\" acessível sem Authorization header.",
+      "details": {
+        "name": "auth",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"login\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"login\" acessível sem Authorization header.",
+      "details": {
+        "name": "login",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"register\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"register\" acessível sem Authorization header.",
+      "details": {
+        "name": "register",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"signup\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"signup\" acessível sem Authorization header.",
+      "details": {
+        "name": "signup",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"api\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"api\" acessível sem Authorization header.",
+      "details": {
+        "name": "api",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"proxy\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"proxy\" acessível sem Authorization header.",
+      "details": {
+        "name": "proxy",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"cors-proxy\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"cors-proxy\" acessível sem Authorization header.",
+      "details": {
+        "name": "cors-proxy",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"generate\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"generate\" acessível sem Authorization header.",
+      "details": {
+        "name": "generate",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"process\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"process\" acessível sem Authorization header.",
+      "details": {
+        "name": "process",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"upload\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"upload\" acessível sem Authorization header.",
+      "details": {
+        "name": "upload",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"cron\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"cron\" acessível sem Authorization header.",
+      "details": {
+        "name": "cron",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"scheduler\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"scheduler\" acessível sem Authorization header.",
+      "details": {
+        "name": "scheduler",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"sync\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"sync\" acessível sem Authorization header.",
+      "details": {
+        "name": "sync",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"export\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"export\" acessível sem Authorization header.",
+      "details": {
+        "name": "export",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"import\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"import\" acessível sem Authorization header.",
+      "details": {
+        "name": "import",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"backup\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"backup\" acessível sem Authorization header.",
+      "details": {
+        "name": "backup",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"search\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"search\" acessível sem Authorization header.",
+      "details": {
+        "name": "search",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"AI\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"AI\" acessível sem Authorization header.",
+      "details": {
+        "name": "AI",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"openai\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"openai\" acessível sem Authorization header.",
+      "details": {
+        "name": "openai",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"chat\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"chat\" acessível sem Authorization header.",
+      "details": {
+        "name": "chat",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"resend\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"resend\" acessível sem Authorization header.",
+      "details": {
+        "name": "resend",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"send-sms\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"send-sms\" acessível sem Authorization header.",
+      "details": {
+        "name": "send-sms",
+        "status": 200
+      }
+    },
+    {
+      "check": "Realtime — WebSocket",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Endpoint WebSocket Realtime está ativo e acessível.",
+      "details": {
+        "url": "wss://estevamsouza.com.br/realtime/v1/websocket?apikey=&vsn=1.0.0",
+        "status": 200,
+        "recommendation": "Configure RLS nas tabelas para controlar quais dados são transmitidos via Realtime. Use Realtime policies."
+      }
+    },
+    {
+      "check": "Realtime — Health Endpoint",
+      "status": "INFO",
+      "severity": "low",
+      "message": "Endpoint de health do Realtime está acessível.",
+      "details": {
+        "url": "https://estevamsouza.com.br/realtime/v1/api/health",
+        "response": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+      }
+    },
+    {
+      "check": "Realtime — No Auth Access",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Realtime responde sem apikey.",
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "check": "Auth — Admin Users Endpoint",
+      "status": "PASS",
+      "severity": "info",
+      "message": "Endpoint admin de users não acessível com anon key. ✓",
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "check": "Env/Key Exposure — File Discovery",
+      "status": "FAIL",
+      "severity": "high",
+      "message": "30 arquivo(s) sensível(is) acessível(is)! ",
+      "details": {
+        "files": [
+          {
+            "path": "/.env",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/.env.local",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/.env.production",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/.env.development",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/.env.example",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/env.js",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/config.js",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/config.json",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/.git/config",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/.git/HEAD",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/wp-config.php",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/.DS_Store",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/package.json",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/.npmrc",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/docker-compose.yml",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/Dockerfile",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/.dockerenv",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/api/config",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/api/env",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/debug",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/info",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/phpinfo.php",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/server-status",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/actuator",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/actuator/env",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/.well-known/security.txt",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/robots.txt",
+            "size": 206,
+            "secrets": [],
+            "contentType": "text/plain; charset=utf-8",
+            "preview": "# Robots.txt - Estevam Souza Portfolio\n# https://www.estevamsouza.com.br\n\nUser-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /admin/js/env.js\n\n# Sitemap\nSitemap: https://www.estevamsouza.com.br/sitema"
+          },
+          {
+            "path": "/sitemap.xml",
+            "size": 1725,
+            "secrets": [],
+            "contentType": "application/xml",
+            "preview": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\"\n        xmlns:xhtml=\"http://www.w3.org/1999/xhtml\">\n\n  <!-- Página Principal -->\n  <url>\n    <loc>htt"
+          },
+          {
+            "path": "/.htaccess",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          },
+          {
+            "path": "/web.config",
+            "size": 9266,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\" style=\"scroll-behavior:smooth\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n    <!-- Preconne"
+          }
+        ],
+        "recommendation": "URGENTE: Remova arquivos sensíveis do servidor público. Rotacione todas as chaves expostas imediatamente."
+      }
+    },
+    {
+      "check": "RLS — Table Detection",
+      "status": "INFO",
+      "severity": "info",
+      "message": "Nenhuma tabela comum detectada. Considere verificar manualmente.",
+      "details": null
+    },
+    {
+      "check": "Security Headers",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "6 header(s) de segurança ausente(s).",
+      "details": {
+        "missing": [
+          "x-frame-options",
+          "x-content-type-options",
+          "x-xss-protection",
+          "content-security-policy",
+          "referrer-policy",
+          "permissions-policy"
+        ],
+        "present": [
+          {
+            "strict-transport-security": "max-age=63072000"
+          }
+        ],
+        "recommendation": "Configure headers de segurança: HSTS, X-Frame-Options, CSP, etc."
+      }
+    },
+    {
+      "check": "Service Key — Leak Check",
+      "status": "PASS",
+      "severity": "info",
+      "message": "Nenhum vazamento de service_role key detectado em recursos públicos. ✓",
+      "details": {
+        "pathsChecked": 19
+      }
+    },
+    {
+      "check": "Open Signup — Settings",
+      "status": "INFO",
+      "severity": "info",
+      "message": "Não foi possível verificar configuração de signup.",
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "check": "JWT — Analysis",
+      "status": "INFO",
+      "severity": "info",
+      "message": "Nenhuma anon key fornecida para análise JWT.",
+      "details": null
+    },
+    {
+      "check": "Source Code — Secrets Detected",
+      "status": "FAIL",
+      "severity": "critical",
+      "message": "142 secret(s)/dado(s) sensível(is) encontrado(s) no código fonte! 1 crítico(s).",
+      "details": {
+        "totalSecrets": 142,
+        "summary": [
+          {
+            "type": "Phone Number",
+            "count": 123,
+            "severity": "low",
+            "sources": [
+              "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+              "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+              "https://estevamsouza.com.br/assets/index-CR8kqr46.css",
+              "https://cdn.jsdelivr.net/npm/jszip@3/dist/jszip.min.js"
+            ]
+          },
+          {
+            "type": "Email Address",
+            "count": 8,
+            "severity": "low",
+            "sources": [
+              "https://estevamsouza.com.br/js/dynamic-content.js",
+              "https://estevamsouza.com.br/admin/js/env.js",
+              "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+              "https://estevamsouza.com.br/admin/js/app.js"
+            ]
+          },
+          {
+            "type": "Generic API Key",
+            "count": 2,
+            "severity": "high",
+            "sources": [
+              "https://estevamsouza.com.br/js/chat-widget.js",
+              "https://estevamsouza.com.br/admin/js/env.js"
+            ]
+          },
+          {
+            "type": "GitHub Token",
+            "count": 1,
+            "severity": "critical",
+            "sources": [
+              "https://estevamsouza.com.br/admin/js/env.js"
+            ]
+          },
+          {
+            "type": "Hardcoded IP",
+            "count": 8,
+            "severity": "medium",
+            "sources": [
+              "https://estevamsouza.com.br/admin/js/env.js",
+              "https://estevamsouza.com.br/js/music-player.js",
+              "https://estevamsouza.com.br/admin/js/app.js"
+            ]
+          }
+        ],
+        "findings": [
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+            "preview": "let St=\"ABCDEF...[REDACTED]\".split(\"\"),Et=\" \\t\\n\\r=\".split(\"\"),Tt=(()=>{let",
+            "line": 1
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+            "preview": "t++)e+=\"ABCDEF...[REDACTED]._~\".charAt(Math.floor(66*Math.random()));return",
+            "line": 1
+          },
+          {
+            "type": "Email Address",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/js/dynamic-content.js",
+            "preview": "s=\"fas fa-envelope\"></i>             <span id=\"footerEmail\">contato@estevamsouza.com.br</span>           </div>",
+            "line": 1427
+          },
+          {
+            "type": "Generic API Key",
+            "severity": "high",
+            "source": "https://estevamsouza.com.br/js/chat-widget.js",
+            "preview": "n startChat(SUPABASE_URL, SUPABASE_ANON_KEY) {     const AI_API_KEY = 'modalr...[REDACTED]",
+            "line": 23
+          },
+          {
+            "type": "Generic API Key",
+            "severity": "high",
+            "source": "https://estevamsouza.com.br/admin/js/env.js",
+            "preview": "NKEDIN...[REDACTED]: '',   LINKED...[REDACTED]: '',   AI_API_KEY: 'modalr...[REDACTED]",
+            "line": 14
+          },
+          {
+            "type": "GitHub Token",
+            "severity": "critical",
+            "source": "https://estevamsouza.com.br/admin/js/env.js",
+            "preview": "LHOOK4...[REDACTED]',   GITHUB_TOKEN: 'ghp_5N...[REDACTED]',   EASYPANEL_API_U",
+            "line": 6
+          },
+          {
+            "type": "Hardcoded IP",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/admin/js/env.js",
+            "preview": "c52ad1...[REDACTED]',   EASYPANEL_IP: '147.93.66.4',   EASYPANEL_EMAIL: 'contato@estevamsouza.com.b",
+            "line": 9
+          },
+          {
+            "type": "Email Address",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/admin/js/env.js",
+            "preview": "bba6a9',   EASYPANEL_IP: '147.93.66.4',   EASYPANEL_EMAIL: 'contato@estevamsouza.com.br',   LINKEDIN_CLIENT_ID: '',   LI",
+            "line": 10
+          },
+          {
+            "type": "Email Address",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "n:\"GitHub\"})}),m.jsx(\"li\",{children:m.jsx(\"a\",{href:\"mailto:contato@estevamsouza.com.br\",children:\"E-mail\"})})]})]})})})",
+            "line": 72
+          },
+          {
+            "type": "Email Address",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "jsx(\"h2\",{children:\"Envie um email:\"}),m.jsx(\"p\",{children:\"contato@estevamsouza.com.br\"})]})]})}),m.jsx(\"div\",{classNam",
+            "line": 80
+          },
+          {
+            "type": "Email Address",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "mail\",className:\"form-control\",defaultValue:\"\",placeholder:\"ola@meusite.com\",required:!0,\"data-error\":\"Por favor, insira",
+            "line": 80
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "=ge,z){case 1:var Ce=-1;break;case 2:Ce=250;break;case 5:Ce=1073741823;break;case 4:Ce=1e4;break;default:Ce=5e3}return C",
+            "line": 25
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "35456:return 268435456;case 536870912:return 536870912;case 1073741824:return 1073741824;default:return e}}function ou(e",
+            "line": 37
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "5456;case 536870912:return 536870912;case 1073741824:return 1073741824;default:return e}}function ou(e,t){var n=e.pendin",
+            "line": 37
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": ":return-1;case 134217728:case 268435456:case 536870912:case 1073741824:return-1;default:return-1}}function bb(e,t){for(v",
+            "line": 37
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "redLanes|=a),s&=~a}}function Ef(e){return e=e.pendingLanes&-1073741825,e!==0?e:e&1073741824?1073741824:0}function $w(){v",
+            "line": 37
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "unction Ef(e){return e=e.pendingLanes&-1073741825,e!==0?e:e&1073741824?1073741824:0}function $w(){var e=dl;return dl<<=1",
+            "line": 37
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "e){return e=e.pendingLanes&-1073741825,e!==0?e:e&1073741824?1073741824:0}function $w(){var e=dl;return dl<<=1,!(dl&41942",
+            "line": 37
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": ":null,e.memoizedState={dehydrated:t,treeContext:n,retryLane:1073741824},n=bn(18,null,null,0),n.stateNode=t,n.return=e,e.",
+            "line": 38
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "achePool:null,transitions:null},He(Ms,rn),rn|=n;else{if(!(n&1073741824))return e=s!==null?s.baseLanes|n:n,t.lanes=t.chil",
+            "line": 40
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "824))return e=s!==null?s.baseLanes|n:n,t.lanes=t.childLanes=1073741824,t.memoizedState={baseLanes:e,cachePool:null,trans",
+            "line": 40
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "ydrated,e!==null)?(t.mode&1?e.data===\"$!\"?t.lanes=8:t.lanes=1073741824:t.lanes=1,null):(o=r.children,e=r.fallback,s?(r=t",
+            "line": 40
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": ")return Mt(t),null}else 2*ct()-s.renderingStartTime>Xs&&n!==1073741824&&(t.flags|=128,r=!0,_o(s,!1),t.lanes=4194304);s.i",
+            "line": 40
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "&e.memoizedState!==null!==r&&(t.flags|=8192),r&&t.mode&1?rn&1073741824&&(Mt(t),t.subtreeFlags&6&&(t.flags|=8192)):Mt(t),",
+            "line": 40
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "l,getCurrentFiber:null,reconcilerVersion:\"18.3.1-next...[REDACTED]\"};if(typeof __REAC...[REDACTED]<\"u\"",
+            "line": 40
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "H(38));return ic(e,t,n,!1,r)};dn.version=\"18.3.1-next...[REDACTED]\";function mS(){if(!(typeof __REACT_DEVTOOLS_GL",
+            "line": 40
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "nPoint),xh(e.y,n.translate,n.scale,n.originPoint)}const f0=.999999999999,h0=1.0000000000001;function NA(e,t,n,r=!1){cons",
+            "line": 72
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "ranslate,n.scale,n.originPoint)}const f0=.999999999999,h0=1.0000000000001;function NA(e,t,n,r=!1){const i=n.length;if(!i",
+            "line": 72
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "(\"h2\",{children:\"número de contato:\"}),m.jsx(\"p\",{children:\"+5548988338777\"})]}),m.jsxs(Tt,{delay:4,className:\"single-co",
+            "line": 80
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "mber\",className:\"form-control\",defaultValue:\"\",placeholder:\"+1234567890\",required:!0,\"data-error\":\"Por favor, insira seu",
+            "line": 80
+          },
+          {
+            "type": "Hardcoded IP",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/js/music-player.js",
+            "preview": "79-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.",
+            "line": 173
+          },
+          {
+            "type": "Hardcoded IP",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/js/music-player.js",
+            "preview": "-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.3",
+            "line": 173
+          },
+          {
+            "type": "Hardcoded IP",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/js/music-player.js",
+            "preview": "8-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z\"/>",
+            "line": 173
+          },
+          {
+            "type": "Hardcoded IP",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/js/music-player.js",
+            "preview": "79-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.",
+            "line": 203
+          },
+          {
+            "type": "Hardcoded IP",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/js/music-player.js",
+            "preview": "-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.3",
+            "line": 203
+          },
+          {
+            "type": "Hardcoded IP",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/js/music-player.js",
+            "preview": "8-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z\"/><",
+            "line": 203
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CR8kqr46.css",
+            "preview": "*{flex:0 0 auto;width:50%}.row-cols-3>*{flex:0 0 auto;width:33.33333333%}.row-cols-4>*{flex:0 0 auto;width:25%}.row-cols",
+            "line": 1
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CR8kqr46.css",
+            "preview": "*{flex:0 0 auto;width:20%}.row-cols-6>*{flex:0 0 auto;width:16.66666667%}.col-auto{flex:0 0 auto;width:auto}.col-1{flex:",
+            "line": 1
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CR8kqr46.css",
+            "preview": "{flex:0 0 auto;width:8.33333333%}.col-2{flex:0 0 auto;width:16.66666667%}.col-3{flex:0 0 auto;width:25%}.col-4{flex:0 0",
+            "line": 1
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CR8kqr46.css",
+            "preview": "%}.col-3{flex:0 0 auto;width:25%}.col-4{flex:0 0 auto;width:33.33333333%}.col-5{flex:0 0 auto;width:41.66666667%}.col-6{",
+            "line": 1
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CR8kqr46.css",
+            "preview": "flex:0 0 auto;width:33.33333333%}.col-5{flex:0 0 auto;width:41.66666667%}.col-6{flex:0 0 auto;width:50%}.col-7{flex:0 0",
+            "line": 1
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CR8kqr46.css",
+            "preview": "%}.col-6{flex:0 0 auto;width:50%}.col-7{flex:0 0 auto;width:58.33333333%}.col-8{flex:0 0 auto;width:66.66666667%}.col-9{",
+            "line": 1
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CR8kqr46.css",
+            "preview": "flex:0 0 auto;width:58.33333333%}.col-8{flex:0 0 auto;width:66.66666667%}.col-9{flex:0 0 auto;width:75%}.col-10{flex:0 0",
+            "line": 1
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CR8kqr46.css",
+            "preview": "}.col-9{flex:0 0 auto;width:75%}.col-10{flex:0 0 auto;width:83.33333333%}.col-11{flex:0 0 auto;width:91.66666667%}.col-1",
+            "line": 1
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CR8kqr46.css",
+            "preview": "lex:0 0 auto;width:83.33333333%}.col-11{flex:0 0 auto;width:91.66666667%}.col-12{flex:0 0 auto;width:100%}.offset-1{marg",
+            "line": 1
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CR8kqr46.css",
+            "preview": "00%}.offset-1{margin-left:8.33333333%}.offset-2{margin-left:16.66666667%}.offset-3{margin-left:25%}.offset-4{margin-left",
+            "line": 1
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CR8kqr46.css",
+            "preview": "6.66666667%}.offset-3{margin-left:25%}.offset-4{margin-left:33.33333333%}.offset-5{margin-left:41.66666667%}.offset-6{ma",
+            "line": 1
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CR8kqr46.css",
+            "preview": "5%}.offset-4{margin-left:33.33333333%}.offset-5{margin-left:41.66666667%}.offset-6{margin-left:50%}.offset-7{margin-left",
+            "line": 1
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CR8kqr46.css",
+            "preview": "1.66666667%}.offset-6{margin-left:50%}.offset-7{margin-left:58.33333333%}.offset-8{margin-left:66.66666667%}.offset-9{ma",
+            "line": 1
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/assets/index-CR8kqr46.css",
+            "preview": "0%}.offset-7{margin-left:58.33333333%}.offset-8{margin-left:66.66666667%}.offset-9{margin-left:75%}.offset-10{margin-lef",
+            "line": 1
+          }
+        ],
+        "recommendation": "URGENTE: Remova e rotacione todas as chaves/segredos expostos no código fonte."
+      }
+    },
+    {
+      "check": "Source Code — Insecure Patterns",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "70 padrão(ões) inseguro(s) encontrado(s) no código fonte.",
+      "details": {
+        "totalIssues": 70,
+        "summary": [
+          {
+            "type": "Console.log in Production",
+            "count": 10,
+            "severity": "low",
+            "sources": [
+              "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+              "https://estevamsouza.com.br/js/chat-widget.js",
+              "https://estevamsouza.com.br/admin/js/app.js"
+            ]
+          },
+          {
+            "type": "Exposed Source Map",
+            "count": 1,
+            "severity": "medium",
+            "sources": [
+              "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+            ]
+          },
+          {
+            "type": "Prototype Pollution Risk",
+            "count": 10,
+            "severity": "high",
+            "sources": [
+              "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+              "https://estevamsouza.com.br/assets/index-CitENTfB.js"
+            ]
+          },
+          {
+            "type": "innerHTML Assignment",
+            "count": 26,
+            "severity": "medium",
+            "sources": [
+              "https://estevamsouza.com.br/js/dynamic-content.js",
+              "https://estevamsouza.com.br/js/chat-widget.js",
+              "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+              "https://estevamsouza.com.br/js/cookie-consent.js",
+              "https://estevamsouza.com.br/js/music-player.js"
+            ]
+          },
+          {
+            "type": "Insecure HTTP URL",
+            "count": 17,
+            "severity": "medium",
+            "sources": [
+              "https://estevamsouza.com.br/js/chat-widget.js",
+              "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+              "https://estevamsouza.com.br/js/music-player.js",
+              "https://estevamsouza.com.br/assets/index-CR8kqr46.css",
+              "https://estevamsouza.com.br/sitemap.xml"
+            ]
+          },
+          {
+            "type": "Dangerously Set Inner HTML (React)",
+            "count": 5,
+            "severity": "medium",
+            "sources": [
+              "https://estevamsouza.com.br/assets/index-CitENTfB.js"
+            ]
+          },
+          {
+            "type": "Exposed Stack Trace",
+            "count": 1,
+            "severity": "medium",
+            "sources": [
+              "https://estevamsouza.com.br/admin/js/app.js"
+            ]
+          }
+        ],
+        "findings": [
+          {
+            "type": "Console.log in Production",
+            "severity": "low",
+            "source": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+            "preview": ",ur=class extends hr{},dr=class extends hr{};async function pr(e,t,r){cr.debug&&console.log(\"@supabase/gotrue-js: navigatorLock: acquire lock\",e,t);let s=new gl",
+            "recommendation": "Remova console.log do código de produção para evitar vazamento de informações.",
+            "line": 1
+          },
+          {
+            "type": "Console.log in Production",
+            "severity": "low",
+            "source": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+            "preview": ";let s=new globalThis.AbortController;t>0&&setTimeout((()=>{s.abort(),cr.debug&&console.log(\"@supabase/gotrue-js: navigatorLock acquire timed out\",e)}),t),await",
+            "recommendation": "Remova console.log do código de produção para evitar vazamento de informações.",
+            "line": 1
+          },
+          {
+            "type": "Console.log in Production",
+            "severity": "low",
+            "source": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+            "preview": "}:{mode:\"exclusive\",signal:s.signal},(async s=>{if(!s){if(0===t)throw cr.debug&&console.log(\"@supabase/gotrue-js: navigatorLock: not immediately available\",e),n",
+            "recommendation": "Remova console.log do código de produção para evitar vazamento de informações.",
+            "line": 1
+          },
+          {
+            "type": "Console.log in Production",
+            "severity": "low",
+            "source": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+            "preview": "diately failed`);if(cr.debug)try{let e=await globalThis.navigator.locks.query();console.log(\"@supabase/gotrue-js: Navigator LockManager state\",JSON.stringify(e,",
+            "recommendation": "Remova console.log do código de produção para evitar vazamento de informações.",
+            "line": 1
+          },
+          {
+            "type": "Console.log in Production",
+            "severity": "low",
+            "source": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+            "preview": "eloper.mozilla.org/en-US/docs/Web/API/LockManager/request\"),await r()}cr.debug&&console.log(\"@supabase/gotrue-js: navigatorLock: acquired\",e,s.name);try{return",
+            "recommendation": "Remova console.log do código de produção para evitar vazamento de informações.",
+            "line": 1
+          },
+          {
+            "type": "Exposed Source Map",
+            "severity": "medium",
+            "source": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+            "preview": ".isAcquireTimeout){try{await s}catch{}return null}throw e}})(),await i},e}({}); //# sourceMappingURL=/sm/a84f624417c75ac0520f8f83518f645385d4fdd6877a13ec72a6146",
+            "recommendation": "Source maps expõem código original. Remova em produção.",
+            "line": 1
+          },
+          {
+            "type": "Prototype Pollution Risk",
+            "severity": "high",
+            "source": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+            "preview": "d this.fetch(g.toString(),{method:l||\"POST\",headers:Object.assign(Object.assign(Object.assign({},d),this.headers),o),body:f,signal:y}).catch((e=>{throw new a(e)",
+            "recommendation": "Verifique inputs para prevenir prototype pollution.",
+            "line": 1
+          },
+          {
+            "type": "Prototype Pollution Risk",
+            "severity": "high",
+            "source": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+            "preview": "join_ref:this.channel._joinRef()}))}updatePayload(e){this.payload=Object.assign(Object.assign({},this.payload),e)}receive(e,t){return this._hasReceived(e)&&t(th",
+            "recommendation": "Verifique inputs para prevenir prototype pollution.",
+            "line": 1
+          },
+          {
+            "type": "Prototype Pollution Risk",
+            "severity": "high",
+            "source": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+            "preview": "this.params.config.presence?.enabled,l={},c={broadcast:s,presence:Object.assign(Object.assign({},a),{enabled:o}),postgres_changes:n,private:i};this.socket.acces",
+            "recommendation": "Verifique inputs para prevenir prototype pollution.",
+            "line": 1
+          },
+          {
+            "type": "Prototype Pollution Risk",
+            "severity": "high",
+            "source": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+            "preview": "between server and client bindings for postgres changes\"));i.push(Object.assign(Object.assign({},a),{id:u.id}))}return this.bindings.postgres_changes=i,void(t&&",
+            "recommendation": "Verifique inputs para prevenir prototype pollution.",
+            "line": 1
+          },
+          {
+            "type": "Prototype Pollution Risk",
+            "severity": "high",
+            "source": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+            "preview": "oller,a=setTimeout((()=>s.abort()),r),i=await this.socket.fetch(e,Object.assign(Object.assign({},t),{signal:s.signal}));return clearTimeout(a),i}_push(e,t,r=thi",
+            "recommendation": "Verifique inputs para prevenir prototype pollution.",
+            "line": 1
+          },
+          {
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/js/dynamic-content.js",
+            "preview": "reeting;      const h1 = heroContent.querySelector('h1');     if (h1) {       h1.innerHTML = `${data.title || ''} <span>${data.highlight || ''}</span> ${data.su",
+            "recommendation": "innerHTML pode causar XSS. Use textContent ou sanitização.",
+            "line": 224
+          },
+          {
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/js/dynamic-content.js",
+            "preview": "ent.querySelector('.theme-btn');     if (ctaBtn && data.cta_text) {       ctaBtn.innerHTML = `${data.cta_text} <i class=\"far fa-angle-right\"></i>`;       const",
+            "recommendation": "innerHTML pode causar XSS. Use textContent ou sanitização.",
+            "line": 229
+          },
+          {
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/js/dynamic-content.js",
+            "preview": "turn;      const row = counterArea.querySelector('.row') || counterArea;     row.innerHTML = items.map(item => {       const suffix = item.suffix || '+';",
+            "recommendation": "innerHTML pode causar XSS. Use textContent ou sanitização.",
+            "line": 248
+          },
+          {
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/js/dynamic-content.js",
+            "preview": ";        const h2 = sectionTitle.querySelector('h2');       if (h2) {         h2.innerHTML = ` ${data.title_prefix || ''} <span>${data.title_highlight1 || ''}</",
+            "recommendation": "innerHTML pode causar XSS. Use textContent ou sanitização.",
+            "line": 275
+          },
+          {
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/js/dynamic-content.js",
+            "preview": "nt.createElement('div');     carousel.className = 'about-carousel';     carousel.innerHTML = `       <div class=\"about-carousel-track\">         ${photoList.map(",
+            "recommendation": "innerHTML pode causar XSS. Use textContent ou sanitização.",
+            "line": 316
+          },
+          {
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/js/chat-widget.js",
+            "preview": "('button');     fab.className = 'ai-chat-fab';     fab.id = 'aiChatFab';     fab.innerHTML = `       <svg viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"",
+            "recommendation": "innerHTML pode causar XSS. Use textContent ou sanitização.",
+            "line": 955
+          },
+          {
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/js/chat-widget.js",
+            "preview": "===================   function renderAuthForm(panel, mode = 'login') {     panel.innerHTML = `       <div class=\"ai-chat-header\">         <div class=\"ai-chat-he",
+            "recommendation": "innerHTML pode causar XSS. Use textContent ou sanitização.",
+            "line": 1020
+          },
+          {
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/js/chat-widget.js",
+            "preview": "nel) {     // Load conversations first     await loadConversations();      panel.innerHTML = `       <div class=\"ai-chat-header\">         <div class=\"ai-chat-he",
+            "recommendation": "innerHTML pode causar XSS. Use textContent ou sanitização.",
+            "line": 1168
+          },
+          {
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/js/chat-widget.js",
+            "preview": "list = document.getElementById('historyList');     if (!list) return;      list.innerHTML = conversations.map(conv => {       const date = new Date(conv.create",
+            "recommendation": "innerHTML pode causar XSS. Use textContent ou sanitização.",
+            "line": 1253
+          },
+          {
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/js/chat-widget.js",
+            "preview": "const body = document.getElementById('aiChatBody');         body.innerHTML = '';                  await addBotMessage(getWelcomeMessage());",
+            "recommendation": "innerHTML pode causar XSS. Use textContent ou sanitização.",
+            "line": 1297
+          },
+          {
+            "type": "Insecure HTTP URL",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/js/chat-widget.js",
+            "preview": "ab.id = 'aiChatFab';     fab.innerHTML = `       <svg viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\">         <path d=\"M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14",
+            "recommendation": "Use HTTPS para todas as comunicações externas.",
+            "line": 956
+          },
+          {
+            "type": "Console.log in Production",
+            "severity": "low",
+            "source": "https://estevamsouza.com.br/js/chat-widget.js",
+            "preview": "N_KEY;          if (url && key) {       startChat(url, key);     } else {       console.log('[AIChat] Waiting for ENV...');       setTimeout(waitForEnv, 300);",
+            "recommendation": "Remova console.log do código de produção para evitar vazamento de informações.",
+            "line": 17
+          },
+          {
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "unction(e,t){if(e.namespaceURI!==\"http://www.w3.org/2000/svg\"||\"innerHTML\"in e)e.innerHTML=t;else{for(cl=cl||document.createElement(\"div\"),cl.innerHTML=\"<svg>\"+",
+            "recommendation": "innerHTML pode causar XSS. Use textContent ou sanitização.",
+            "line": 37
+          },
+          {
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "||\"innerHTML\"in e)e.innerHTML=t;else{for(cl=cl||document.createElement(\"div\"),cl.innerHTML=\"<svg>\"+t.valueOf().toString()+\"</svg>\",t=cl.firstChild;e.firstChild;",
+            "recommendation": "innerHTML pode causar XSS. Use textContent ou sanitização.",
+            "line": 37
+          },
+          {
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "(n)),e===\"http://www.w3.org/1999/xhtml\"?n===\"script\"?(e=o.createElement(\"div\"),e.innerHTML=\"<script><\\/script>\",e=e.removeChild(e.firstChild)):typeof r.is==\"str",
+            "recommendation": "innerHTML pode causar XSS. Use textContent ou sanitização.",
+            "line": 40
+          },
+          {
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "this._config.content,...u},this}toHtml(){const u=document.createElement(\"div\");u.innerHTML=this._maybeSanitize(this._config.template);for(const[L,O]of Object.en",
+            "recommendation": "innerHTML pode causar XSS. Use textContent ou sanitização.",
+            "line": 44
+          },
+          {
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "PossibleFunction(p))?a(p)?this._putElementInTemplate(l(p),L):this._config.html?L.innerHTML=this._maybeSanitize(p):L.textContent=p:L.remove())}_maybeSanitize(u){",
+            "recommendation": "innerHTML pode causar XSS. Use textContent ou sanitização.",
+            "line": 44
+          },
+          {
+            "type": "Insecure HTTP URL",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "pe\".split(\" \").forEach(function(e){var t=e.replace(Oh,Ah);Pt[t]=new $t(t,1,!1,e,\"http://www.w3.org/1999/xlink\",!1,!1)});[\"xml:base\",\"xml:lang\",\"xml:space\"].forE",
+            "recommendation": "Use HTTPS para todas as comunicações externas.",
+            "line": 33
+          },
+          {
+            "type": "Insecure HTTP URL",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "\",\"xml:space\"].forEach(function(e){var t=e.replace(Oh,Ah);Pt[t]=new $t(t,1,!1,e,\"http://www.w3.org/XML/1998/namespace\",!1,!1)});[\"tabIndex\",\"crossOrigin\"].forEa",
+            "recommendation": "Use HTTPS para todas as comunicações externas.",
+            "line": 33
+          },
+          {
+            "type": "Insecure HTTP URL",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "e.toLowerCase(),null,!1,!1)});Pt.xlinkHref=new $t(\"xlinkHref\",1,!1,\"xlink:href\",\"http://www.w3.org/1999/xlink\",!0,!1);[\"src\",\"href\",\"action\",\"formAction\"].forEa",
+            "recommendation": "Use HTTPS para todas as comunicações externas.",
+            "line": 33
+          },
+          {
+            "type": "Insecure HTTP URL",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "alValue&&t!==\"\"&&t!==null&&(e.value=t)}function Pw(e){switch(e){case\"svg\":return\"http://www.w3.org/2000/svg\";case\"math\":return\"http://www.w3.org/1998/Math/MathM",
+            "recommendation": "Use HTTPS para todas as comunicações externas.",
+            "line": 37
+          },
+          {
+            "type": "Insecure HTTP URL",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "n Pw(e){switch(e){case\"svg\":return\"http://www.w3.org/2000/svg\";case\"math\":return\"http://www.w3.org/1998/Math/MathML\";default:return\"http://www.w3.org/1999/xhtml",
+            "recommendation": "Use HTTPS para todas as comunicações externas.",
+            "line": 37
+          },
+          {
+            "type": "Dangerously Set Inner HTML (React)",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "e=e,this.type=t,this.sanitizeURL=s,this.removeEmptyString=o}var Pt={};\"children dangerouslySetInnerHTML defaultValue defaultChecked innerHTML suppressContentEdi",
+            "recommendation": "dangerouslySetInnerHTML pode causar XSS. Sanitize o HTML antes.",
+            "line": 33
+          },
+          {
+            "type": "Dangerously Set Inner HTML (React)",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "=null||e[i].disabled||(t=e[i])}t!==null&&(t.selected=!0)}}function mf(e,t){if(t.dangerouslySetInnerHTML!=null)throw Error(H(91));return it({},t,{value:void 0,de",
+            "recommendation": "dangerouslySetInnerHTML pode causar XSS. Sanitize o HTML antes.",
+            "line": 37
+          },
+          {
+            "type": "Dangerously Set Inner HTML (React)",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "urce:!0,track:!0,wbr:!0});function vf(e,t){if(t){if(cb[e]&&(t.children!=null||t.dangerouslySetInnerHTML!=null))throw Error(H(137,e));if(t.dangerouslySetInnerHTM",
+            "recommendation": "dangerouslySetInnerHTML pode causar XSS. Sanitize o HTML antes.",
+            "line": 37
+          },
+          {
+            "type": "Dangerously Set Inner HTML (React)",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "&(t.children!=null||t.dangerouslySetInnerHTML!=null))throw Error(H(137,e));if(t.dangerouslySetInnerHTML!=null){if(t.children!=null)throw Error(H(60));if(typeof",
+            "recommendation": "dangerouslySetInnerHTML pode causar XSS. Sanitize o HTML antes.",
+            "line": 37
+          },
+          {
+            "type": "Dangerously Set Inner HTML (React)",
+            "severity": "medium",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "ngerouslySetInnerHTML!=null){if(t.children!=null)throw Error(H(60));if(typeof t.dangerouslySetInnerHTML!=\"object\"||!(\"__html\"in t.dangerouslySetInnerHTML))throw",
+            "recommendation": "dangerouslySetInnerHTML pode causar XSS. Sanitize o HTML antes.",
+            "line": 37
+          },
+          {
+            "type": "Prototype Pollution Risk",
+            "severity": "high",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "ion()};Ee.version=\"18.3.1\";sw.exports=Ee;var k=sw.exports;const ft=rw(k),KT=nw({__proto__:null,default:ft},[k]);/**  * @license React  * react-jsx-runtime.produ",
+            "recommendation": "Verifique inputs para prevenir prototype pollution.",
+            "line": 9
+          },
+          {
+            "type": "Prototype Pollution Risk",
+            "severity": "high",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "){console.error(e)}}mS(),mw.exports=dn;var sc=mw.exports;const iC=rw(sc),sC=nw({__proto__:null,default:iC},[sc]);var gS,Hv=sc;gS=Hv.createRoot,Hv.hydrateRoot;va",
+            "recommendation": "Verifique inputs para prevenir prototype pollution.",
+            "line": 40
+          }
+        ],
+        "recommendation": "Revise e corrija os padrões inseguros identificados."
+      }
+    },
+    {
+      "check": "Source Code — Source Maps Exposed",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "1 source map(s) exposto(s). Código original pode ser reconstruído.",
+      "details": {
+        "maps": [
+          "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+        ],
+        "recommendation": "Remova sourceMapingURL de bundles em produção para evitar exposição do código original."
+      }
+    },
+    {
+      "check": "Source Code — Errors Detected",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "6 erro(s) detectado(s) em respostas/código.",
+      "details": {
+        "errors": [
+          {
+            "type": "Runtime Error",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "StackTrace=",
+            "line": 34
+          },
+          {
+            "type": "Runtime Error",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "preview": "StackTrace=",
+            "line": 37
+          },
+          {
+            "type": "Runtime Error",
+            "source": "https://cdn.jsdelivr.net/npm/jszip@3/dist/jszip.min.js",
+            "preview": "ERROR:-2,Z_DATA_ERROR:-3,Z_BUF_ERROR:-5,Z_NO_COMPRESSION:0,Z_BEST_SPEED:1,Z_BEST_COMPRESSION:9,Z_DEFAULT_C",
+            "line": 13
+          },
+          {
+            "type": "Runtime Error",
+            "source": "https://estevamsouza.com.br/admin/js/app.js",
+            "preview": "ERROR:', err); }",
+            "line": 4419
+          },
+          {
+            "type": "Runtime Error",
+            "source": "https://estevamsouza.com.br/admin/js/app.js",
+            "preview": "ERROR:', err); }",
+            "line": 4666
+          },
+          {
+            "type": "Runtime Error",
+            "source": "https://estevamsouza.com.br/admin/js/app.js",
+            "preview": "ERROR:', err); }",
+            "line": 4891
+          }
+        ],
+        "recommendation": "Corrija os erros para evitar comportamento inesperado e possíveis brechas."
+      }
+    },
+    {
+      "check": "Routes — robots.txt",
+      "status": "INFO",
+      "severity": "info",
+      "message": "robots.txt encontrado com 2 caminhos bloqueados.",
+      "details": {
+        "disallowed": [
+          "/admin/",
+          "/admin/js/env.js"
+        ],
+        "sitemaps": [
+          "https://www.estevamsouza.com.br/sitemap.xml"
+        ]
+      }
+    },
+    {
+      "check": "Routes — Sitemap",
+      "status": "INFO",
+      "severity": "info",
+      "message": "sitemap.xml encontrado com 10 URL(s).",
+      "details": {
+        "urls": [
+          "https://www.estevamsouza.com.br/",
+          "https://www.estevamsouza.com.br/#about",
+          "https://www.estevamsouza.com.br/#resume",
+          "https://www.estevamsouza.com.br/#services",
+          "https://www.estevamsouza.com.br/#projects",
+          "https://www.estevamsouza.com.br/#skills",
+          "https://www.estevamsouza.com.br/#contact",
+          "https://www.estevamsouza.com.br/blog/post",
+          "https://www.estevamsouza.com.br/saas",
+          "https://www.estevamsouza.com.br/calculadora"
+        ]
+      }
+    },
+    {
+      "check": "Routes — Hidden/Exposed Endpoints",
+      "status": "FAIL",
+      "severity": "critical",
+      "message": "6 rota(s) descoberta(s). 4 crítica(s), 0 alta(s).",
+      "details": {
+        "total": 6,
+        "byCategory": {
+          "admin": [
+            {
+              "path": "/admin",
+              "status": 200,
+              "risk": "critical"
+            },
+            {
+              "path": "/admin/",
+              "status": 200,
+              "risk": "critical"
+            },
+            {
+              "path": "/admin/login",
+              "status": 200,
+              "risk": "critical"
+            }
+          ],
+          "static": [
+            {
+              "path": "/robots.txt",
+              "status": 200,
+              "risk": "low"
+            },
+            {
+              "path": "/sitemap.xml",
+              "status": 200,
+              "risk": "low"
+            }
+          ],
+          "other": [
+            {
+              "path": "/admin/js/env.js",
+              "status": 200,
+              "risk": "critical"
+            }
+          ]
+        },
+        "criticalRoutes": [
+          {
+            "path": "/admin",
+            "status": 200,
+            "size": 8941,
+            "contentType": "text/html; charset=utf-8",
+            "category": "admin",
+            "risk": "critical",
+            "redirectsTo": "https://www.estevamsouza.com.br/admin",
+            "headers": {
+              "server": "Vercel",
+              "auth": false
+            }
+          },
+          {
+            "path": "/admin/",
+            "status": 200,
+            "size": 8941,
+            "contentType": "text/html; charset=utf-8",
+            "category": "admin",
+            "risk": "critical",
+            "redirectsTo": "https://www.estevamsouza.com.br/admin/",
+            "headers": {
+              "server": "Vercel",
+              "auth": false
+            }
+          },
+          {
+            "path": "/admin/login",
+            "status": 200,
+            "size": 4016,
+            "contentType": "text/html; charset=utf-8",
+            "category": "admin",
+            "risk": "critical",
+            "redirectsTo": "https://www.estevamsouza.com.br/admin/login",
+            "headers": {
+              "server": "Vercel",
+              "auth": false
+            }
+          },
+          {
+            "path": "/admin/js/env.js",
+            "status": 200,
+            "size": 985,
+            "contentType": "application/javascript; charset=utf-8",
+            "category": "other",
+            "risk": "critical",
+            "redirectsTo": "https://www.estevamsouza.com.br/admin/js/env.js",
+            "headers": {
+              "server": "Vercel",
+              "auth": false
+            }
+          }
+        ],
+        "highRoutes": [],
+        "allRoutes": [
+          {
+            "path": "/admin",
+            "status": 200,
+            "size": 8941,
+            "contentType": "text/html; charset=utf-8",
+            "category": "admin",
+            "risk": "critical",
+            "redirectsTo": "https://www.estevamsouza.com.br/admin",
+            "headers": {
+              "server": "Vercel",
+              "auth": false
+            }
+          },
+          {
+            "path": "/admin/",
+            "status": 200,
+            "size": 8941,
+            "contentType": "text/html; charset=utf-8",
+            "category": "admin",
+            "risk": "critical",
+            "redirectsTo": "https://www.estevamsouza.com.br/admin/",
+            "headers": {
+              "server": "Vercel",
+              "auth": false
+            }
+          },
+          {
+            "path": "/admin/login",
+            "status": 200,
+            "size": 4016,
+            "contentType": "text/html; charset=utf-8",
+            "category": "admin",
+            "risk": "critical",
+            "redirectsTo": "https://www.estevamsouza.com.br/admin/login",
+            "headers": {
+              "server": "Vercel",
+              "auth": false
+            }
+          },
+          {
+            "path": "/robots.txt",
+            "status": 200,
+            "size": 206,
+            "contentType": "text/plain; charset=utf-8",
+            "category": "static",
+            "risk": "low",
+            "redirectsTo": "https://www.estevamsouza.com.br/robots.txt",
+            "headers": {
+              "server": "Vercel",
+              "auth": false
+            }
+          },
+          {
+            "path": "/sitemap.xml",
+            "status": 200,
+            "size": 1725,
+            "contentType": "application/xml",
+            "category": "static",
+            "risk": "low",
+            "redirectsTo": "https://www.estevamsouza.com.br/sitemap.xml",
+            "headers": {
+              "server": "Vercel",
+              "auth": false
+            }
+          },
+          {
+            "path": "/admin/js/env.js",
+            "status": 200,
+            "size": 985,
+            "contentType": "application/javascript; charset=utf-8",
+            "category": "other",
+            "risk": "critical",
+            "redirectsTo": "https://www.estevamsouza.com.br/admin/js/env.js",
+            "headers": {
+              "server": "Vercel",
+              "auth": false
+            }
+          }
+        ],
+        "recommendation": "URGENTE: Rotas críticas descobertas (admin, debug, config). Bloqueie ou proteja esses endpoints."
+      }
+    },
+    {
+      "check": "Routes — Extracted from Source",
+      "status": "INFO",
+      "severity": "low",
+      "message": "1 rota(s) extraída(s) do código fonte da página.",
+      "details": {
+        "routes": [
+          "/images/favicon.svg"
+        ],
+        "recommendation": "Verifique se todas as rotas extraídas do código fonte devem ser públicas."
+      }
+    },
+    {
+      "check": "Vulnerability — XSS",
+      "status": "PASS",
+      "severity": "info",
+      "message": "Nenhum XSS refletido detectado nos endpoints testados.",
+      "details": {
+        "endpointsTested": 11
+      }
+    },
+    {
+      "check": "Vulnerability — Clickjacking",
+      "status": "FAIL",
+      "severity": "medium",
+      "message": "Site pode ser embutido em iframes (vulnerável a clickjacking). X-Frame-Options e CSP frame-ancestors ausentes.",
+      "details": {
+        "recommendation": "Adicione header X-Frame-Options: DENY ou Content-Security-Policy: frame-ancestors 'self'"
+      }
+    },
+    {
+      "check": "Vulnerability — Security Headers",
+      "status": "FAIL",
+      "severity": "high",
+      "message": "1/10 headers de segurança presentes. 2 crítico(s) ausente(s).",
+      "details": {
+        "present": [
+          {
+            "name": "Strict-Transport-Security",
+            "value": "max-age=63072000"
+          }
+        ],
+        "missing": [
+          {
+            "name": "Content-Security-Policy",
+            "critical": true
+          },
+          {
+            "name": "X-Frame-Options",
+            "critical": true
+          },
+          {
+            "name": "X-Content-Type-Options",
+            "critical": false
+          },
+          {
+            "name": "X-XSS-Protection",
+            "critical": false
+          },
+          {
+            "name": "Referrer-Policy",
+            "critical": false
+          },
+          {
+            "name": "Permissions-Policy",
+            "critical": false
+          },
+          {
+            "name": "Cross-Origin-Opener-Policy",
+            "critical": false
+          },
+          {
+            "name": "Cross-Origin-Resource-Policy",
+            "critical": false
+          },
+          {
+            "name": "Cross-Origin-Embedder-Policy",
+            "critical": false
+          }
+        ],
+        "recommendation": "URGENTE: Configure HSTS, CSP e X-Frame-Options."
+      }
+    },
+    {
+      "check": "Vulnerability — Rate Limiting",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Rate limiting não detectado — endpoints podem ser vulneráveis a brute force.",
+      "details": {
+        "recommendation": "Configure rate limiting em endpoints de autenticação para prevenir brute force."
+      }
+    },
+    {
+      "check": "Vulnerability — Technology Fingerprint",
+      "status": "INFO",
+      "severity": "low",
+      "message": "2 tecnologia(s) identificada(s): Vercel, Supabase",
+      "details": {
+        "technologies": [
+          {
+            "name": "Vercel",
+            "source": "header"
+          },
+          {
+            "name": "Supabase",
+            "source": "html"
+          }
+        ],
+        "recommendation": "Verifique se todas as tecnologias detectadas estão atualizadas. Versões antigas podem ter CVEs conhecidos."
+      }
+    },
+    {
+      "check": "Sensitive Data — Critical Exposures",
+      "status": "FAIL",
+      "severity": "critical",
+      "message": "6 exposição(ões) CRÍTICA(S) de dados sensíveis!",
+      "details": {
+        "findings": [
+          {
+            "type": "Password in URL",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "severity": "critical",
+            "category": "Credentials",
+            "count": 1,
+            "samples": [
+              "pass********************tion"
+            ]
+          },
+          {
+            "type": "Password in URL",
+            "source": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+            "severity": "critical",
+            "category": "Credentials",
+            "count": 8,
+            "samples": [
+              "pass********************tion",
+              "pass********************ll;\"",
+              "pass********************(!(\""
+            ]
+          },
+          {
+            "type": "Password in URL",
+            "source": "https://estevamsouza.com.br/js/chat-widget.js",
+            "severity": "critical",
+            "category": "Credentials",
+            "count": 1,
+            "samples": [
+              "pass********************Id('"
+            ]
+          },
+          {
+            "type": "Password in URL",
+            "source": "https://estevamsouza.com.br/assets/index-CR8kqr46.css",
+            "severity": "critical",
+            "category": "Credentials",
+            "count": 2,
+            "samples": [
+              "pass*************nt:\"",
+              "pass************nt:\""
+            ]
+          },
+          {
+            "type": "Password in URL",
+            "source": "https://estevamsouza.com.br/assets/index-CR8kqr46.css",
+            "severity": "critical",
+            "category": "Credentials",
+            "count": 2,
+            "samples": [
+              "pass*************nt:\"",
+              "pass************nt:\""
+            ]
+          },
+          {
+            "type": "Password in URL",
+            "source": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css",
+            "severity": "critical",
+            "category": "Credentials",
+            "count": 1,
+            "samples": [
+              "pass*************nt:\""
+            ]
+          }
+        ],
+        "recommendation": "URGENTE: Remova dados sensíveis do frontend, implemente RLS e reveja permissões."
+      }
+    },
+    {
+      "check": "Sensitive Data — High Risk Exposures",
+      "status": "FAIL",
+      "severity": "high",
+      "message": "4 exposição(ões) de alto risco.",
+      "details": {
+        "findings": [
+          {
+            "type": "Internal URL",
+            "source": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+            "severity": "high",
+            "category": "Infrastructure",
+            "count": 1,
+            "samples": [
+              "http*************9999"
+            ]
+          },
+          {
+            "type": "API Key Generic",
+            "source": "https://estevamsouza.com.br/admin/js/env.js",
+            "severity": "high",
+            "category": "Credentials",
+            "count": 2,
+            "samples": [
+              "API_********************6a9'",
+              "API_********************y6Y'"
+            ]
+          },
+          {
+            "type": "JWT Token",
+            "source": "https://estevamsouza.com.br/admin/js/env.js",
+            "severity": "high",
+            "category": "Credentials",
+            "count": 1,
+            "samples": [
+              "eyJh********************ceSk"
+            ]
+          },
+          {
+            "type": "API Key Generic",
+            "source": "https://estevamsouza.com.br/js/chat-widget.js",
+            "severity": "high",
+            "category": "Credentials",
+            "count": 1,
+            "samples": [
+              "API_********************y6Y'"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "check": "Sensitive Data — Medium Risk",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "8 achado(s) de risco médio.",
+      "details": {
+        "findings": [
+          {
+            "type": "Email Address",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "severity": "medium",
+            "category": "PII",
+            "count": 2,
+            "samples": [
+              "cont*******************m.br",
+              "ola@*******.com"
+            ]
+          },
+          {
+            "type": "Phone BR",
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "severity": "medium",
+            "category": "PII",
+            "count": 11,
+            "samples": [
+              "10******23",
+              "16****16",
+              "33****32"
+            ]
+          },
+          {
+            "type": "Email Address",
+            "source": "https://estevamsouza.com.br/admin/js/env.js",
+            "severity": "medium",
+            "category": "PII",
+            "count": 1,
+            "samples": [
+              "cont*******************m.br"
+            ]
+          },
+          {
+            "type": "Email Address",
+            "source": "https://estevamsouza.com.br/js/dynamic-content.js",
+            "severity": "medium",
+            "category": "PII",
+            "count": 1,
+            "samples": [
+              "cont*******************m.br"
+            ]
+          },
+          {
+            "type": "Phone BR",
+            "source": "https://estevamsouza.com.br/js/music-player.js",
+            "severity": "medium",
+            "category": "PII",
+            "count": 1,
+            "samples": [
+              "23****28"
+            ]
+          },
+          {
+            "type": "Phone BR",
+            "source": "https://estevamsouza.com.br/assets/index-CR8kqr46.css",
+            "severity": "medium",
+            "category": "PII",
+            "count": 9,
+            "samples": [
+              "20*****24",
+              "33****33",
+              "66****67"
+            ]
+          },
+          {
+            "type": "Phone BR",
+            "source": "https://estevamsouza.com.br/assets/index-CR8kqr46.css",
+            "severity": "medium",
+            "category": "PII",
+            "count": 9,
+            "samples": [
+              "20*****24",
+              "33****33",
+              "66****67"
+            ]
+          },
+          {
+            "type": "Sensitive Paths in robots.txt",
+            "source": "/robots.txt",
+            "severity": "medium",
+            "matches": [
+              "/admin/",
+              "/admin/js/env.js"
+            ],
+            "note": "robots.txt revela caminhos sensíveis (pode guiar atacantes)"
+          }
+        ]
+      }
+    },
+    {
+      "check": "Sensitive Data — Summary",
+      "status": "INFO",
+      "severity": "info",
+      "message": "Total: 25 achado(s) — 6 críticos, 4 altos, 8 médios, 7 baixos.",
+      "details": {
+        "total": 25,
+        "bySeverity": {
+          "critical": 6,
+          "high": 4,
+          "medium": 8,
+          "low": 7
+        },
+        "byCategory": {
+          "PII": 7,
+          "Credentials": 9,
+          "Encoded": 5,
+          "Infrastructure": 3,
+          "Sensitive Paths in robots.txt": 1
+        }
+      }
+    },
+    {
+      "check": "Errors — Broken Resources",
+      "status": "PASS",
+      "severity": "info",
+      "message": "Nenhum recurso quebrado detectado.",
+      "details": {
+        "checked": 100
+      }
+    },
+    {
+      "check": "Errors — JavaScript Code Issues",
+      "status": "FAIL",
+      "severity": "high",
+      "message": "22 problema(s) em código JavaScript: 6 erros, 7 avisos.",
+      "details": {
+        "errors": [
+          {
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "type": "Throw Error",
+            "severity": "low",
+            "count": 5,
+            "samples": [
+              "throw new Error('You have to implement the static method \"NAME\", for each component!')",
+              "throw new Error(\"Please use show on visible elements\")"
+            ],
+            "isMinified": true
+          },
+          {
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "type": "Console Error/Warn",
+            "severity": "low",
+            "count": 8,
+            "samples": [
+              "console.error(\"forceFrameRate takes a positive int between 0 and 125, forcing frame rates higher tha",
+              "console.error(`Bootstrap doesn'"
+            ],
+            "isMinified": true
+          },
+          {
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "type": "Error Handler",
+            "severity": "info",
+            "count": 1,
+            "samples": [
+              ".catch(h=>{d=h})"
+            ],
+            "isMinified": true
+          },
+          {
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "type": "Dangerous eval/Function",
+            "severity": "high",
+            "count": 10,
+            "samples": [
+              "Function(function()",
+              "Function(u)"
+            ],
+            "isMinified": true
+          },
+          {
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "count": 8,
+            "samples": [
+              "innerHTML=",
+              "innerHTML="
+            ],
+            "isMinified": true
+          },
+          {
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "type": "Dynamic Property Access",
+            "severity": "medium",
+            "count": 1,
+            "samples": [
+              "window[i.__subType]"
+            ],
+            "isMinified": true
+          },
+          {
+            "source": "https://estevamsouza.com.br/assets/index-CitENTfB.js",
+            "type": "Hardcoded Secret",
+            "severity": "high",
+            "count": 21,
+            "samples": [
+              "Key:\"Unidentified\"",
+              "key:\"getScrollSpyContainer\""
+            ],
+            "isMinified": true
+          },
+          {
+            "source": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+            "type": "Console Error/Warn",
+            "severity": "low",
+            "count": 18,
+            "samples": [
+              "console.warn(\"Realtime send() is automatically falling back to REST API. This behavior will be depre",
+              "console.warn(\"WebCrypto API is not supported. Code challenge method will default to use plain instea"
+            ],
+            "isMinified": true
+          },
+          {
+            "source": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+            "type": "Hardcoded Secret",
+            "severity": "high",
+            "count": 5,
+            "samples": [
+              "token=\"access_token\"",
+              "Key:\"discouraged\""
+            ],
+            "isMinified": true
+          },
+          {
+            "source": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+            "type": "Source Map Exposed",
+            "severity": "medium",
+            "note": "Source maps em produção expõem código-fonte original.",
+            "mapUrl": "/sm/a84f624417c75ac0520f8f83518f645385d4fdd6877a13ec72a6146dca26f9ac.map"
+          },
+          {
+            "source": "https://estevamsouza.com.br/admin/js/env.js",
+            "type": "Hardcoded Secret",
+            "severity": "high",
+            "count": 4,
+            "samples": [
+              "KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjem1lbGF6Y3d0ZmRteHVkZ",
+              "TOKEN: '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'"
+            ],
+            "isMinified": false
+          },
+          {
+            "source": "https://estevamsouza.com.br/js/dynamic-content.js",
+            "type": "Console Error/Warn",
+            "severity": "low",
+            "count": 3,
+            "samples": [
+              "console.warn('[DynamicContent] Error loading from Supabase:'",
+              "console.error('Erro ao enviar mensagem:'"
+            ],
+            "isMinified": false
+          },
+          {
+            "source": "https://estevamsouza.com.br/js/dynamic-content.js",
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "count": 21,
+            "samples": [
+              "innerHTML = ",
+              "innerHTML = "
+            ],
+            "isMinified": false
+          },
+          {
+            "source": "https://estevamsouza.com.br/js/chat-widget.js",
+            "type": "Throw Error",
+            "severity": "low",
+            "count": 1,
+            "samples": [
+              "throw new Error(`AI API error: ${response.status}`)"
+            ],
+            "isMinified": false
+          },
+          {
+            "source": "https://estevamsouza.com.br/js/chat-widget.js",
+            "type": "Console Error/Warn",
+            "severity": "low",
+            "count": 4,
+            "samples": [
+              "console.warn('[AIChat] Portfolio data load error:'",
+              "console.error('[AIChat] AI error:'"
+            ],
+            "isMinified": false
+          },
+          {
+            "source": "https://estevamsouza.com.br/js/chat-widget.js",
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "count": 10,
+            "samples": [
+              "innerHTML = ",
+              "innerHTML = "
+            ],
+            "isMinified": false
+          },
+          {
+            "source": "https://estevamsouza.com.br/js/chat-widget.js",
+            "type": "Hardcoded Secret",
+            "severity": "high",
+            "count": 1,
+            "samples": [
+              "KEY = 'modalresearch_pBFaCMGtN9Gfn2aUnEMpKY-f9CIr3HE0tr-5Paf2y6Y'"
+            ],
+            "isMinified": false
+          },
+          {
+            "source": "https://estevamsouza.com.br/js/music-player.js",
+            "type": "Throw Error",
+            "severity": "low",
+            "count": 1,
+            "samples": [
+              "throw new Error('Failed to load')"
+            ],
+            "isMinified": false
+          },
+          {
+            "source": "https://estevamsouza.com.br/js/music-player.js",
+            "type": "Console Error/Warn",
+            "severity": "low",
+            "count": 2,
+            "samples": [
+              "console.warn('Music Player: Could not load tracks'",
+              "console.warn('Skip download:'"
+            ],
+            "isMinified": false
+          },
+          {
+            "source": "https://estevamsouza.com.br/js/music-player.js",
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "count": 11,
+            "samples": [
+              "innerHTML = ",
+              "innerHTML = "
+            ],
+            "isMinified": false
+          },
+          {
+            "source": "https://estevamsouza.com.br/js/cookie-consent.js",
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "count": 1,
+            "samples": [
+              "innerHTML = "
+            ],
+            "isMinified": false
+          },
+          {
+            "source": "https://estevamsouza.com.br/js/cookie-consent.js",
+            "type": "Hardcoded Secret",
+            "severity": "high",
+            "count": 1,
+            "samples": [
+              "KEY = 'cookie_consent'"
+            ],
+            "isMinified": false
+          }
+        ],
+        "recommendation": "Corrija os erros de JavaScript para melhorar a estabilidade e segurança."
+      }
+    },
+    {
+      "check": "Errors — SSL/TLS Configuration",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "1 problema(s) na configuração SSL/TLS.",
+      "details": {
+        "issues": [
+          {
+            "type": "HSTS sem includeSubDomains",
+            "severity": "low",
+            "note": "Subdomínios não são protegidos pelo HSTS."
+          }
+        ],
+        "recommendation": "Configure HTTPS redirect, HSTS com max-age ≥ 1 ano, e remova mixed content."
+      }
+    },
+    {
+      "check": "Errors — Performance Issues",
+      "status": "WARN",
+      "severity": "low",
+      "message": "1 problema(s) de performance detectado(s).",
+      "details": {
+        "issues": [
+          {
+            "type": "Scripts bloqueando renderização",
+            "value": "5 scripts sem async/defer",
+            "severity": "low",
+            "note": "Use async ou defer em scripts para não bloquear a renderização."
+          }
+        ]
+      }
+    }
+  ],
+  "evidence": {
+    "sha256": "535015a12f1d0a41c62e83041ed10144c86b173369e0ae91774f4516ed52a057",
+    "timestamp": "2026-03-06T19:57:22.635Z",
+    "auditId": "a6538548-ec7d-4364-bf57-5bdd654fd30f"
+  }
+}
