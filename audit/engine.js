@@ -21,6 +21,13 @@ const { checkOpenSignup } = require('./checks/open-signup');
 const { checkJWTConfig } = require('./checks/jwt');
 const { checkDNSInfo } = require('./checks/dns');
 
+// ── Deep Analysis Modules ────────────────────────────────────────
+const { deepSourceCodeAnalysis } = require('./checks/source-code');
+const { deepRouteDiscovery } = require('./checks/route-discovery');
+const { deepVulnerabilityScanner } = require('./checks/vulnerability-scanner');
+const { deepSensitiveDataDetector } = require('./checks/sensitive-data');
+const { deepErrorDetector } = require('./checks/error-detector');
+
 // ── Evidence signing ─────────────────────────────────────────────
 function signEvidence(data) {
   const payload = JSON.stringify(data);
@@ -83,6 +90,12 @@ async function runFullAudit(config, emit) {
     { name: 'Service Key Leak', fn: checkServiceKeyLeak, enabled: true },
     { name: 'Open Signup', fn: checkOpenSignup, enabled: true },
     { name: 'JWT Configuration', fn: checkJWTConfig, enabled: true },
+    // ── Deep Analysis Modules (emit-aware) ──
+    { name: '🔬 Deep Source Code Analysis', fn: deepSourceCodeAnalysis, enabled: config.options.checkDeepSource !== false, usesEmit: true },
+    { name: '🗺️ Hidden Route Discovery', fn: deepRouteDiscovery, enabled: config.options.checkDeepRoutes !== false, usesEmit: true },
+    { name: '🛡️ Vulnerability Scanner', fn: deepVulnerabilityScanner, enabled: config.options.checkDeepVuln !== false, usesEmit: true },
+    { name: '🔍 Sensitive Data Detector', fn: deepSensitiveDataDetector, enabled: config.options.checkDeepSensitive !== false, usesEmit: true },
+    { name: '🐛 Error Detector', fn: deepErrorDetector, enabled: config.options.checkDeepErrors !== false, usesEmit: true },
   ];
 
   const enabledChecks = checks.filter(c => c.enabled);
@@ -104,7 +117,9 @@ async function runFullAudit(config, emit) {
     });
 
     try {
-      const result = await check.fn(config);
+      const result = check.usesEmit
+        ? await check.fn(config, emit)
+        : await check.fn(config);
       const items = Array.isArray(result) ? result : [result];
       
       for (const item of items) {

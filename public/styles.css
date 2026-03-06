@@ -334,6 +334,29 @@ input[type="text"]::placeholder {
   accent-color: var(--accent);
 }
 
+.deep-scan-divider {
+  margin: 1.25rem 0 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--accent-dim);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.deep-scan-divider span {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.deep-grid .check-item.deep {
+  color: var(--accent-dim);
+  font-weight: 600;
+}
+
 .role-mode {
   display: flex;
   align-items: center;

@@ -1,0 +1,1273 @@
+{
+  "projectUrl": "http://ltdestacio.com.br",
+  "projectRef": null,
+  "score": 0,
+  "grade": {
+    "grade": "F",
+    "color": "#ff0040",
+    "label": "Crítico"
+  },
+  "totalChecks": 61,
+  "passed": 4,
+  "failed": 3,
+  "warnings": 50,
+  "errors": 0,
+  "info": 4,
+  "duration": "90.1s",
+  "results": [
+    {
+      "check": "DNS — Connectivity",
+      "status": "PASS",
+      "severity": "info",
+      "message": "Projeto acessível. Status: 200",
+      "details": {
+        "url": "http://ltdestacio.com.br",
+        "status": 200,
+        "server": "Vercel",
+        "via": null,
+        "cfRay": null
+      }
+    },
+    {
+      "check": "DNS — HTTPS",
+      "status": "FAIL",
+      "severity": "high",
+      "message": "Projeto está usando HTTP sem criptografia!",
+      "details": {
+        "recommendation": "Use HTTPS para todas as comunicações."
+      }
+    },
+    {
+      "check": "REST API — Table Exposure",
+      "status": "PASS",
+      "severity": "info",
+      "message": "Nenhuma tabela comum encontrada exposta via REST API (GUEST).",
+      "details": null
+    },
+    {
+      "check": "REST API — No Auth Access",
+      "status": "WARN",
+      "severity": "high",
+      "message": "REST API responde sem apikey/Authorization header.",
+      "details": {
+        "status": 200,
+        "hint": "Verifique se o endpoint requer autenticação."
+      }
+    },
+    {
+      "check": "RPC — Function Exposure",
+      "status": "FAIL",
+      "severity": "high",
+      "message": "24 função(ões) RPC descoberta(s). 0 retornam dados.",
+      "details": {
+        "functions": [
+          {
+            "function": "get_users",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "get_all_users",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "list_users",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "search_users",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "get_admin",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "admin_query",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "run_query",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "exec_sql",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "get_secret",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "get_config",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "get_settings",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "get_env",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "delete_user",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "update_role",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "grant_admin",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "get_orders",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "get_payments",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "get_transactions",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "export_data",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "backup",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "get_logs",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "create_user",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "reset_password",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          },
+          {
+            "function": "generate_token",
+            "status": 405,
+            "returnsData": false,
+            "response": "Method Not Allowed"
+          }
+        ],
+        "recommendation": "Revogue EXECUTE no role anon para funções sensíveis. Use SECURITY DEFINER com cuidado."
+      }
+    },
+    {
+      "check": "Storage — Public Path \"avatars\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/avatars/",
+      "details": {
+        "url": "http://ltdestacio.com.br/storage/v1/object/public/avatars/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"uploads\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/uploads/",
+      "details": {
+        "url": "http://ltdestacio.com.br/storage/v1/object/public/uploads/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"images\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/images/",
+      "details": {
+        "url": "http://ltdestacio.com.br/storage/v1/object/public/images/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"documents\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/documents/",
+      "details": {
+        "url": "http://ltdestacio.com.br/storage/v1/object/public/documents/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"public\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/public/",
+      "details": {
+        "url": "http://ltdestacio.com.br/storage/v1/object/public/public/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"files\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/files/",
+      "details": {
+        "url": "http://ltdestacio.com.br/storage/v1/object/public/files/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"backups\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/backups/",
+      "details": {
+        "url": "http://ltdestacio.com.br/storage/v1/object/public/backups/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"exports\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/exports/",
+      "details": {
+        "url": "http://ltdestacio.com.br/storage/v1/object/public/exports/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"media\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/media/",
+      "details": {
+        "url": "http://ltdestacio.com.br/storage/v1/object/public/media/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"assets\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/assets/",
+      "details": {
+        "url": "http://ltdestacio.com.br/storage/v1/object/public/assets/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Functions — Discovery",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "35 Edge Function(s) descoberta(s). 35 acessível(is).",
+      "details": {
+        "functions": [
+          {
+            "name": "hello",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "test",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "ping",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "health",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "status",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "webhook",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "stripe-webhook",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "payment",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "checkout",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "send-email",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "notify",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "notification",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "admin",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "auth",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "login",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "register",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "signup",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "api",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "proxy",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "cors-proxy",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "generate",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "process",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "upload",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "cron",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "scheduler",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "sync",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "export",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "import",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "backup",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "search",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "AI",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "openai",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "chat",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "resend",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          },
+          {
+            "name": "send-sms",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 492,
+            "hasBody": true,
+            "contentType": "text/html; charset=utf-8"
+          }
+        ],
+        "recommendation": "Verifique se Edge Functions sensíveis requerem auth. Use verify JWT no handler."
+      }
+    },
+    {
+      "check": "Edge Function — \"hello\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"hello\" acessível sem Authorization header.",
+      "details": {
+        "name": "hello",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"test\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"test\" acessível sem Authorization header.",
+      "details": {
+        "name": "test",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"ping\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"ping\" acessível sem Authorization header.",
+      "details": {
+        "name": "ping",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"health\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"health\" acessível sem Authorization header.",
+      "details": {
+        "name": "health",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"status\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"status\" acessível sem Authorization header.",
+      "details": {
+        "name": "status",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"webhook\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"webhook\" acessível sem Authorization header.",
+      "details": {
+        "name": "webhook",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"stripe-webhook\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"stripe-webhook\" acessível sem Authorization header.",
+      "details": {
+        "name": "stripe-webhook",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"payment\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"payment\" acessível sem Authorization header.",
+      "details": {
+        "name": "payment",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"checkout\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"checkout\" acessível sem Authorization header.",
+      "details": {
+        "name": "checkout",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"send-email\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"send-email\" acessível sem Authorization header.",
+      "details": {
+        "name": "send-email",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"notify\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"notify\" acessível sem Authorization header.",
+      "details": {
+        "name": "notify",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"notification\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"notification\" acessível sem Authorization header.",
+      "details": {
+        "name": "notification",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"admin\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"admin\" acessível sem Authorization header.",
+      "details": {
+        "name": "admin",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"auth\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"auth\" acessível sem Authorization header.",
+      "details": {
+        "name": "auth",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"login\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"login\" acessível sem Authorization header.",
+      "details": {
+        "name": "login",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"register\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"register\" acessível sem Authorization header.",
+      "details": {
+        "name": "register",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"signup\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"signup\" acessível sem Authorization header.",
+      "details": {
+        "name": "signup",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"api\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"api\" acessível sem Authorization header.",
+      "details": {
+        "name": "api",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"proxy\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"proxy\" acessível sem Authorization header.",
+      "details": {
+        "name": "proxy",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"cors-proxy\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"cors-proxy\" acessível sem Authorization header.",
+      "details": {
+        "name": "cors-proxy",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"generate\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"generate\" acessível sem Authorization header.",
+      "details": {
+        "name": "generate",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"process\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"process\" acessível sem Authorization header.",
+      "details": {
+        "name": "process",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"upload\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"upload\" acessível sem Authorization header.",
+      "details": {
+        "name": "upload",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"cron\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"cron\" acessível sem Authorization header.",
+      "details": {
+        "name": "cron",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"scheduler\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"scheduler\" acessível sem Authorization header.",
+      "details": {
+        "name": "scheduler",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"sync\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"sync\" acessível sem Authorization header.",
+      "details": {
+        "name": "sync",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"export\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"export\" acessível sem Authorization header.",
+      "details": {
+        "name": "export",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"import\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"import\" acessível sem Authorization header.",
+      "details": {
+        "name": "import",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"backup\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"backup\" acessível sem Authorization header.",
+      "details": {
+        "name": "backup",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"search\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"search\" acessível sem Authorization header.",
+      "details": {
+        "name": "search",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"AI\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"AI\" acessível sem Authorization header.",
+      "details": {
+        "name": "AI",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"openai\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"openai\" acessível sem Authorization header.",
+      "details": {
+        "name": "openai",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"chat\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"chat\" acessível sem Authorization header.",
+      "details": {
+        "name": "chat",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"resend\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"resend\" acessível sem Authorization header.",
+      "details": {
+        "name": "resend",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"send-sms\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"send-sms\" acessível sem Authorization header.",
+      "details": {
+        "name": "send-sms",
+        "status": 200
+      }
+    },
+    {
+      "check": "Realtime — WebSocket",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Endpoint WebSocket Realtime está ativo e acessível.",
+      "details": {
+        "url": "ws://ltdestacio.com.br/realtime/v1/websocket?apikey=&vsn=1.0.0",
+        "status": 200,
+        "recommendation": "Configure RLS nas tabelas para controlar quais dados são transmitidos via Realtime. Use Realtime policies."
+      }
+    },
+    {
+      "check": "Realtime — Health Endpoint",
+      "status": "INFO",
+      "severity": "low",
+      "message": "Endpoint de health do Realtime está acessível.",
+      "details": {
+        "url": "http://ltdestacio.com.br/realtime/v1/api/health",
+        "response": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+      }
+    },
+    {
+      "check": "Realtime — No Auth Access",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Realtime responde sem apikey.",
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "check": "Auth — Admin Users Endpoint",
+      "status": "PASS",
+      "severity": "info",
+      "message": "Endpoint admin de users não acessível com anon key. ✓",
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "check": "Env/Key Exposure — File Discovery",
+      "status": "FAIL",
+      "severity": "high",
+      "message": "30 arquivo(s) sensível(is) acessível(is)! ",
+      "details": {
+        "files": [
+          {
+            "path": "/.env",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/.env.local",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/.env.production",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/.env.development",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/.env.example",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/env.js",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/config.js",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/config.json",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/.git/config",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/.git/HEAD",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/wp-config.php",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/.DS_Store",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/package.json",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/.npmrc",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/docker-compose.yml",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/Dockerfile",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/.dockerenv",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/api/config",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/api/env",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/debug",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/info",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/phpinfo.php",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/server-status",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/actuator",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/actuator/env",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/.well-known/security.txt",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/robots.txt",
+            "size": 151,
+            "secrets": [],
+            "contentType": "text/plain; charset=utf-8",
+            "preview": "User-agent: *\nAllow: /\n\nSitemap: https://ltdestacio.com.br/sitemap.xml\n\n# Disallow admin pages from search engines\nDisallow: /admin/\nDisallow: /admin/*"
+          },
+          {
+            "path": "/sitemap.xml",
+            "size": 1598,
+            "secrets": [],
+            "contentType": "application/xml",
+            "preview": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n  <url>\n    <loc>https://ltdestacio.com.br/</loc>\n    <lastmod>2025-01-08</lastmod>\n    <changefreq>"
+          },
+          {
+            "path": "/.htaccess",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          },
+          {
+            "path": "/web.config",
+            "size": 492,
+            "secrets": [],
+            "contentType": "text/html; charset=utf-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-s"
+          }
+        ],
+        "recommendation": "URGENTE: Remova arquivos sensíveis do servidor público. Rotacione todas as chaves expostas imediatamente."
+      }
+    },
+    {
+      "check": "RLS — Table Detection",
+      "status": "INFO",
+      "severity": "info",
+      "message": "Nenhuma tabela comum detectada. Considere verificar manualmente.",
+      "details": null
+    },
+    {
+      "check": "Security Headers",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "6 header(s) de segurança ausente(s).",
+      "details": {
+        "missing": [
+          "x-frame-options",
+          "x-content-type-options",
+          "x-xss-protection",
+          "content-security-policy",
+          "referrer-policy",
+          "permissions-policy"
+        ],
+        "present": [
+          {
+            "strict-transport-security": "max-age=63072000"
+          }
+        ],
+        "recommendation": "Configure headers de segurança: HSTS, X-Frame-Options, CSP, etc."
+      }
+    },
+    {
+      "check": "Service Key — Leak Check",
+      "status": "PASS",
+      "severity": "info",
+      "message": "Nenhum vazamento de service_role key detectado em recursos públicos. ✓",
+      "details": {
+        "pathsChecked": 19
+      }
+    },
+    {
+      "check": "Open Signup — Settings",
+      "status": "INFO",
+      "severity": "info",
+      "message": "Não foi possível verificar configuração de signup.",
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "check": "JWT — Analysis",
+      "status": "INFO",
+      "severity": "info",
+      "message": "Nenhuma anon key fornecida para análise JWT.",
+      "details": null
+    }
+  ],
+  "evidence": {
+    "sha256": "12b65e55a16cb190046ff05927169a7cd91eb3ad3f62ea60d0bc4f24abe71bcf",
+    "timestamp": "2026-03-06T19:51:28.644Z",
+    "auditId": "699a9998-5994-48e3-a39d-d04e7f113db5"
+  }
+}

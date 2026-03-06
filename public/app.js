@@ -60,6 +60,12 @@ async function startAudit() {
     checkEnvExposure: $('#chkEnv')?.checked ?? true,
     checkRLS: $('#chkRLS')?.checked ?? true,
     checkCORS: $('#chkCORS')?.checked ?? true,
+    // Deep Analysis
+    checkDeepSource: $('#chkDeepSource')?.checked ?? true,
+    checkDeepRoutes: $('#chkDeepRoutes')?.checked ?? true,
+    checkDeepVuln: $('#chkDeepVuln')?.checked ?? true,
+    checkDeepSensitive: $('#chkDeepSensitive')?.checked ?? true,
+    checkDeepErrors: $('#chkDeepErrors')?.checked ?? true,
     userMode: document.querySelector('input[name="roleMode"]:checked')?.value === 'both'
   };
 
@@ -141,6 +147,11 @@ function handleEvent(event) {
     case 'error':
       appendLog('error', 'ERROR', event.message);
       setStatus('error', 'Error');
+      break;
+
+    case 'log':
+      const logLevel = event.level === 'warn' ? 'warn' : 'info';
+      appendLog(logLevel, event.level === 'warn' ? 'WARN' : 'LOG', event.message);
       break;
   }
 }
@@ -447,6 +458,8 @@ function showHowItWorks() {
   $('#modalBody').innerHTML = `
     <h2>Como a Auditoria Funciona</h2>
     <p>O Supabase Guard executa uma série de verificações de segurança não-intrusivas no seu projeto Supabase:</p>
+    
+    <h3 style="color: var(--text-secondary); margin-top: 1rem;">Verificações Base</h3>
     <ul>
       <li><strong>DNS & Connectivity:</strong> Verifica acessibilidade, HTTPS e headers do servidor.</li>
       <li><strong>REST API:</strong> Testa se PostgREST está exposto e se tabelas são acessíveis via <code>anon</code> key.</li>
@@ -462,8 +475,18 @@ function showHowItWorks() {
       <li><strong>Service Key:</strong> Detecta vazamento de <code>service_role</code> key em recursos públicos.</li>
       <li><strong>JWT:</strong> Analisa a estrutura e configuração do token JWT.</li>
     </ul>
-    <p><strong>Todas as verificações são feitas como GUEST (usando anon key ou sem autenticação), simulando o que um atacante externo poderia descobrir.</strong></p>
-    <p>Os resultados são assinados com SHA-256 para garantir integridade.</p>
+
+    <h3 style="color: var(--accent); margin-top: 1rem;">🔬 Deep Analysis Modules</h3>
+    <ul>
+      <li><strong>🔍 Source Code Analysis:</strong> Escaneia código-fonte (HTML, JS, CSS) buscando 25+ padrões de secrets (AWS, Stripe, JWT, passwords, API keys), 18+ padrões inseguros (eval, innerHTML, SQL injection), source maps e stack traces.</li>
+      <li><strong>🗺️ Hidden Route Discovery:</strong> Testa 200+ rotas comuns em 9 categorias (admin, API, debug, auth, git, config, backup, Next.js, WordPress). Detecta rotas ocultas, quebradas e extrai rotas de código JS.</li>
+      <li><strong>🛡️ Vulnerability Scanner:</strong> Testa XSS refletido, open redirect, CSRF, clickjacking, headers de segurança, métodos HTTP perigosos, information disclosure, cookies inseguros, rate limiting e fingerprinting de tecnologias.</li>
+      <li><strong>🔐 Sensitive Data Detector:</strong> Detecta PII (CPF, CNPJ, SSN, emails, telefones), dados financeiros (cartões de crédito, Stripe keys), credenciais, URLs internas, campos sensíveis em respostas API e arquivos sensíveis em storage.</li>
+      <li><strong>🐛 Error Detector:</strong> Detecta erros 5xx, recursos quebrados (scripts, links, imagens), erros em código JavaScript (eval, innerHTML, debugger, secrets hardcoded), problemas SSL/TLS, mixed content e vazamento de informações em erros da API.</li>
+    </ul>
+
+    <p style="margin-top: 1rem;"><strong>Todas as verificações são feitas como GUEST (usando anon key ou sem autenticação), simulando o que um atacante externo poderia descobrir.</strong></p>
+    <p>Os resultados são assinados com SHA-256 para garantir integridade. Logs em tempo real mostram o progresso de cada módulo.</p>
   `;
   $('#modalOverlay').style.display = 'flex';
 }
