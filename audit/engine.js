@@ -28,6 +28,14 @@ const { deepVulnerabilityScanner } = require('./checks/vulnerability-scanner');
 const { deepSensitiveDataDetector } = require('./checks/sensitive-data');
 const { deepErrorDetector } = require('./checks/error-detector');
 
+// ── Deep Analysis v2 — Targeted Security Modules ─────────────────
+const { deepRLSCheck } = require('./checks/rls-deep');
+const { deepRESTRPCLeakCheck } = require('./checks/rest-rpc-leak');
+const { deepEdgeFunctionCheck } = require('./checks/edge-deep');
+const { deepBundleKeyScanner } = require('./checks/bundle-keys');
+const { deepStorageCheck } = require('./checks/storage-deep');
+const { deepCredentialPIIDetector } = require('./checks/credential-pii');
+
 // ── Evidence signing ─────────────────────────────────────────────
 function signEvidence(data) {
   const payload = JSON.stringify(data);
@@ -96,6 +104,13 @@ async function runFullAudit(config, emit) {
     { name: '🛡️ Vulnerability Scanner', fn: deepVulnerabilityScanner, enabled: config.options.checkDeepVuln !== false, usesEmit: true },
     { name: '🔍 Sensitive Data Detector', fn: deepSensitiveDataDetector, enabled: config.options.checkDeepSensitive !== false, usesEmit: true },
     { name: '🐛 Error Detector', fn: deepErrorDetector, enabled: config.options.checkDeepErrors !== false, usesEmit: true },
+    // ── Deep Analysis v2 — Targeted Security ──
+    { name: '🔒 Deep RLS Misconfiguration', fn: deepRLSCheck, enabled: config.options.checkDeepRLS !== false, usesEmit: true },
+    { name: '🔓 REST/RPC Data Leak (GUEST/USER)', fn: deepRESTRPCLeakCheck, enabled: config.options.checkDeepRESTRPC !== false, usesEmit: true },
+    { name: '⚡ Edge Function Role Control', fn: deepEdgeFunctionCheck, enabled: config.options.checkDeepEdge !== false, usesEmit: true },
+    { name: '🔑 Bundle Key Scanner', fn: deepBundleKeyScanner, enabled: config.options.checkDeepBundleKeys !== false, usesEmit: true },
+    { name: '📦 Deep Storage Abuse', fn: deepStorageCheck, enabled: config.options.checkDeepStorage !== false, usesEmit: true },
+    { name: '🕵️ Credential & PII Detector', fn: deepCredentialPIIDetector, enabled: config.options.checkDeepCredPII !== false, usesEmit: true },
   ];
 
   const enabledChecks = checks.filter(c => c.enabled);

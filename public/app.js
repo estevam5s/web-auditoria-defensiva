@@ -66,6 +66,13 @@ async function startAudit() {
     checkDeepVuln: $('#chkDeepVuln')?.checked ?? true,
     checkDeepSensitive: $('#chkDeepSensitive')?.checked ?? true,
     checkDeepErrors: $('#chkDeepErrors')?.checked ?? true,
+    // Deep Analysis v2
+    checkDeepRLS: $('#chkDeepRLS')?.checked ?? true,
+    checkDeepRESTRPC: $('#chkDeepRESTRPC')?.checked ?? true,
+    checkDeepEdge: $('#chkDeepEdge')?.checked ?? true,
+    checkDeepBundleKeys: $('#chkDeepBundleKeys')?.checked ?? true,
+    checkDeepStorage: $('#chkDeepStorage')?.checked ?? true,
+    checkDeepCredPII: $('#chkDeepCredPII')?.checked ?? true,
     userMode: document.querySelector('input[name="roleMode"]:checked')?.value === 'both'
   };
 
