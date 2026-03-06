@@ -1,0 +1,5499 @@
+{
+  "projectUrl": "https://supabaseguard.com",
+  "projectRef": null,
+  "score": 0,
+  "grade": {
+    "grade": "F",
+    "color": "#ff0040",
+    "label": "Crítico"
+  },
+  "totalChecks": 92,
+  "passed": 12,
+  "failed": 9,
+  "warnings": 59,
+  "errors": 0,
+  "info": 12,
+  "duration": "604.2s",
+  "results": [
+    {
+      "check": "DNS — Connectivity",
+      "status": "PASS",
+      "severity": "info",
+      "message": "Projeto acessível. Status: 200",
+      "details": {
+        "url": "https://supabaseguard.com",
+        "status": 200,
+        "server": "cloudflare",
+        "via": null,
+        "cfRay": "9d84132fda6ee9b0-SCL"
+      }
+    },
+    {
+      "check": "DNS — HTTPS",
+      "status": "PASS",
+      "severity": "info",
+      "message": "Projeto usa HTTPS. ✓",
+      "details": null
+    },
+    {
+      "check": "DNS — Server Info Leak",
+      "status": "WARN",
+      "severity": "low",
+      "message": "Header X-Powered-By expõe tecnologia: Express",
+      "details": {
+        "server": "cloudflare",
+        "poweredBy": "Express",
+        "cdn": "Cloudflare",
+        "recommendation": "Remova o header X-Powered-By para reduzir fingerprinting."
+      }
+    },
+    {
+      "check": "REST API — Table Exposure",
+      "status": "PASS",
+      "severity": "info",
+      "message": "Nenhuma tabela comum encontrada exposta via REST API (GUEST).",
+      "details": null
+    },
+    {
+      "check": "REST API — No Auth Access",
+      "status": "WARN",
+      "severity": "high",
+      "message": "REST API responde sem apikey/Authorization header.",
+      "details": {
+        "status": 200,
+        "hint": "Verifique se o endpoint requer autenticação."
+      }
+    },
+    {
+      "check": "RPC — Function Exposure",
+      "status": "PASS",
+      "severity": "info",
+      "message": "Nenhuma função RPC comum encontrada exposta ao role anon.",
+      "details": null
+    },
+    {
+      "check": "GraphQL — Endpoint",
+      "status": "PASS",
+      "severity": "info",
+      "message": "Endpoint GraphQL não encontrado ou desabilitado.",
+      "details": {
+        "url": "https://supabaseguard.com/graphql/v1",
+        "status": 404
+      }
+    },
+    {
+      "check": "Storage — Public Path \"avatars\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/avatars/",
+      "details": {
+        "url": "https://supabaseguard.com/storage/v1/object/public/avatars/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"uploads\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/uploads/",
+      "details": {
+        "url": "https://supabaseguard.com/storage/v1/object/public/uploads/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"images\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/images/",
+      "details": {
+        "url": "https://supabaseguard.com/storage/v1/object/public/images/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"documents\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/documents/",
+      "details": {
+        "url": "https://supabaseguard.com/storage/v1/object/public/documents/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"public\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/public/",
+      "details": {
+        "url": "https://supabaseguard.com/storage/v1/object/public/public/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"files\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/files/",
+      "details": {
+        "url": "https://supabaseguard.com/storage/v1/object/public/files/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"backups\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/backups/",
+      "details": {
+        "url": "https://supabaseguard.com/storage/v1/object/public/backups/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"exports\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/exports/",
+      "details": {
+        "url": "https://supabaseguard.com/storage/v1/object/public/exports/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"media\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/media/",
+      "details": {
+        "url": "https://supabaseguard.com/storage/v1/object/public/media/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Storage — Public Path \"assets\"",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Caminho público de storage acessível: /storage/v1/object/public/assets/",
+      "details": {
+        "url": "https://supabaseguard.com/storage/v1/object/public/assets/",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Functions — Discovery",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "35 Edge Function(s) descoberta(s). 35 acessível(is).",
+      "details": {
+        "functions": [
+          {
+            "name": "hello",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "test",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "ping",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "health",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "status",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "webhook",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "stripe-webhook",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "payment",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "checkout",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "send-email",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "notify",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "notification",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "admin",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "auth",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "login",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "register",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "signup",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "api",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "proxy",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "cors-proxy",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "generate",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "process",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "upload",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "cron",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "scheduler",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "sync",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "export",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "import",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "backup",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "search",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "AI",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "openai",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "chat",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "resend",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          },
+          {
+            "name": "send-sms",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "hasBody": true,
+            "contentType": "text/html; charset=UTF-8"
+          }
+        ],
+        "recommendation": "Verifique se Edge Functions sensíveis requerem auth. Use verify JWT no handler."
+      }
+    },
+    {
+      "check": "Edge Function — \"hello\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"hello\" acessível sem Authorization header.",
+      "details": {
+        "name": "hello",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"test\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"test\" acessível sem Authorization header.",
+      "details": {
+        "name": "test",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"ping\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"ping\" acessível sem Authorization header.",
+      "details": {
+        "name": "ping",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"health\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"health\" acessível sem Authorization header.",
+      "details": {
+        "name": "health",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"status\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"status\" acessível sem Authorization header.",
+      "details": {
+        "name": "status",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"webhook\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"webhook\" acessível sem Authorization header.",
+      "details": {
+        "name": "webhook",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"stripe-webhook\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"stripe-webhook\" acessível sem Authorization header.",
+      "details": {
+        "name": "stripe-webhook",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"payment\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"payment\" acessível sem Authorization header.",
+      "details": {
+        "name": "payment",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"checkout\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"checkout\" acessível sem Authorization header.",
+      "details": {
+        "name": "checkout",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"send-email\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"send-email\" acessível sem Authorization header.",
+      "details": {
+        "name": "send-email",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"notify\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"notify\" acessível sem Authorization header.",
+      "details": {
+        "name": "notify",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"notification\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"notification\" acessível sem Authorization header.",
+      "details": {
+        "name": "notification",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"admin\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"admin\" acessível sem Authorization header.",
+      "details": {
+        "name": "admin",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"auth\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"auth\" acessível sem Authorization header.",
+      "details": {
+        "name": "auth",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"login\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"login\" acessível sem Authorization header.",
+      "details": {
+        "name": "login",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"register\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"register\" acessível sem Authorization header.",
+      "details": {
+        "name": "register",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"signup\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"signup\" acessível sem Authorization header.",
+      "details": {
+        "name": "signup",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"api\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"api\" acessível sem Authorization header.",
+      "details": {
+        "name": "api",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"proxy\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"proxy\" acessível sem Authorization header.",
+      "details": {
+        "name": "proxy",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"cors-proxy\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"cors-proxy\" acessível sem Authorization header.",
+      "details": {
+        "name": "cors-proxy",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"generate\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"generate\" acessível sem Authorization header.",
+      "details": {
+        "name": "generate",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"process\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"process\" acessível sem Authorization header.",
+      "details": {
+        "name": "process",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"upload\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"upload\" acessível sem Authorization header.",
+      "details": {
+        "name": "upload",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"cron\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"cron\" acessível sem Authorization header.",
+      "details": {
+        "name": "cron",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"scheduler\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"scheduler\" acessível sem Authorization header.",
+      "details": {
+        "name": "scheduler",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"sync\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"sync\" acessível sem Authorization header.",
+      "details": {
+        "name": "sync",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"export\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"export\" acessível sem Authorization header.",
+      "details": {
+        "name": "export",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"import\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"import\" acessível sem Authorization header.",
+      "details": {
+        "name": "import",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"backup\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"backup\" acessível sem Authorization header.",
+      "details": {
+        "name": "backup",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"search\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"search\" acessível sem Authorization header.",
+      "details": {
+        "name": "search",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"AI\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"AI\" acessível sem Authorization header.",
+      "details": {
+        "name": "AI",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"openai\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"openai\" acessível sem Authorization header.",
+      "details": {
+        "name": "openai",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"chat\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"chat\" acessível sem Authorization header.",
+      "details": {
+        "name": "chat",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"resend\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"resend\" acessível sem Authorization header.",
+      "details": {
+        "name": "resend",
+        "status": 200
+      }
+    },
+    {
+      "check": "Edge Function — \"send-sms\" No Auth",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Edge Function \"send-sms\" acessível sem Authorization header.",
+      "details": {
+        "name": "send-sms",
+        "status": 200
+      }
+    },
+    {
+      "check": "Realtime — WebSocket",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Endpoint WebSocket Realtime está ativo e acessível.",
+      "details": {
+        "url": "wss://supabaseguard.com/realtime/v1/websocket?apikey=&vsn=1.0.0",
+        "status": 200,
+        "recommendation": "Configure RLS nas tabelas para controlar quais dados são transmitidos via Realtime. Use Realtime policies."
+      }
+    },
+    {
+      "check": "Realtime — Health Endpoint",
+      "status": "INFO",
+      "severity": "low",
+      "message": "Endpoint de health do Realtime está acessível.",
+      "details": {
+        "url": "https://supabaseguard.com/realtime/v1/api/health",
+        "response": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+      }
+    },
+    {
+      "check": "Realtime — No Auth Access",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Realtime responde sem apikey.",
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "check": "Auth — Admin Users Endpoint",
+      "status": "PASS",
+      "severity": "info",
+      "message": "Endpoint admin de users não acessível com anon key. ✓",
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "check": "Env/Key Exposure — File Discovery",
+      "status": "FAIL",
+      "severity": "high",
+      "message": "29 arquivo(s) sensível(is) acessível(is)! ",
+      "details": {
+        "files": [
+          {
+            "path": "/.env",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/.env.local",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/.env.production",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/.env.development",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/.env.example",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/env.js",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/config.js",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/config.json",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/.git/config",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/.git/HEAD",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/.DS_Store",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/package.json",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/.npmrc",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/docker-compose.yml",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/Dockerfile",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/.dockerenv",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/api/config",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/api/env",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/debug",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/info",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/phpinfo.php",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/server-status",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/actuator",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/actuator/env",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/.well-known/security.txt",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/robots.txt",
+            "size": 5329,
+            "secrets": [],
+            "contentType": "text/plain; charset=utf-8",
+            "preview": "# As a condition of accessing this website, you agree to abide by the following\n# content signals:\n\n# (a)  If a Content-Signal = yes, you may collect content for the corresponding\n#      use.\n# (b)  I"
+          },
+          {
+            "path": "/sitemap.xml",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/.htaccess",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          },
+          {
+            "path": "/web.config",
+            "size": 3650,
+            "secrets": [],
+            "contentType": "text/html; charset=UTF-8",
+            "preview": "<!doctype html>\n<html lang=\"pt-BR\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"theme-color\" content=\"#282a36\" />"
+          }
+        ],
+        "recommendation": "URGENTE: Remova arquivos sensíveis do servidor público. Rotacione todas as chaves expostas imediatamente."
+      }
+    },
+    {
+      "check": "RLS — Table Detection",
+      "status": "INFO",
+      "severity": "info",
+      "message": "Nenhuma tabela comum detectada. Considere verificar manualmente.",
+      "details": null
+    },
+    {
+      "check": "Security Headers",
+      "status": "INFO",
+      "severity": "low",
+      "message": "1 header(s) de segurança ausente(s).",
+      "details": {
+        "missing": [
+          "strict-transport-security"
+        ],
+        "present": [
+          {
+            "x-frame-options": "DENY"
+          },
+          {
+            "x-content-type-options": "nosniff"
+          },
+          {
+            "x-xss-protection": "0"
+          },
+          {
+            "content-security-policy": "default-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; base-uri 'none'; frame-ancestors 'none'; object-src 'none'"
+          },
+          {
+            "referrer-policy": "no-referrer"
+          },
+          {
+            "permissions-policy": "geolocation=(), microphone=(), camera=()"
+          }
+        ],
+        "recommendation": "Configure headers de segurança: HSTS, X-Frame-Options, CSP, etc."
+      }
+    },
+    {
+      "check": "Service Key — Leak Check",
+      "status": "PASS",
+      "severity": "info",
+      "message": "Nenhum vazamento de service_role key detectado em recursos públicos. ✓",
+      "details": {
+        "pathsChecked": 19
+      }
+    },
+    {
+      "check": "Open Signup — Settings",
+      "status": "INFO",
+      "severity": "info",
+      "message": "Não foi possível verificar configuração de signup.",
+      "details": {
+        "status": 200
+      }
+    },
+    {
+      "check": "JWT — Analysis",
+      "status": "INFO",
+      "severity": "info",
+      "message": "Nenhuma anon key fornecida para análise JWT.",
+      "details": null
+    },
+    {
+      "check": "Source Code — Secrets Detected",
+      "status": "FAIL",
+      "severity": "high",
+      "message": "16 secret(s)/dado(s) sensível(is) encontrado(s) no código fonte! 0 crítico(s).",
+      "details": {
+        "totalSecrets": 16,
+        "summary": [
+          {
+            "type": "Phone Number",
+            "count": 16,
+            "severity": "low",
+            "sources": [
+              "https://supabaseguard.com/assets/index-DREk2GeU.js"
+            ]
+          }
+        ],
+        "findings": [
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "D):I=D,P){case 1:var X=-1;break;case 2:X=250;break;case 5:X=1073741823;break;case 4:X=1e4;break;default:X=5e3}return X=I",
+            "line": 25
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "35456:return 268435456;case 536870912:return 536870912;case 1073741824:return 1073741824;default:return e}}function Nl(e",
+            "line": 37
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "5456;case 536870912:return 536870912;case 1073741824:return 1073741824;default:return e}}function Nl(e,t){var n=e.pendin",
+            "line": 37
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": ":return-1;case 134217728:case 268435456:case 536870912:case 1073741824:return-1;default:return-1}}function Kf(e,t){for(v",
+            "line": 37
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "redLanes|=u),i&=~u}}function ns(e){return e=e.pendingLanes&-1073741825,e!==0?e:e&1073741824?1073741824:0}function qu(){v",
+            "line": 37
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "unction ns(e){return e=e.pendingLanes&-1073741825,e!==0?e:e&1073741824?1073741824:0}function qu(){var e=Gr;return Gr<<=1",
+            "line": 37
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "e){return e=e.pendingLanes&-1073741825,e!==0?e:e&1073741824?1073741824:0}function qu(){var e=Gr;return Gr<<=1,!(Gr&41942",
+            "line": 37
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": ":null,e.memoizedState={dehydrated:t,treeContext:n,retryLane:1073741824},n=Ke(18,null,null,0),n.stateNode=t,n.return=e,e.",
+            "line": 38
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "cachePool:null,transitions:null},V(Pn,De),De|=n;else{if(!(n&1073741824))return e=i!==null?i.baseLanes|n:n,t.lanes=t.chil",
+            "line": 40
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "824))return e=i!==null?i.baseLanes|n:n,t.lanes=t.childLanes=1073741824,t.memoizedState={baseLanes:e,cachePool:null,trans",
+            "line": 40
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "ydrated,e!==null)?(t.mode&1?e.data===\"$!\"?t.lanes=8:t.lanes=1073741824:t.lanes=1,null):(s=r.children,e=r.fallback,i?(r=t",
+            "line": 40
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "Q)return ye(t),null}else 2*q()-i.renderingStartTime>Bn&&n!==1073741824&&(t.flags|=128,r=!0,tr(i,!1),t.lanes=4194304);i.i",
+            "line": 40
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "&e.memoizedState!==null!==r&&(t.flags|=8192),r&&t.mode&1?De&1073741824&&(ye(t),t.subtreeFlags&6&&(t.flags|=8192)):ye(t),",
+            "line": 40
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "l,getCurrentFiber:null,reconcilerVersion:\"18.3.1-next...[REDACTED]\"};if(typeof __REAC...[REDACTED]<\"u\"",
+            "line": 40
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "j(38));return ii(e,t,n,!1,r)};Ue.version=\"18.3.1-next...[REDACTED]\";function _d(){if(!(typeof __REACT_DEVTOOLS_GL",
+            "line": 40
+          },
+          {
+            "type": "Phone Number",
+            "severity": "low",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "tion uu(e){return e==null?\"\":String(e)}function Ud(e){let t=2166136261;for(let n=0;n<e.length;n+=1)t^=e.charCodeAt(n),t=",
+            "line": 67
+          }
+        ],
+        "recommendation": "URGENTE: Remova e rotacione todas as chaves/segredos expostos no código fonte."
+      }
+    },
+    {
+      "check": "Source Code — Insecure Patterns",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "16 padrão(ões) inseguro(s) encontrado(s) no código fonte.",
+      "details": {
+        "totalIssues": 16,
+        "summary": [
+          {
+            "type": "innerHTML Assignment",
+            "count": 3,
+            "severity": "medium",
+            "sources": [
+              "https://supabaseguard.com/assets/index-DREk2GeU.js"
+            ]
+          },
+          {
+            "type": "Insecure HTTP URL",
+            "count": 5,
+            "severity": "medium",
+            "sources": [
+              "https://supabaseguard.com/assets/index-DREk2GeU.js"
+            ]
+          },
+          {
+            "type": "Dangerously Set Inner HTML (React)",
+            "count": 5,
+            "severity": "medium",
+            "sources": [
+              "https://supabaseguard.com/assets/index-DREk2GeU.js"
+            ]
+          },
+          {
+            "type": "Prototype Pollution Risk",
+            "count": 3,
+            "severity": "high",
+            "sources": [
+              "https://supabaseguard.com/assets/index-DREk2GeU.js"
+            ]
+          }
+        ],
+        "findings": [
+          {
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "unction(e,t){if(e.namespaceURI!==\"http://www.w3.org/2000/svg\"||\"innerHTML\"in e)e.innerHTML=t;else{for(Kr=Kr||document.createElement(\"div\"),Kr.innerHTML=\"<svg>\"+",
+            "recommendation": "innerHTML pode causar XSS. Use textContent ou sanitização.",
+            "line": 37
+          },
+          {
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "||\"innerHTML\"in e)e.innerHTML=t;else{for(Kr=Kr||document.createElement(\"div\"),Kr.innerHTML=\"<svg>\"+t.valueOf().toString()+\"</svg>\",t=Kr.firstChild;e.firstChild;",
+            "recommendation": "innerHTML pode causar XSS. Use textContent ou sanitização.",
+            "line": 37
+          },
+          {
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "(n)),e===\"http://www.w3.org/1999/xhtml\"?n===\"script\"?(e=s.createElement(\"div\"),e.innerHTML=\"<script><\\/script>\",e=e.removeChild(e.firstChild)):typeof r.is==\"str",
+            "recommendation": "innerHTML pode causar XSS. Use textContent ou sanitização.",
+            "line": 40
+          },
+          {
+            "type": "Insecure HTTP URL",
+            "severity": "medium",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "pe\".split(\" \").forEach(function(e){var t=e.replace($s,As);pe[t]=new _e(t,1,!1,e,\"http://www.w3.org/1999/xlink\",!1,!1)});[\"xml:base\",\"xml:lang\",\"xml:space\"].forE",
+            "recommendation": "Use HTTPS para todas as comunicações externas.",
+            "line": 33
+          },
+          {
+            "type": "Insecure HTTP URL",
+            "severity": "medium",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "\",\"xml:space\"].forEach(function(e){var t=e.replace($s,As);pe[t]=new _e(t,1,!1,e,\"http://www.w3.org/XML/1998/namespace\",!1,!1)});[\"tabIndex\",\"crossOrigin\"].forEa",
+            "recommendation": "Use HTTPS para todas as comunicações externas.",
+            "line": 33
+          },
+          {
+            "type": "Insecure HTTP URL",
+            "severity": "medium",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "e.toLowerCase(),null,!1,!1)});pe.xlinkHref=new _e(\"xlinkHref\",1,!1,\"xlink:href\",\"http://www.w3.org/1999/xlink\",!0,!1);[\"src\",\"href\",\"action\",\"formAction\"].forEa",
+            "recommendation": "Use HTTPS para todas as comunicações externas.",
+            "line": 33
+          },
+          {
+            "type": "Insecure HTTP URL",
+            "severity": "medium",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "alValue&&t!==\"\"&&t!==null&&(e.value=t)}function bu(e){switch(e){case\"svg\":return\"http://www.w3.org/2000/svg\";case\"math\":return\"http://www.w3.org/1998/Math/MathM",
+            "recommendation": "Use HTTPS para todas as comunicações externas.",
+            "line": 37
+          },
+          {
+            "type": "Insecure HTTP URL",
+            "severity": "medium",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "n bu(e){switch(e){case\"svg\":return\"http://www.w3.org/2000/svg\";case\"math\":return\"http://www.w3.org/1998/Math/MathML\";default:return\"http://www.w3.org/1999/xhtml",
+            "recommendation": "Use HTTPS para todas as comunicações externas.",
+            "line": 37
+          },
+          {
+            "type": "Dangerously Set Inner HTML (React)",
+            "severity": "medium",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "e=e,this.type=t,this.sanitizeURL=i,this.removeEmptyString=s}var pe={};\"children dangerouslySetInnerHTML defaultValue defaultChecked innerHTML suppressContentEdi",
+            "recommendation": "dangerouslySetInnerHTML pode causar XSS. Sanitize o HTML antes.",
+            "line": 33
+          },
+          {
+            "type": "Dangerously Set Inner HTML (React)",
+            "severity": "medium",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "=null||e[l].disabled||(t=e[l])}t!==null&&(t.selected=!0)}}function Gi(e,t){if(t.dangerouslySetInnerHTML!=null)throw Error(j(91));return Y({},t,{value:void 0,def",
+            "recommendation": "dangerouslySetInnerHTML pode causar XSS. Sanitize o HTML antes.",
+            "line": 37
+          },
+          {
+            "type": "Dangerously Set Inner HTML (React)",
+            "severity": "medium",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "urce:!0,track:!0,wbr:!0});function Xi(e,t){if(t){if(zf[e]&&(t.children!=null||t.dangerouslySetInnerHTML!=null))throw Error(j(137,e));if(t.dangerouslySetInnerHTM",
+            "recommendation": "dangerouslySetInnerHTML pode causar XSS. Sanitize o HTML antes.",
+            "line": 37
+          },
+          {
+            "type": "Dangerously Set Inner HTML (React)",
+            "severity": "medium",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "&(t.children!=null||t.dangerouslySetInnerHTML!=null))throw Error(j(137,e));if(t.dangerouslySetInnerHTML!=null){if(t.children!=null)throw Error(j(60));if(typeof",
+            "recommendation": "dangerouslySetInnerHTML pode causar XSS. Sanitize o HTML antes.",
+            "line": 37
+          },
+          {
+            "type": "Dangerously Set Inner HTML (React)",
+            "severity": "medium",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "ngerouslySetInnerHTML!=null){if(t.children!=null)throw Error(j(60));if(typeof t.dangerouslySetInnerHTML!=\"object\"||!(\"__html\"in t.dangerouslySetInnerHTML))throw",
+            "recommendation": "dangerouslySetInnerHTML pode causar XSS. Sanitize o HTML antes.",
+            "line": 37
+          },
+          {
+            "type": "Prototype Pollution Risk",
+            "severity": "high",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "ition()};F.version=\"18.3.1\";gu.exports=F;var x=gu.exports;const Eu=Zd(x),hf=Jd({__proto__:null,default:Eu},[x]);/**  * @license React  * react-jsx-runtime.produ",
+            "recommendation": "Verifique inputs para prevenir prototype pollution.",
+            "line": 9
+          },
+          {
+            "type": "Prototype Pollution Risk",
+            "severity": "high",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": ".split(\"/\").slice(N.length).join(\"/\")}let y=Rm(e,{pathname:w}),k=uh(y&&y.map(N=>Object.assign({},N,{params:Object.assign({},u,N.params),pathname:tn([a,l.encodeL",
+            "recommendation": "Verifique inputs para prevenir prototype pollution.",
+            "line": 58
+          },
+          {
+            "type": "Prototype Pollution Risk",
+            "severity": "high",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": ".join(\"/\")}let y=Rm(e,{pathname:w}),k=uh(y&&y.map(N=>Object.assign({},N,{params:Object.assign({},u,N.params),pathname:tn([a,l.encodeLocation?l.encodeLocation(N.",
+            "recommendation": "Verifique inputs para prevenir prototype pollution.",
+            "line": 58
+          }
+        ],
+        "recommendation": "Revise e corrija os padrões inseguros identificados."
+      }
+    },
+    {
+      "check": "Source Code — Errors Detected",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "2 erro(s) detectado(s) em respostas/código.",
+      "details": {
+        "errors": [
+          {
+            "type": "Runtime Error",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "StackTrace=",
+            "line": 34
+          },
+          {
+            "type": "Runtime Error",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "preview": "StackTrace=",
+            "line": 37
+          }
+        ],
+        "recommendation": "Corrija os erros para evitar comportamento inesperado e possíveis brechas."
+      }
+    },
+    {
+      "check": "Routes — robots.txt",
+      "status": "INFO",
+      "severity": "info",
+      "message": "robots.txt encontrado com 8 caminhos bloqueados.",
+      "details": {
+        "disallowed": [
+          "/",
+          "/",
+          "/",
+          "/",
+          "/",
+          "/",
+          "/",
+          "/"
+        ],
+        "sitemaps": []
+      }
+    },
+    {
+      "check": "Routes — Hidden/Exposed Endpoints",
+      "status": "WARN",
+      "severity": "high",
+      "message": "4 rota(s) descoberta(s). 0 crítica(s), 1 alta(s).",
+      "details": {
+        "total": 4,
+        "byCategory": {
+          "static": [
+            {
+              "path": "/robots.txt",
+              "status": 200,
+              "risk": "low"
+            }
+          ],
+          "config": [
+            {
+              "path": "/wp-config.php",
+              "status": 403,
+              "risk": "high"
+            }
+          ],
+          "wordpress": [
+            {
+              "path": "/wp-config.php.bak",
+              "status": 403,
+              "risk": "medium"
+            }
+          ],
+          "misc": [
+            {
+              "path": "/healthz",
+              "status": 200,
+              "risk": "low"
+            }
+          ]
+        },
+        "criticalRoutes": [],
+        "highRoutes": [
+          {
+            "path": "/wp-config.php",
+            "status": 403,
+            "size": 4577,
+            "contentType": "text/html; charset=UTF-8",
+            "category": "config",
+            "risk": "high",
+            "redirectsTo": null,
+            "headers": {
+              "server": "cloudflare",
+              "auth": false
+            }
+          }
+        ],
+        "allRoutes": [
+          {
+            "path": "/robots.txt",
+            "status": 200,
+            "size": 5329,
+            "contentType": "text/plain; charset=utf-8",
+            "category": "static",
+            "risk": "low",
+            "redirectsTo": null,
+            "headers": {
+              "server": "cloudflare",
+              "auth": false
+            }
+          },
+          {
+            "path": "/wp-config.php",
+            "status": 403,
+            "size": 4577,
+            "contentType": "text/html; charset=UTF-8",
+            "category": "config",
+            "risk": "high",
+            "redirectsTo": null,
+            "headers": {
+              "server": "cloudflare",
+              "auth": false
+            }
+          },
+          {
+            "path": "/wp-config.php.bak",
+            "status": 403,
+            "size": 4577,
+            "contentType": "text/html; charset=UTF-8",
+            "category": "wordpress",
+            "risk": "medium",
+            "redirectsTo": null,
+            "headers": {
+              "server": "cloudflare",
+              "auth": false
+            }
+          },
+          {
+            "path": "/healthz",
+            "status": 200,
+            "size": 74,
+            "contentType": "application/json; charset=utf-8",
+            "category": "misc",
+            "risk": "low",
+            "redirectsTo": null,
+            "headers": {
+              "server": "cloudflare",
+              "poweredBy": "Express",
+              "auth": false
+            }
+          }
+        ],
+        "recommendation": "Revise as rotas expostas e garanta que endpoints sensíveis estejam protegidos."
+      }
+    },
+    {
+      "check": "Routes — Extracted from Source",
+      "status": "INFO",
+      "severity": "low",
+      "message": "2 rota(s) extraída(s) do código fonte da página.",
+      "details": {
+        "routes": [
+          "/favicon.svg",
+          "/assets/index-h0-SWhUd.css"
+        ],
+        "recommendation": "Verifique se todas as rotas extraídas do código fonte devem ser públicas."
+      }
+    },
+    {
+      "check": "Vulnerability — XSS",
+      "status": "PASS",
+      "severity": "info",
+      "message": "Nenhum XSS refletido detectado nos endpoints testados.",
+      "details": {
+        "endpointsTested": 11
+      }
+    },
+    {
+      "check": "Vulnerability — Weak CSP",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Content-Security-Policy presente mas com 1 problema(s).",
+      "details": {
+        "csp": "default-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; base-uri 'none'; frame-ancestors 'none'; object-src 'none'",
+        "issues": [
+          "Permite 'unsafe-inline' (risco XSS)"
+        ],
+        "recommendation": "Reforce a CSP removendo unsafe-inline/eval e wildcards."
+      }
+    },
+    {
+      "check": "Vulnerability — Security Headers",
+      "status": "FAIL",
+      "severity": "high",
+      "message": "8/10 headers de segurança presentes. 1 crítico(s) ausente(s).",
+      "details": {
+        "present": [
+          {
+            "name": "Content-Security-Policy",
+            "value": "default-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; base-uri 'none'; frame-ancestors 'none'; object-src 'none'"
+          },
+          {
+            "name": "X-Frame-Options",
+            "value": "DENY"
+          },
+          {
+            "name": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "name": "X-XSS-Protection",
+            "value": "0"
+          },
+          {
+            "name": "Referrer-Policy",
+            "value": "no-referrer"
+          },
+          {
+            "name": "Permissions-Policy",
+            "value": "geolocation=(), microphone=(), camera=()"
+          },
+          {
+            "name": "Cross-Origin-Opener-Policy",
+            "value": "same-origin"
+          },
+          {
+            "name": "Cross-Origin-Resource-Policy",
+            "value": "same-origin"
+          }
+        ],
+        "missing": [
+          {
+            "name": "Strict-Transport-Security",
+            "critical": true
+          },
+          {
+            "name": "Cross-Origin-Embedder-Policy",
+            "critical": false
+          }
+        ],
+        "recommendation": "URGENTE: Configure HSTS, CSP e X-Frame-Options."
+      }
+    },
+    {
+      "check": "Vulnerability — Information Disclosure",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "1 vazamento(s) de informação detectado(s).",
+      "details": {
+        "leaks": [
+          {
+            "type": "X-Powered-By",
+            "value": "Express",
+            "risk": "medium"
+          }
+        ],
+        "recommendation": "Remova headers de versão, configure error pages personalizadas, e evite expor stack traces."
+      }
+    },
+    {
+      "check": "Vulnerability — Rate Limiting",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "Rate limiting não detectado — endpoints podem ser vulneráveis a brute force.",
+      "details": {
+        "recommendation": "Configure rate limiting em endpoints de autenticação para prevenir brute force."
+      }
+    },
+    {
+      "check": "Vulnerability — Technology Fingerprint",
+      "status": "INFO",
+      "severity": "low",
+      "message": "3 tecnologia(s) identificada(s): Cloudflare, Express.js, Supabase",
+      "details": {
+        "technologies": [
+          {
+            "name": "Cloudflare",
+            "source": "header"
+          },
+          {
+            "name": "Express.js",
+            "source": "header"
+          },
+          {
+            "name": "Supabase",
+            "source": "html"
+          }
+        ],
+        "recommendation": "Verifique se todas as tecnologias detectadas estão atualizadas. Versões antigas podem ter CVEs conhecidos."
+      }
+    },
+    {
+      "check": "Sensitive Data — Critical Exposures",
+      "status": "FAIL",
+      "severity": "critical",
+      "message": "1 exposição(ões) CRÍTICA(S) de dados sensíveis!",
+      "details": {
+        "findings": [
+          {
+            "type": "Password in URL",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "severity": "critical",
+            "category": "Credentials",
+            "count": 1,
+            "samples": [
+              "pass********************tion"
+            ]
+          }
+        ],
+        "recommendation": "URGENTE: Remova dados sensíveis do frontend, implemente RLS e reveja permissões."
+      }
+    },
+    {
+      "check": "Sensitive Data — Medium Risk",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "2 achado(s) de risco médio.",
+      "details": {
+        "findings": [
+          {
+            "type": "Phone BR",
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "severity": "medium",
+            "category": "PII",
+            "count": 11,
+            "samples": [
+              "10******23",
+              "16****16",
+              "33****32"
+            ]
+          },
+          {
+            "type": "Phone BR",
+            "source": "https://supabaseguard.com/assets/index-h0-SWhUd.css",
+            "severity": "medium",
+            "category": "PII",
+            "count": 1,
+            "samples": [
+              "04****80"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "check": "Sensitive Data — Summary",
+      "status": "INFO",
+      "severity": "info",
+      "message": "Total: 4 achado(s) — 1 críticos, 0 altos, 2 médios, 1 baixos.",
+      "details": {
+        "total": 4,
+        "bySeverity": {
+          "critical": 1,
+          "high": 0,
+          "medium": 2,
+          "low": 1
+        },
+        "byCategory": {
+          "PII": 2,
+          "Credentials": 1,
+          "Encoded": 1
+        }
+      }
+    },
+    {
+      "check": "Errors — Broken Resources",
+      "status": "PASS",
+      "severity": "info",
+      "message": "Nenhum recurso quebrado detectado.",
+      "details": {
+        "checked": 100
+      }
+    },
+    {
+      "check": "Errors — JavaScript Code Issues",
+      "status": "FAIL",
+      "severity": "high",
+      "message": "5 problema(s) em código JavaScript: 2 erros, 1 avisos.",
+      "details": {
+        "errors": [
+          {
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "type": "Throw Error",
+            "severity": "low",
+            "count": 4,
+            "samples": [
+              "throw new Error(\"A history only accepts one active listener\")",
+              "throw new Error(\"Informe o token de analytics.\")"
+            ],
+            "isMinified": true
+          },
+          {
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "type": "Console Error/Warn",
+            "severity": "low",
+            "count": 2,
+            "samples": [
+              "console.error(\"forceFrameRate takes a positive int between 0 and 125, forcing frame rates higher tha",
+              "console.error(\"React Router caught the following error during render\""
+            ],
+            "isMinified": true
+          },
+          {
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "type": "Dangerous eval/Function",
+            "severity": "high",
+            "count": 1,
+            "samples": [
+              "Function(function()"
+            ],
+            "isMinified": true
+          },
+          {
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "type": "innerHTML Assignment",
+            "severity": "medium",
+            "count": 3,
+            "samples": [
+              "innerHTML=",
+              "innerHTML="
+            ],
+            "isMinified": true
+          },
+          {
+            "source": "https://supabaseguard.com/assets/index-DREk2GeU.js",
+            "type": "Hardcoded Secret",
+            "severity": "high",
+            "count": 2,
+            "samples": [
+              "Key:\"Unidentified\"",
+              "key:\"default\""
+            ],
+            "isMinified": true
+          }
+        ],
+        "recommendation": "Corrija os erros de JavaScript para melhorar a estabilidade e segurança."
+      }
+    },
+    {
+      "check": "Errors — SSL/TLS Configuration",
+      "status": "FAIL",
+      "severity": "high",
+      "message": "1 problema(s) na configuração SSL/TLS.",
+      "details": {
+        "issues": [
+          {
+            "type": "HSTS Ausente",
+            "severity": "high",
+            "note": "Header Strict-Transport-Security não encontrado."
+          }
+        ],
+        "recommendation": "Configure HTTPS redirect, HSTS com max-age ≥ 1 ano, e remova mixed content."
+      }
+    },
+    {
+      "check": "RLS Deep — Proteção Geral",
+      "status": "PASS",
+      "severity": "info",
+      "message": "✓ RLS parece bem configurado. 0 tabela(s) bloqueada(s), 98 testadas.",
+      "details": {
+        "tablesChecked": 98,
+        "blocked": 0
+      }
+    },
+    {
+      "check": "RLS Deep — Resumo",
+      "status": "INFO",
+      "severity": "info",
+      "message": "Análise RLS: 0 expostas, 0 gravação, 0 RPC bypass, 0 bloqueadas, 0 vazias.",
+      "details": {
+        "totalTested": 98,
+        "exposed": 0,
+        "writable": 0,
+        "rpcBypass": 0,
+        "blocked": 0,
+        "emptyAccess": 0,
+        "schemaLeaks": 0,
+        "horizontalEscalation": 0
+      }
+    },
+    {
+      "check": "REST/RPC — Leak Check",
+      "status": "PASS",
+      "severity": "info",
+      "message": "✓ Nenhum vazamento de dados detectado. 75 tabelas e 49 RPCs testados.",
+      "details": {
+        "tablesChecked": 75,
+        "rpcsChecked": 49
+      }
+    },
+    {
+      "check": "Edge Functions — Descoberta",
+      "status": "INFO",
+      "severity": "info",
+      "message": "114 Edge Function(s) descoberta(s): hello, test, ping, health, status, version, auth, login, register, signup, signin, logout, verify, verify-email, confirm, reset-password, forgot-password, refresh-token, validate-token, magic-link, otp, webhook, stripe-webhook, stripe, payment, checkout, create-payment, process-payment, refund, subscription, mercadopago, mercadopago-webhook, pix, boleto, pagseguro, paypal, asaas, iugu, pagar-me, pagarme, create-checkout, billing, invoice, charge, send-email, email, notify, notification, push, send-sms, sms, whatsapp, send-whatsapp, resend, admin, dashboard, analytics, metrics, report, manage, moderate, ban-user, delete-user, update-role, api, proxy, cors-proxy, fetch, scrape, crawl, search, global-search, autocomplete, export, import, backup, restore, sync, migrate, ai, openai, chat, generate, embed, transcribe, gpt, claude, gemini, llm, completion, upload, download, process, resize, convert, pdf, generate-pdf, generate-report, cron, scheduler, worker, queue, job, process-queue, run-job, cleanup, github, slack, discord, telegram, zapier, n8n, make, integromat",
+      "details": {
+        "functions": [
+          {
+            "name": "hello",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "test",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "ping",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "health",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "status",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "version",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "auth",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "login",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "register",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "signup",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "signin",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "logout",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "verify",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "verify-email",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "confirm",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "reset-password",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "forgot-password",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "refresh-token",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "validate-token",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "magic-link",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "otp",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "webhook",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "stripe-webhook",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "stripe",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "payment",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "checkout",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "create-payment",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "process-payment",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "refund",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "subscription",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "mercadopago",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "mercadopago-webhook",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "pix",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "boleto",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "pagseguro",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "paypal",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "asaas",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "iugu",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "pagar-me",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "pagarme",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "create-checkout",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "billing",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "invoice",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "charge",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "send-email",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "email",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "notify",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "notification",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "push",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "send-sms",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "sms",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "whatsapp",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "send-whatsapp",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "resend",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "admin",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "dashboard",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "analytics",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "metrics",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "report",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "manage",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "moderate",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "ban-user",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "delete-user",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "update-role",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "api",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "proxy",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "cors-proxy",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "fetch",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "scrape",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "crawl",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "search",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "global-search",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "autocomplete",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "export",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "import",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "backup",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "restore",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "sync",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "migrate",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "ai",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "openai",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "chat",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "generate",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "embed",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "transcribe",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "gpt",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "claude",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "gemini",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "llm",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "completion",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "upload",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "download",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "process",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "resize",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "convert",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "pdf",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "generate-pdf",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "generate-report",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "cron",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "scheduler",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "worker",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "queue",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "job",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "process-queue",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "run-job",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "cleanup",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "github",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "slack",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "discord",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "telegram",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "zapier",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "n8n",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "make",
+            "method": "GET",
+            "status": 200
+          },
+          {
+            "name": "integromat",
+            "method": "GET",
+            "status": 200
+          }
+        ]
+      }
+    },
+    {
+      "check": "Edge Functions — Sensíveis Sem Auth",
+      "status": "FAIL",
+      "severity": "critical",
+      "message": "🚨 26 função(ões) SENSÍVEL(IS) acessível(is) sem autenticação: reset-password, webhook, stripe-webhook, stripe, payment, checkout, create-payment, process-payment, refund, mercadopago, mercadopago-webhook, pix, create-checkout, billing, invoice, send-email, send-sms, whatsapp, send-whatsapp, admin, manage, ban-user, delete-user, update-role, export, backup",
+      "details": {
+        "functions": [
+          {
+            "name": "reset-password",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "webhook",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "stripe-webhook",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "stripe",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "payment",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "checkout",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "create-payment",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "process-payment",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "refund",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "mercadopago",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "mercadopago-webhook",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "pix",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "create-checkout",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "billing",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "invoice",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "send-email",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "send-sms",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "whatsapp",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "send-whatsapp",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "admin",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "manage",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "ban-user",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "delete-user",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "update-role",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "export",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          },
+          {
+            "name": "backup",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": true
+          }
+        ],
+        "recommendation": "URGENTE: Adicione verificação de JWT em todas as funções sensíveis. Use supabase.auth.getUser() no início do handler."
+      }
+    },
+    {
+      "check": "Edge Functions — Sem Auth (Geral)",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "88 função(ões) acessível(is) sem autenticação.",
+      "details": {
+        "functions": [
+          {
+            "name": "hello",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "test",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "ping",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "health",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "status",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "version",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "auth",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "login",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "register",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "signup",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "signin",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "logout",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "verify",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "verify-email",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "confirm",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "forgot-password",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "refresh-token",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "validate-token",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "magic-link",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "otp",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "subscription",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "boleto",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "pagseguro",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "paypal",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "asaas",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "iugu",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "pagar-me",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "pagarme",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "charge",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "email",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "notify",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "notification",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "push",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "sms",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "resend",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "dashboard",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "analytics",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "metrics",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "report",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "moderate",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "api",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "proxy",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "cors-proxy",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "fetch",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "scrape",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "crawl",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "search",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "global-search",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "autocomplete",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "import",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "restore",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "sync",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "migrate",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "ai",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "openai",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "chat",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "generate",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "embed",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "transcribe",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "gpt",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "claude",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "gemini",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "llm",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "completion",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "upload",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "download",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "process",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "resize",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "convert",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "pdf",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "generate-pdf",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "generate-report",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "cron",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "scheduler",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "worker",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "queue",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "job",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "process-queue",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "run-job",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "cleanup",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "github",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "slack",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "discord",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "telegram",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "zapier",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "n8n",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "make",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          },
+          {
+            "name": "integromat",
+            "method": "GET",
+            "status": 200,
+            "responseSize": 3650,
+            "isSensitive": false
+          }
+        ],
+        "recommendation": "Avalie se cada função deve ser pública. Adicione JWT verification quando necessário."
+      }
+    },
+    {
+      "check": "Bundle — Token/Key Scan",
+      "status": "PASS",
+      "severity": "info",
+      "message": "✓ Nenhum token ou chave sensível detectado em 63 bundles públicos.",
+      "details": {
+        "pathsScanned": 63,
+        "patternsChecked": 57
+      }
+    },
+    {
+      "check": "Storage — Arquivos Críticos Acessíveis",
+      "status": "FAIL",
+      "severity": "critical",
+      "message": "🚨 299 arquivo(s) de configuração/credencial acessível(is) publicamente!",
+      "details": {
+        "files": [
+          {
+            "bucket": "avatars",
+            "file": ".env",
+            "url": "https://supabaseguard.com/storage/v1/object/public/avatars/.env",
+            "size": 0
+          },
+          {
+            "bucket": "avatars",
+            "file": "config.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/avatars/config.json",
+            "size": 0
+          },
+          {
+            "bucket": "avatars",
+            "file": "secrets.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/avatars/secrets.json",
+            "size": 0
+          },
+          {
+            "bucket": "avatars",
+            "file": "credentials.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/avatars/credentials.json",
+            "size": 0
+          },
+          {
+            "bucket": "avatars",
+            "file": "database.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/avatars/database.sql",
+            "size": 0
+          },
+          {
+            "bucket": "avatars",
+            "file": "backup.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/avatars/backup.sql",
+            "size": 0
+          },
+          {
+            "bucket": "avatars",
+            "file": "dump.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/avatars/dump.sql",
+            "size": 0
+          },
+          {
+            "bucket": "avatars",
+            "file": "export.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/avatars/export.csv",
+            "size": 0
+          },
+          {
+            "bucket": "avatars",
+            "file": "users.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/avatars/users.csv",
+            "size": 0
+          },
+          {
+            "bucket": "avatars",
+            "file": "customers.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/avatars/customers.csv",
+            "size": 0
+          },
+          {
+            "bucket": "avatars",
+            "file": "orders.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/avatars/orders.csv",
+            "size": 0
+          },
+          {
+            "bucket": "avatars",
+            "file": "payments.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/avatars/payments.csv",
+            "size": 0
+          },
+          {
+            "bucket": "avatars",
+            "file": "README.md",
+            "url": "https://supabaseguard.com/storage/v1/object/public/avatars/README.md",
+            "size": 0
+          },
+          {
+            "bucket": "avatars",
+            "file": "index.html",
+            "url": "https://supabaseguard.com/storage/v1/object/public/avatars/index.html",
+            "size": 0
+          },
+          {
+            "bucket": "avatars",
+            "file": ".gitignore",
+            "url": "https://supabaseguard.com/storage/v1/object/public/avatars/.gitignore",
+            "size": 0
+          },
+          {
+            "bucket": "avatars",
+            "file": ".htaccess",
+            "url": "https://supabaseguard.com/storage/v1/object/public/avatars/.htaccess",
+            "size": 0
+          },
+          {
+            "bucket": "avatars",
+            "file": "key.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/avatars/key.pem",
+            "size": 0
+          },
+          {
+            "bucket": "avatars",
+            "file": "cert.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/avatars/cert.pem",
+            "size": 0
+          },
+          {
+            "bucket": "avatars",
+            "file": "server.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/avatars/server.key",
+            "size": 0
+          },
+          {
+            "bucket": "avatars",
+            "file": "private.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/avatars/private.key",
+            "size": 0
+          },
+          {
+            "bucket": "uploads",
+            "file": ".env",
+            "url": "https://supabaseguard.com/storage/v1/object/public/uploads/.env",
+            "size": 0
+          },
+          {
+            "bucket": "uploads",
+            "file": "config.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/uploads/config.json",
+            "size": 0
+          },
+          {
+            "bucket": "uploads",
+            "file": "secrets.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/uploads/secrets.json",
+            "size": 0
+          },
+          {
+            "bucket": "uploads",
+            "file": "credentials.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/uploads/credentials.json",
+            "size": 0
+          },
+          {
+            "bucket": "uploads",
+            "file": "database.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/uploads/database.sql",
+            "size": 0
+          },
+          {
+            "bucket": "uploads",
+            "file": "backup.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/uploads/backup.sql",
+            "size": 0
+          },
+          {
+            "bucket": "uploads",
+            "file": "dump.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/uploads/dump.sql",
+            "size": 0
+          },
+          {
+            "bucket": "uploads",
+            "file": "export.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/uploads/export.csv",
+            "size": 0
+          },
+          {
+            "bucket": "uploads",
+            "file": "users.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/uploads/users.csv",
+            "size": 0
+          },
+          {
+            "bucket": "uploads",
+            "file": "customers.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/uploads/customers.csv",
+            "size": 0
+          },
+          {
+            "bucket": "uploads",
+            "file": "orders.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/uploads/orders.csv",
+            "size": 0
+          },
+          {
+            "bucket": "uploads",
+            "file": "payments.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/uploads/payments.csv",
+            "size": 0
+          },
+          {
+            "bucket": "uploads",
+            "file": "README.md",
+            "url": "https://supabaseguard.com/storage/v1/object/public/uploads/README.md",
+            "size": 0
+          },
+          {
+            "bucket": "uploads",
+            "file": "index.html",
+            "url": "https://supabaseguard.com/storage/v1/object/public/uploads/index.html",
+            "size": 0
+          },
+          {
+            "bucket": "uploads",
+            "file": ".gitignore",
+            "url": "https://supabaseguard.com/storage/v1/object/public/uploads/.gitignore",
+            "size": 0
+          },
+          {
+            "bucket": "uploads",
+            "file": ".htaccess",
+            "url": "https://supabaseguard.com/storage/v1/object/public/uploads/.htaccess",
+            "size": 0
+          },
+          {
+            "bucket": "uploads",
+            "file": "key.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/uploads/key.pem",
+            "size": 0
+          },
+          {
+            "bucket": "uploads",
+            "file": "cert.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/uploads/cert.pem",
+            "size": 0
+          },
+          {
+            "bucket": "uploads",
+            "file": "server.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/uploads/server.key",
+            "size": 0
+          },
+          {
+            "bucket": "uploads",
+            "file": "private.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/uploads/private.key",
+            "size": 0
+          },
+          {
+            "bucket": "images",
+            "file": ".env",
+            "url": "https://supabaseguard.com/storage/v1/object/public/images/.env",
+            "size": 0
+          },
+          {
+            "bucket": "images",
+            "file": "config.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/images/config.json",
+            "size": 0
+          },
+          {
+            "bucket": "images",
+            "file": "secrets.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/images/secrets.json",
+            "size": 0
+          },
+          {
+            "bucket": "images",
+            "file": "credentials.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/images/credentials.json",
+            "size": 0
+          },
+          {
+            "bucket": "images",
+            "file": "database.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/images/database.sql",
+            "size": 0
+          },
+          {
+            "bucket": "images",
+            "file": "backup.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/images/backup.sql",
+            "size": 0
+          },
+          {
+            "bucket": "images",
+            "file": "dump.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/images/dump.sql",
+            "size": 0
+          },
+          {
+            "bucket": "images",
+            "file": "export.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/images/export.csv",
+            "size": 0
+          },
+          {
+            "bucket": "images",
+            "file": "users.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/images/users.csv",
+            "size": 0
+          },
+          {
+            "bucket": "images",
+            "file": "customers.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/images/customers.csv",
+            "size": 0
+          },
+          {
+            "bucket": "images",
+            "file": "orders.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/images/orders.csv",
+            "size": 0
+          },
+          {
+            "bucket": "images",
+            "file": "payments.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/images/payments.csv",
+            "size": 0
+          },
+          {
+            "bucket": "images",
+            "file": "README.md",
+            "url": "https://supabaseguard.com/storage/v1/object/public/images/README.md",
+            "size": 0
+          },
+          {
+            "bucket": "images",
+            "file": "index.html",
+            "url": "https://supabaseguard.com/storage/v1/object/public/images/index.html",
+            "size": 0
+          },
+          {
+            "bucket": "images",
+            "file": ".gitignore",
+            "url": "https://supabaseguard.com/storage/v1/object/public/images/.gitignore",
+            "size": 0
+          },
+          {
+            "bucket": "images",
+            "file": ".htaccess",
+            "url": "https://supabaseguard.com/storage/v1/object/public/images/.htaccess",
+            "size": 0
+          },
+          {
+            "bucket": "images",
+            "file": "key.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/images/key.pem",
+            "size": 0
+          },
+          {
+            "bucket": "images",
+            "file": "cert.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/images/cert.pem",
+            "size": 0
+          },
+          {
+            "bucket": "images",
+            "file": "server.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/images/server.key",
+            "size": 0
+          },
+          {
+            "bucket": "images",
+            "file": "private.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/images/private.key",
+            "size": 0
+          },
+          {
+            "bucket": "photos",
+            "file": ".env",
+            "url": "https://supabaseguard.com/storage/v1/object/public/photos/.env",
+            "size": 0
+          },
+          {
+            "bucket": "photos",
+            "file": "config.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/photos/config.json",
+            "size": 0
+          },
+          {
+            "bucket": "photos",
+            "file": "secrets.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/photos/secrets.json",
+            "size": 0
+          },
+          {
+            "bucket": "photos",
+            "file": "credentials.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/photos/credentials.json",
+            "size": 0
+          },
+          {
+            "bucket": "photos",
+            "file": "database.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/photos/database.sql",
+            "size": 0
+          },
+          {
+            "bucket": "photos",
+            "file": "backup.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/photos/backup.sql",
+            "size": 0
+          },
+          {
+            "bucket": "photos",
+            "file": "dump.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/photos/dump.sql",
+            "size": 0
+          },
+          {
+            "bucket": "photos",
+            "file": "export.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/photos/export.csv",
+            "size": 0
+          },
+          {
+            "bucket": "photos",
+            "file": "users.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/photos/users.csv",
+            "size": 0
+          },
+          {
+            "bucket": "photos",
+            "file": "customers.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/photos/customers.csv",
+            "size": 0
+          },
+          {
+            "bucket": "photos",
+            "file": "orders.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/photos/orders.csv",
+            "size": 0
+          },
+          {
+            "bucket": "photos",
+            "file": "payments.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/photos/payments.csv",
+            "size": 0
+          },
+          {
+            "bucket": "photos",
+            "file": "README.md",
+            "url": "https://supabaseguard.com/storage/v1/object/public/photos/README.md",
+            "size": 0
+          },
+          {
+            "bucket": "photos",
+            "file": "index.html",
+            "url": "https://supabaseguard.com/storage/v1/object/public/photos/index.html",
+            "size": 0
+          },
+          {
+            "bucket": "photos",
+            "file": ".gitignore",
+            "url": "https://supabaseguard.com/storage/v1/object/public/photos/.gitignore",
+            "size": 0
+          },
+          {
+            "bucket": "photos",
+            "file": ".htaccess",
+            "url": "https://supabaseguard.com/storage/v1/object/public/photos/.htaccess",
+            "size": 0
+          },
+          {
+            "bucket": "photos",
+            "file": "key.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/photos/key.pem",
+            "size": 0
+          },
+          {
+            "bucket": "photos",
+            "file": "cert.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/photos/cert.pem",
+            "size": 0
+          },
+          {
+            "bucket": "photos",
+            "file": "server.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/photos/server.key",
+            "size": 0
+          },
+          {
+            "bucket": "photos",
+            "file": "private.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/photos/private.key",
+            "size": 0
+          },
+          {
+            "bucket": "pictures",
+            "file": ".env",
+            "url": "https://supabaseguard.com/storage/v1/object/public/pictures/.env",
+            "size": 0
+          },
+          {
+            "bucket": "pictures",
+            "file": "config.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/pictures/config.json",
+            "size": 0
+          },
+          {
+            "bucket": "pictures",
+            "file": "secrets.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/pictures/secrets.json",
+            "size": 0
+          },
+          {
+            "bucket": "pictures",
+            "file": "credentials.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/pictures/credentials.json",
+            "size": 0
+          },
+          {
+            "bucket": "pictures",
+            "file": "database.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/pictures/database.sql",
+            "size": 0
+          },
+          {
+            "bucket": "pictures",
+            "file": "backup.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/pictures/backup.sql",
+            "size": 0
+          },
+          {
+            "bucket": "pictures",
+            "file": "dump.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/pictures/dump.sql",
+            "size": 0
+          },
+          {
+            "bucket": "pictures",
+            "file": "export.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/pictures/export.csv",
+            "size": 0
+          },
+          {
+            "bucket": "pictures",
+            "file": "users.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/pictures/users.csv",
+            "size": 0
+          },
+          {
+            "bucket": "pictures",
+            "file": "customers.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/pictures/customers.csv",
+            "size": 0
+          },
+          {
+            "bucket": "pictures",
+            "file": "orders.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/pictures/orders.csv",
+            "size": 0
+          },
+          {
+            "bucket": "pictures",
+            "file": "payments.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/pictures/payments.csv",
+            "size": 0
+          },
+          {
+            "bucket": "pictures",
+            "file": "README.md",
+            "url": "https://supabaseguard.com/storage/v1/object/public/pictures/README.md",
+            "size": 0
+          },
+          {
+            "bucket": "pictures",
+            "file": "index.html",
+            "url": "https://supabaseguard.com/storage/v1/object/public/pictures/index.html",
+            "size": 0
+          },
+          {
+            "bucket": "pictures",
+            "file": ".gitignore",
+            "url": "https://supabaseguard.com/storage/v1/object/public/pictures/.gitignore",
+            "size": 0
+          },
+          {
+            "bucket": "pictures",
+            "file": ".htaccess",
+            "url": "https://supabaseguard.com/storage/v1/object/public/pictures/.htaccess",
+            "size": 0
+          },
+          {
+            "bucket": "pictures",
+            "file": "key.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/pictures/key.pem",
+            "size": 0
+          },
+          {
+            "bucket": "pictures",
+            "file": "cert.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/pictures/cert.pem",
+            "size": 0
+          },
+          {
+            "bucket": "pictures",
+            "file": "server.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/pictures/server.key",
+            "size": 0
+          },
+          {
+            "bucket": "pictures",
+            "file": "private.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/pictures/private.key",
+            "size": 0
+          },
+          {
+            "bucket": "media",
+            "file": ".env",
+            "url": "https://supabaseguard.com/storage/v1/object/public/media/.env",
+            "size": 0
+          },
+          {
+            "bucket": "media",
+            "file": "config.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/media/config.json",
+            "size": 0
+          },
+          {
+            "bucket": "media",
+            "file": "secrets.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/media/secrets.json",
+            "size": 0
+          },
+          {
+            "bucket": "media",
+            "file": "credentials.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/media/credentials.json",
+            "size": 0
+          },
+          {
+            "bucket": "media",
+            "file": "database.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/media/database.sql",
+            "size": 0
+          },
+          {
+            "bucket": "media",
+            "file": "backup.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/media/backup.sql",
+            "size": 0
+          },
+          {
+            "bucket": "media",
+            "file": "dump.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/media/dump.sql",
+            "size": 0
+          },
+          {
+            "bucket": "media",
+            "file": "export.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/media/export.csv",
+            "size": 0
+          },
+          {
+            "bucket": "media",
+            "file": "users.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/media/users.csv",
+            "size": 0
+          },
+          {
+            "bucket": "media",
+            "file": "customers.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/media/customers.csv",
+            "size": 0
+          },
+          {
+            "bucket": "media",
+            "file": "orders.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/media/orders.csv",
+            "size": 0
+          },
+          {
+            "bucket": "media",
+            "file": "payments.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/media/payments.csv",
+            "size": 0
+          },
+          {
+            "bucket": "media",
+            "file": "README.md",
+            "url": "https://supabaseguard.com/storage/v1/object/public/media/README.md",
+            "size": 0
+          },
+          {
+            "bucket": "media",
+            "file": "index.html",
+            "url": "https://supabaseguard.com/storage/v1/object/public/media/index.html",
+            "size": 0
+          },
+          {
+            "bucket": "media",
+            "file": ".gitignore",
+            "url": "https://supabaseguard.com/storage/v1/object/public/media/.gitignore",
+            "size": 0
+          },
+          {
+            "bucket": "media",
+            "file": ".htaccess",
+            "url": "https://supabaseguard.com/storage/v1/object/public/media/.htaccess",
+            "size": 0
+          },
+          {
+            "bucket": "media",
+            "file": "key.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/media/key.pem",
+            "size": 0
+          },
+          {
+            "bucket": "media",
+            "file": "cert.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/media/cert.pem",
+            "size": 0
+          },
+          {
+            "bucket": "media",
+            "file": "server.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/media/server.key",
+            "size": 0
+          },
+          {
+            "bucket": "media",
+            "file": "private.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/media/private.key",
+            "size": 0
+          },
+          {
+            "bucket": "documents",
+            "file": ".env",
+            "url": "https://supabaseguard.com/storage/v1/object/public/documents/.env",
+            "size": 0
+          },
+          {
+            "bucket": "documents",
+            "file": "config.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/documents/config.json",
+            "size": 0
+          },
+          {
+            "bucket": "documents",
+            "file": "secrets.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/documents/secrets.json",
+            "size": 0
+          },
+          {
+            "bucket": "documents",
+            "file": "credentials.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/documents/credentials.json",
+            "size": 0
+          },
+          {
+            "bucket": "documents",
+            "file": "database.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/documents/database.sql",
+            "size": 0
+          },
+          {
+            "bucket": "documents",
+            "file": "backup.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/documents/backup.sql",
+            "size": 0
+          },
+          {
+            "bucket": "documents",
+            "file": "dump.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/documents/dump.sql",
+            "size": 0
+          },
+          {
+            "bucket": "documents",
+            "file": "export.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/documents/export.csv",
+            "size": 0
+          },
+          {
+            "bucket": "documents",
+            "file": "users.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/documents/users.csv",
+            "size": 0
+          },
+          {
+            "bucket": "documents",
+            "file": "customers.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/documents/customers.csv",
+            "size": 0
+          },
+          {
+            "bucket": "documents",
+            "file": "orders.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/documents/orders.csv",
+            "size": 0
+          },
+          {
+            "bucket": "documents",
+            "file": "payments.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/documents/payments.csv",
+            "size": 0
+          },
+          {
+            "bucket": "documents",
+            "file": "README.md",
+            "url": "https://supabaseguard.com/storage/v1/object/public/documents/README.md",
+            "size": 0
+          },
+          {
+            "bucket": "documents",
+            "file": "index.html",
+            "url": "https://supabaseguard.com/storage/v1/object/public/documents/index.html",
+            "size": 0
+          },
+          {
+            "bucket": "documents",
+            "file": ".gitignore",
+            "url": "https://supabaseguard.com/storage/v1/object/public/documents/.gitignore",
+            "size": 0
+          },
+          {
+            "bucket": "documents",
+            "file": ".htaccess",
+            "url": "https://supabaseguard.com/storage/v1/object/public/documents/.htaccess",
+            "size": 0
+          },
+          {
+            "bucket": "documents",
+            "file": "key.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/documents/key.pem",
+            "size": 0
+          },
+          {
+            "bucket": "documents",
+            "file": "cert.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/documents/cert.pem",
+            "size": 0
+          },
+          {
+            "bucket": "documents",
+            "file": "server.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/documents/server.key",
+            "size": 0
+          },
+          {
+            "bucket": "documents",
+            "file": "private.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/documents/private.key",
+            "size": 0
+          },
+          {
+            "bucket": "docs",
+            "file": ".env",
+            "url": "https://supabaseguard.com/storage/v1/object/public/docs/.env",
+            "size": 0
+          },
+          {
+            "bucket": "docs",
+            "file": "config.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/docs/config.json",
+            "size": 0
+          },
+          {
+            "bucket": "docs",
+            "file": "secrets.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/docs/secrets.json",
+            "size": 0
+          },
+          {
+            "bucket": "docs",
+            "file": "credentials.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/docs/credentials.json",
+            "size": 0
+          },
+          {
+            "bucket": "docs",
+            "file": "database.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/docs/database.sql",
+            "size": 0
+          },
+          {
+            "bucket": "docs",
+            "file": "backup.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/docs/backup.sql",
+            "size": 0
+          },
+          {
+            "bucket": "docs",
+            "file": "dump.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/docs/dump.sql",
+            "size": 0
+          },
+          {
+            "bucket": "docs",
+            "file": "export.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/docs/export.csv",
+            "size": 0
+          },
+          {
+            "bucket": "docs",
+            "file": "users.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/docs/users.csv",
+            "size": 0
+          },
+          {
+            "bucket": "docs",
+            "file": "customers.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/docs/customers.csv",
+            "size": 0
+          },
+          {
+            "bucket": "docs",
+            "file": "orders.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/docs/orders.csv",
+            "size": 0
+          },
+          {
+            "bucket": "docs",
+            "file": "payments.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/docs/payments.csv",
+            "size": 0
+          },
+          {
+            "bucket": "docs",
+            "file": "README.md",
+            "url": "https://supabaseguard.com/storage/v1/object/public/docs/README.md",
+            "size": 0
+          },
+          {
+            "bucket": "docs",
+            "file": "index.html",
+            "url": "https://supabaseguard.com/storage/v1/object/public/docs/index.html",
+            "size": 0
+          },
+          {
+            "bucket": "docs",
+            "file": ".gitignore",
+            "url": "https://supabaseguard.com/storage/v1/object/public/docs/.gitignore",
+            "size": 0
+          },
+          {
+            "bucket": "docs",
+            "file": ".htaccess",
+            "url": "https://supabaseguard.com/storage/v1/object/public/docs/.htaccess",
+            "size": 0
+          },
+          {
+            "bucket": "docs",
+            "file": "key.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/docs/key.pem",
+            "size": 0
+          },
+          {
+            "bucket": "docs",
+            "file": "cert.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/docs/cert.pem",
+            "size": 0
+          },
+          {
+            "bucket": "docs",
+            "file": "server.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/docs/server.key",
+            "size": 0
+          },
+          {
+            "bucket": "docs",
+            "file": "private.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/docs/private.key",
+            "size": 0
+          },
+          {
+            "bucket": "files",
+            "file": ".env",
+            "url": "https://supabaseguard.com/storage/v1/object/public/files/.env",
+            "size": 0
+          },
+          {
+            "bucket": "files",
+            "file": "config.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/files/config.json",
+            "size": 0
+          },
+          {
+            "bucket": "files",
+            "file": "secrets.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/files/secrets.json",
+            "size": 0
+          },
+          {
+            "bucket": "files",
+            "file": "credentials.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/files/credentials.json",
+            "size": 0
+          },
+          {
+            "bucket": "files",
+            "file": "database.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/files/database.sql",
+            "size": 0
+          },
+          {
+            "bucket": "files",
+            "file": "backup.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/files/backup.sql",
+            "size": 0
+          },
+          {
+            "bucket": "files",
+            "file": "dump.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/files/dump.sql",
+            "size": 0
+          },
+          {
+            "bucket": "files",
+            "file": "export.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/files/export.csv",
+            "size": 0
+          },
+          {
+            "bucket": "files",
+            "file": "users.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/files/users.csv",
+            "size": 0
+          },
+          {
+            "bucket": "files",
+            "file": "customers.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/files/customers.csv",
+            "size": 0
+          },
+          {
+            "bucket": "files",
+            "file": "orders.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/files/orders.csv",
+            "size": 0
+          },
+          {
+            "bucket": "files",
+            "file": "payments.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/files/payments.csv",
+            "size": 0
+          },
+          {
+            "bucket": "files",
+            "file": "README.md",
+            "url": "https://supabaseguard.com/storage/v1/object/public/files/README.md",
+            "size": 0
+          },
+          {
+            "bucket": "files",
+            "file": "index.html",
+            "url": "https://supabaseguard.com/storage/v1/object/public/files/index.html",
+            "size": 0
+          },
+          {
+            "bucket": "files",
+            "file": ".gitignore",
+            "url": "https://supabaseguard.com/storage/v1/object/public/files/.gitignore",
+            "size": 0
+          },
+          {
+            "bucket": "files",
+            "file": ".htaccess",
+            "url": "https://supabaseguard.com/storage/v1/object/public/files/.htaccess",
+            "size": 0
+          },
+          {
+            "bucket": "files",
+            "file": "key.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/files/key.pem",
+            "size": 0
+          },
+          {
+            "bucket": "files",
+            "file": "cert.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/files/cert.pem",
+            "size": 0
+          },
+          {
+            "bucket": "files",
+            "file": "server.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/files/server.key",
+            "size": 0
+          },
+          {
+            "bucket": "files",
+            "file": "private.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/files/private.key",
+            "size": 0
+          },
+          {
+            "bucket": "attachments",
+            "file": ".env",
+            "url": "https://supabaseguard.com/storage/v1/object/public/attachments/.env",
+            "size": 0
+          },
+          {
+            "bucket": "attachments",
+            "file": "config.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/attachments/config.json",
+            "size": 0
+          },
+          {
+            "bucket": "attachments",
+            "file": "secrets.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/attachments/secrets.json",
+            "size": 0
+          },
+          {
+            "bucket": "attachments",
+            "file": "credentials.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/attachments/credentials.json",
+            "size": 0
+          },
+          {
+            "bucket": "attachments",
+            "file": "database.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/attachments/database.sql",
+            "size": 0
+          },
+          {
+            "bucket": "attachments",
+            "file": "backup.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/attachments/backup.sql",
+            "size": 0
+          },
+          {
+            "bucket": "attachments",
+            "file": "dump.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/attachments/dump.sql",
+            "size": 0
+          },
+          {
+            "bucket": "attachments",
+            "file": "export.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/attachments/export.csv",
+            "size": 0
+          },
+          {
+            "bucket": "attachments",
+            "file": "users.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/attachments/users.csv",
+            "size": 0
+          },
+          {
+            "bucket": "attachments",
+            "file": "customers.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/attachments/customers.csv",
+            "size": 0
+          },
+          {
+            "bucket": "attachments",
+            "file": "orders.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/attachments/orders.csv",
+            "size": 0
+          },
+          {
+            "bucket": "attachments",
+            "file": "payments.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/attachments/payments.csv",
+            "size": 0
+          },
+          {
+            "bucket": "attachments",
+            "file": "README.md",
+            "url": "https://supabaseguard.com/storage/v1/object/public/attachments/README.md",
+            "size": 0
+          },
+          {
+            "bucket": "attachments",
+            "file": "index.html",
+            "url": "https://supabaseguard.com/storage/v1/object/public/attachments/index.html",
+            "size": 0
+          },
+          {
+            "bucket": "attachments",
+            "file": ".gitignore",
+            "url": "https://supabaseguard.com/storage/v1/object/public/attachments/.gitignore",
+            "size": 0
+          },
+          {
+            "bucket": "attachments",
+            "file": ".htaccess",
+            "url": "https://supabaseguard.com/storage/v1/object/public/attachments/.htaccess",
+            "size": 0
+          },
+          {
+            "bucket": "attachments",
+            "file": "key.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/attachments/key.pem",
+            "size": 0
+          },
+          {
+            "bucket": "attachments",
+            "file": "cert.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/attachments/cert.pem",
+            "size": 0
+          },
+          {
+            "bucket": "attachments",
+            "file": "server.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/attachments/server.key",
+            "size": 0
+          },
+          {
+            "bucket": "attachments",
+            "file": "private.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/attachments/private.key",
+            "size": 0
+          },
+          {
+            "bucket": "resources",
+            "file": ".env",
+            "url": "https://supabaseguard.com/storage/v1/object/public/resources/.env",
+            "size": 0
+          },
+          {
+            "bucket": "resources",
+            "file": "config.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/resources/config.json",
+            "size": 0
+          },
+          {
+            "bucket": "resources",
+            "file": "secrets.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/resources/secrets.json",
+            "size": 0
+          },
+          {
+            "bucket": "resources",
+            "file": "credentials.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/resources/credentials.json",
+            "size": 0
+          },
+          {
+            "bucket": "resources",
+            "file": "database.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/resources/database.sql",
+            "size": 0
+          },
+          {
+            "bucket": "resources",
+            "file": "backup.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/resources/backup.sql",
+            "size": 0
+          },
+          {
+            "bucket": "resources",
+            "file": "dump.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/resources/dump.sql",
+            "size": 0
+          },
+          {
+            "bucket": "resources",
+            "file": "export.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/resources/export.csv",
+            "size": 0
+          },
+          {
+            "bucket": "resources",
+            "file": "users.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/resources/users.csv",
+            "size": 0
+          },
+          {
+            "bucket": "resources",
+            "file": "customers.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/resources/customers.csv",
+            "size": 0
+          },
+          {
+            "bucket": "resources",
+            "file": "orders.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/resources/orders.csv",
+            "size": 0
+          },
+          {
+            "bucket": "resources",
+            "file": "payments.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/resources/payments.csv",
+            "size": 0
+          },
+          {
+            "bucket": "resources",
+            "file": "README.md",
+            "url": "https://supabaseguard.com/storage/v1/object/public/resources/README.md",
+            "size": 0
+          },
+          {
+            "bucket": "resources",
+            "file": "index.html",
+            "url": "https://supabaseguard.com/storage/v1/object/public/resources/index.html",
+            "size": 0
+          },
+          {
+            "bucket": "resources",
+            "file": ".gitignore",
+            "url": "https://supabaseguard.com/storage/v1/object/public/resources/.gitignore",
+            "size": 0
+          },
+          {
+            "bucket": "resources",
+            "file": ".htaccess",
+            "url": "https://supabaseguard.com/storage/v1/object/public/resources/.htaccess",
+            "size": 0
+          },
+          {
+            "bucket": "resources",
+            "file": "key.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/resources/key.pem",
+            "size": 0
+          },
+          {
+            "bucket": "resources",
+            "file": "cert.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/resources/cert.pem",
+            "size": 0
+          },
+          {
+            "bucket": "resources",
+            "file": "server.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/resources/server.key",
+            "size": 0
+          },
+          {
+            "bucket": "resources",
+            "file": "private.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/resources/private.key",
+            "size": 0
+          },
+          {
+            "bucket": "public",
+            "file": ".env",
+            "url": "https://supabaseguard.com/storage/v1/object/public/public/.env",
+            "size": 0
+          },
+          {
+            "bucket": "public",
+            "file": "config.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/public/config.json",
+            "size": 0
+          },
+          {
+            "bucket": "public",
+            "file": "secrets.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/public/secrets.json",
+            "size": 0
+          },
+          {
+            "bucket": "public",
+            "file": "credentials.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/public/credentials.json",
+            "size": 0
+          },
+          {
+            "bucket": "public",
+            "file": "database.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/public/database.sql",
+            "size": 0
+          },
+          {
+            "bucket": "public",
+            "file": "backup.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/public/backup.sql",
+            "size": 0
+          },
+          {
+            "bucket": "public",
+            "file": "dump.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/public/dump.sql",
+            "size": 0
+          },
+          {
+            "bucket": "public",
+            "file": "export.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/public/export.csv",
+            "size": 0
+          },
+          {
+            "bucket": "public",
+            "file": "users.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/public/users.csv",
+            "size": 0
+          },
+          {
+            "bucket": "public",
+            "file": "customers.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/public/customers.csv",
+            "size": 0
+          },
+          {
+            "bucket": "public",
+            "file": "orders.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/public/orders.csv",
+            "size": 0
+          },
+          {
+            "bucket": "public",
+            "file": "payments.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/public/payments.csv",
+            "size": 0
+          },
+          {
+            "bucket": "public",
+            "file": "README.md",
+            "url": "https://supabaseguard.com/storage/v1/object/public/public/README.md",
+            "size": 0
+          },
+          {
+            "bucket": "public",
+            "file": "index.html",
+            "url": "https://supabaseguard.com/storage/v1/object/public/public/index.html",
+            "size": 0
+          },
+          {
+            "bucket": "public",
+            "file": ".gitignore",
+            "url": "https://supabaseguard.com/storage/v1/object/public/public/.gitignore",
+            "size": 0
+          },
+          {
+            "bucket": "public",
+            "file": ".htaccess",
+            "url": "https://supabaseguard.com/storage/v1/object/public/public/.htaccess",
+            "size": 0
+          },
+          {
+            "bucket": "public",
+            "file": "key.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/public/key.pem",
+            "size": 0
+          },
+          {
+            "bucket": "public",
+            "file": "cert.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/public/cert.pem",
+            "size": 0
+          },
+          {
+            "bucket": "public",
+            "file": "server.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/public/server.key",
+            "size": 0
+          },
+          {
+            "bucket": "public",
+            "file": "private.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/public/private.key",
+            "size": 0
+          },
+          {
+            "bucket": "assets",
+            "file": ".env",
+            "url": "https://supabaseguard.com/storage/v1/object/public/assets/.env",
+            "size": 0
+          },
+          {
+            "bucket": "assets",
+            "file": "config.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/assets/config.json",
+            "size": 0
+          },
+          {
+            "bucket": "assets",
+            "file": "secrets.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/assets/secrets.json",
+            "size": 0
+          },
+          {
+            "bucket": "assets",
+            "file": "credentials.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/assets/credentials.json",
+            "size": 0
+          },
+          {
+            "bucket": "assets",
+            "file": "database.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/assets/database.sql",
+            "size": 0
+          },
+          {
+            "bucket": "assets",
+            "file": "backup.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/assets/backup.sql",
+            "size": 0
+          },
+          {
+            "bucket": "assets",
+            "file": "dump.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/assets/dump.sql",
+            "size": 0
+          },
+          {
+            "bucket": "assets",
+            "file": "export.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/assets/export.csv",
+            "size": 0
+          },
+          {
+            "bucket": "assets",
+            "file": "users.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/assets/users.csv",
+            "size": 0
+          },
+          {
+            "bucket": "assets",
+            "file": "customers.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/assets/customers.csv",
+            "size": 0
+          },
+          {
+            "bucket": "assets",
+            "file": "orders.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/assets/orders.csv",
+            "size": 0
+          },
+          {
+            "bucket": "assets",
+            "file": "payments.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/assets/payments.csv",
+            "size": 0
+          },
+          {
+            "bucket": "assets",
+            "file": "README.md",
+            "url": "https://supabaseguard.com/storage/v1/object/public/assets/README.md",
+            "size": 0
+          },
+          {
+            "bucket": "assets",
+            "file": "index.html",
+            "url": "https://supabaseguard.com/storage/v1/object/public/assets/index.html",
+            "size": 0
+          },
+          {
+            "bucket": "assets",
+            "file": ".gitignore",
+            "url": "https://supabaseguard.com/storage/v1/object/public/assets/.gitignore",
+            "size": 0
+          },
+          {
+            "bucket": "assets",
+            "file": ".htaccess",
+            "url": "https://supabaseguard.com/storage/v1/object/public/assets/.htaccess",
+            "size": 0
+          },
+          {
+            "bucket": "assets",
+            "file": "key.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/assets/key.pem",
+            "size": 0
+          },
+          {
+            "bucket": "assets",
+            "file": "cert.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/assets/cert.pem",
+            "size": 0
+          },
+          {
+            "bucket": "assets",
+            "file": "server.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/assets/server.key",
+            "size": 0
+          },
+          {
+            "bucket": "assets",
+            "file": "private.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/assets/private.key",
+            "size": 0
+          },
+          {
+            "bucket": "static",
+            "file": ".env",
+            "url": "https://supabaseguard.com/storage/v1/object/public/static/.env",
+            "size": 0
+          },
+          {
+            "bucket": "static",
+            "file": "config.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/static/config.json",
+            "size": 0
+          },
+          {
+            "bucket": "static",
+            "file": "secrets.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/static/secrets.json",
+            "size": 0
+          },
+          {
+            "bucket": "static",
+            "file": "credentials.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/static/credentials.json",
+            "size": 0
+          },
+          {
+            "bucket": "static",
+            "file": "database.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/static/database.sql",
+            "size": 0
+          },
+          {
+            "bucket": "static",
+            "file": "backup.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/static/backup.sql",
+            "size": 0
+          },
+          {
+            "bucket": "static",
+            "file": "dump.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/static/dump.sql",
+            "size": 0
+          },
+          {
+            "bucket": "static",
+            "file": "export.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/static/export.csv",
+            "size": 0
+          },
+          {
+            "bucket": "static",
+            "file": "users.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/static/users.csv",
+            "size": 0
+          },
+          {
+            "bucket": "static",
+            "file": "customers.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/static/customers.csv",
+            "size": 0
+          },
+          {
+            "bucket": "static",
+            "file": "orders.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/static/orders.csv",
+            "size": 0
+          },
+          {
+            "bucket": "static",
+            "file": "payments.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/static/payments.csv",
+            "size": 0
+          },
+          {
+            "bucket": "static",
+            "file": "README.md",
+            "url": "https://supabaseguard.com/storage/v1/object/public/static/README.md",
+            "size": 0
+          },
+          {
+            "bucket": "static",
+            "file": "index.html",
+            "url": "https://supabaseguard.com/storage/v1/object/public/static/index.html",
+            "size": 0
+          },
+          {
+            "bucket": "static",
+            "file": ".gitignore",
+            "url": "https://supabaseguard.com/storage/v1/object/public/static/.gitignore",
+            "size": 0
+          },
+          {
+            "bucket": "static",
+            "file": ".htaccess",
+            "url": "https://supabaseguard.com/storage/v1/object/public/static/.htaccess",
+            "size": 0
+          },
+          {
+            "bucket": "static",
+            "file": "key.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/static/key.pem",
+            "size": 0
+          },
+          {
+            "bucket": "static",
+            "file": "cert.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/static/cert.pem",
+            "size": 0
+          },
+          {
+            "bucket": "static",
+            "file": "server.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/static/server.key",
+            "size": 0
+          },
+          {
+            "bucket": "static",
+            "file": "private.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/static/private.key",
+            "size": 0
+          },
+          {
+            "bucket": "content",
+            "file": ".env",
+            "url": "https://supabaseguard.com/storage/v1/object/public/content/.env",
+            "size": 0
+          },
+          {
+            "bucket": "content",
+            "file": "config.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/content/config.json",
+            "size": 0
+          },
+          {
+            "bucket": "content",
+            "file": "secrets.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/content/secrets.json",
+            "size": 0
+          },
+          {
+            "bucket": "content",
+            "file": "credentials.json",
+            "url": "https://supabaseguard.com/storage/v1/object/public/content/credentials.json",
+            "size": 0
+          },
+          {
+            "bucket": "content",
+            "file": "database.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/content/database.sql",
+            "size": 0
+          },
+          {
+            "bucket": "content",
+            "file": "backup.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/content/backup.sql",
+            "size": 0
+          },
+          {
+            "bucket": "content",
+            "file": "dump.sql",
+            "url": "https://supabaseguard.com/storage/v1/object/public/content/dump.sql",
+            "size": 0
+          },
+          {
+            "bucket": "content",
+            "file": "export.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/content/export.csv",
+            "size": 0
+          },
+          {
+            "bucket": "content",
+            "file": "users.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/content/users.csv",
+            "size": 0
+          },
+          {
+            "bucket": "content",
+            "file": "customers.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/content/customers.csv",
+            "size": 0
+          },
+          {
+            "bucket": "content",
+            "file": "orders.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/content/orders.csv",
+            "size": 0
+          },
+          {
+            "bucket": "content",
+            "file": "payments.csv",
+            "url": "https://supabaseguard.com/storage/v1/object/public/content/payments.csv",
+            "size": 0
+          },
+          {
+            "bucket": "content",
+            "file": "README.md",
+            "url": "https://supabaseguard.com/storage/v1/object/public/content/README.md",
+            "size": 0
+          },
+          {
+            "bucket": "content",
+            "file": "index.html",
+            "url": "https://supabaseguard.com/storage/v1/object/public/content/index.html",
+            "size": 0
+          },
+          {
+            "bucket": "content",
+            "file": ".gitignore",
+            "url": "https://supabaseguard.com/storage/v1/object/public/content/.gitignore",
+            "size": 0
+          },
+          {
+            "bucket": "content",
+            "file": ".htaccess",
+            "url": "https://supabaseguard.com/storage/v1/object/public/content/.htaccess",
+            "size": 0
+          },
+          {
+            "bucket": "content",
+            "file": "key.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/content/key.pem",
+            "size": 0
+          },
+          {
+            "bucket": "content",
+            "file": "cert.pem",
+            "url": "https://supabaseguard.com/storage/v1/object/public/content/cert.pem",
+            "size": 0
+          },
+          {
+            "bucket": "content",
+            "file": "private.key",
+            "url": "https://supabaseguard.com/storage/v1/object/public/content/private.key",
+            "size": 0
+          }
+        ],
+        "recommendation": "URGENTE: Remova .env, .sql, .key e outros arquivos de configuração do storage público."
+      }
+    },
+    {
+      "check": "Storage — Buckets Ocultos Descobertos",
+      "status": "WARN",
+      "severity": "medium",
+      "message": "49 bucket(s) não listado(s) mas acessível(is) por nome.",
+      "details": {
+        "buckets": [
+          {
+            "name": "avatars",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "uploads",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "images",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "photos",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "pictures",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "media",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "documents",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "docs",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "files",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "attachments",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "resources",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "public",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "assets",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "static",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "content",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "data",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "backups",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "backup",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "exports",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "downloads",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "reports",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "invoices",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "receipts",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "contracts",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "certificates",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "videos",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "audio",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "music",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "recordings",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "thumbnails",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "previews",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "covers",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "banners",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "logos",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "icons",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "brands",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "temp",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "tmp",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "cache",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "staging",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "private",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "internal",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "admin",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "system",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "user-data",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "user-files",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "user-uploads",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "profile-pictures",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          },
+          {
+            "name": "profile-images",
+            "accessible": true,
+            "fileCount": 0,
+            "publicAccess": true
+          }
+        ],
+        "recommendation": "Buckets ocultos por nome não é segurança. Configure RLS policies adequadas."
+      }
+    },
+    {
+      "check": "Dados — PII (Email, Telefone, Endereço)",
+      "status": "FAIL",
+      "severity": "high",
+      "message": "1 tipo(s) de dado pessoal exposto(s) (emails, telefones, CEPs).",
+      "details": {
+        "findings": [
+          {
+            "type": "CEP",
+            "category": "PII",
+            "severity": "medium",
+            "source": "Bundle: /assets/index-DREk2GeU.js",
+            "count": 7,
+            "samples": [
+              "167***16",
+              "335***32",
+              "671***64"
+            ]
+          }
+        ],
+        "recommendation": "Proteja dados pessoais conforme LGPD. Configure RLS para limitar acesso."
+      }
+    },
+    {
+      "check": "Credential/PII — Resumo",
+      "status": "INFO",
+      "severity": "info",
+      "message": "Total: 1 achados. PII: 1",
+      "details": {
+        "total": 1,
+        "byCategory": {
+          "PII": 1
+        }
+      }
+    }
+  ],
+  "evidence": {
+    "sha256": "9737882d603ddf56640947bfb5eb7a9cc3f256da033bdeb2f6699300b68e47fc",
+    "timestamp": "2026-03-06T20:32:55.579Z",
+    "auditId": "54a60cf6-5c38-411a-b7ab-4fd78c1e41a5"
+  }
+}
