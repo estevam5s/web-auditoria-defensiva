@@ -35,6 +35,7 @@ const { deepEdgeFunctionCheck } = require('./checks/edge-deep');
 const { deepBundleKeyScanner } = require('./checks/bundle-keys');
 const { deepStorageCheck } = require('./checks/storage-deep');
 const { deepCredentialPIIDetector } = require('./checks/credential-pii');
+const { detectStack } = require('./checks/stack-detector');
 
 // ── Evidence signing ─────────────────────────────────────────────
 function signEvidence(data) {
@@ -111,6 +112,7 @@ async function runFullAudit(config, emit) {
     { name: '🔑 Bundle Key Scanner', fn: deepBundleKeyScanner, enabled: config.options.checkDeepBundleKeys !== false, usesEmit: true },
     { name: '📦 Deep Storage Abuse', fn: deepStorageCheck, enabled: config.options.checkDeepStorage !== false, usesEmit: true },
     { name: '🕵️ Credential & PII Detector', fn: deepCredentialPIIDetector, enabled: config.options.checkDeepCredPII !== false, usesEmit: true },
+    { name: '🔧 Stack Detection', fn: detectStack, enabled: true, usesEmit: true },
   ];
 
   const enabledChecks = checks.filter(c => c.enabled);

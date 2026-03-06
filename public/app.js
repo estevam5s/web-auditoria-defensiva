@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════
-   SUPABASE GUARD — Frontend Application Logic
-   Handles audit execution, SSE streaming, and report generation
+   SUPABASE GUARD — Frontend Application Logic v2.0
+   Handles audit execution, SSE streaming, report generation,
+   PDF/HTML reports, charts, and site scraper
    ═══════════════════════════════════════════════════════════════════ */
 
 let auditResults = null;
@@ -386,7 +387,7 @@ function copyLogs() {
   });
 }
 
-// ── Download Report ──────────────────────────────────────────────
+// ── Download Report JSON ─────────────────────────────────────────
 function downloadReport() {
   if (!auditResults) return;
 
@@ -399,48 +400,133 @@ function downloadReport() {
   URL.revokeObjectURL(url);
 }
 
-function downloadReportPDF() {
+// ── Download PDF Report ──────────────────────────────────────────
+async function downloadReportPDF() {
   if (!auditResults) return;
 
-  let text = '';
-  text += '═══════════════════════════════════════════════════════════════\n';
-  text += '  SUPABASE GUARD — Relatório de Auditoria de Segurança\n';
-  text += '═══════════════════════════════════════════════════════════════\n\n';
-  text += `Projeto:       ${auditResults.projectUrl}\n`;
-  text += `Data:          ${auditResults.evidence.timestamp}\n`;
-  text += `Audit ID:      ${auditResults.evidence.auditId}\n`;
-  text += `SHA-256:       ${auditResults.evidence.sha256}\n`;
-  text += `Score:         ${auditResults.score}/100 (${auditResults.grade.grade} — ${auditResults.grade.label})\n`;
-  text += `Duração:       ${auditResults.duration}\n`;
-  text += `Verificações:  ${auditResults.totalChecks}\n`;
-  text += `Aprovados:     ${auditResults.passed}\n`;
-  text += `Falhas:        ${auditResults.failed}\n`;
-  text += `Alertas:       ${auditResults.warnings}\n\n`;
+  appendLog('info', 'PDF', 'Gerando relatório PDF profissional...');
 
-  text += '───────────────────────────────────────────────────────────────\n';
-  text += '  RESULTADOS DETALHADOS\n';
-  text += '───────────────────────────────────────────────────────────────\n\n';
+  try {
+    const response = await fetch('/api/report/pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ auditData: auditResults })
+    });
 
-  for (const r of auditResults.results) {
-    text += `[${r.status}] [${r.severity.toUpperCase()}] ${r.check}\n`;
-    text += `  ${r.message}\n`;
-    if (r.details) {
-      text += `  Detalhes: ${JSON.stringify(r.details, null, 2).split('\n').join('\n  ')}\n`;
-    }
-    text += '\n';
+    if (!response.ok) throw new Error('Falha ao gerar PDF');
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `supabase-guard-report-${auditResults.evidence.auditId}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    appendLog('info', 'PDF', '✓ Relatório PDF baixado com sucesso!');
+  } catch (err) {
+    appendLog('error', 'PDF', `Erro: ${err.message}`);
+  }
+}
+
+// ── Download HTML Report ─────────────────────────────────────────
+async function downloadReportHTML() {
+  if (!auditResults) return;
+
+  appendLog('info', 'HTML', 'Gerando relatório HTML com gráficos...');
+
+  try {
+    const response = await fetch('/api/report/html', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ auditData: auditResults })
+    });
+
+    if (!response.ok) throw new Error('Falha ao gerar HTML');
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `supabase-guard-report-${auditResults.evidence.auditId}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    appendLog('info', 'HTML', '✓ Relatório HTML baixado com sucesso!');
+  } catch (err) {
+    appendLog('error', 'HTML', `Erro: ${err.message}`);
+  }
+}
+
+// ── View HTML Report in Browser ──────────────────────────────────
+async function viewReportHTML() {
+  if (!auditResults) return;
+
+  try {
+    const response = await fetch('/api/report/html/view', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ auditData: auditResults })
+    });
+
+    if (!response.ok) throw new Error('Falha');
+
+    const html = await response.text();
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  } catch (err) {
+    appendLog('error', 'VIEW', `Erro: ${err.message}`);
+  }
+}
+
+// ── Download Site Source Code (ZIP) ──────────────────────────────
+async function downloadSourceCode() {
+  const url = $('#projectUrl').value.trim();
+  if (!url) {
+    appendLog('error', 'SCRAPE', 'Insira a URL do projeto primeiro.');
+    return;
   }
 
-  text += '═══════════════════════════════════════════════════════════════\n';
-  text += '  Gerado por Supabase Guard v1.0\n';
-  text += '═══════════════════════════════════════════════════════════════\n';
+  appendLog('info', 'SCRAPE', 'Iniciando download do código-fonte...');
+  const btn = $('#btnScrape');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Baixando...';
+  }
 
-  const blob = new Blob([text], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `supabase-audit-${auditResults.evidence.auditId}.txt`;
-  a.click();
-  URL.revokeObjectURL(url);
+  try {
+    const response = await fetch('/api/scrape', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+
+    if (!response.ok) throw new Error('Falha no download');
+
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = `source-code-${url.replace(/https?:\/\//, '').replace(/[^a-zA-Z0-9]/g, '-')}.zip`;
+    a.click();
+    URL.revokeObjectURL(blobUrl);
+
+    appendLog('info', 'SCRAPE', `✓ Código-fonte baixado! (${(blob.size / 1024 / 1024).toFixed(2)} MB)`);
+  } catch (err) {
+    appendLog('error', 'SCRAPE', `Erro: ${err.message}`);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '📥 Download Código-Fonte (ZIP)';
+    }
+  }
+}
+
+// ── View Audit Info Page ─────────────────────────────────────────
+function viewAuditPage() {
+  if (!auditResults?.evidence?.auditId) return;
+  window.open(`/audit/${auditResults.evidence.auditId}`, '_blank');
 }
 
 // ── Modals ───────────────────────────────────────────────────────

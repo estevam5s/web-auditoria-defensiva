@@ -947,6 +947,129 @@ input[type="text"]::placeholder {
   color: var(--accent);
 }
 
+/* ── Report Actions ──────────────────────────────────────────────── */
+.report-actions {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.report-actions h4 {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--accent);
+  margin-bottom: 1rem;
+  letter-spacing: 0.5px;
+}
+
+.report-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.65rem;
+}
+
+.btn-report {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.btn-report:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.btn-report:active {
+  transform: translateY(0);
+}
+
+/* PDF button — red accent */
+.btn-pdf {
+  border-color: #e74c3c;
+  color: #e74c3c;
+}
+.btn-pdf:hover {
+  background: rgba(231, 76, 60, 0.12);
+  border-color: #ff6b6b;
+  color: #ff6b6b;
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.2);
+}
+
+/* HTML button — blue accent */
+.btn-html {
+  border-color: #3498db;
+  color: #3498db;
+}
+.btn-html:hover {
+  background: rgba(52, 152, 219, 0.12);
+  border-color: #5dade2;
+  color: #5dade2;
+  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);
+}
+
+/* View Report button — purple accent */
+.btn-view {
+  border-color: #9b59b6;
+  color: #9b59b6;
+}
+.btn-view:hover {
+  background: rgba(155, 89, 182, 0.12);
+  border-color: #bb8fce;
+  color: #bb8fce;
+  box-shadow: 0 4px 15px rgba(155, 89, 182, 0.2);
+}
+
+/* JSON button — green (accent) */
+.btn-json {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.btn-json:hover {
+  background: rgba(0, 255, 136, 0.08);
+  border-color: var(--accent);
+  box-shadow: 0 4px 15px rgba(0, 255, 136, 0.15);
+}
+
+/* Audit Page button — amber accent */
+.btn-audit {
+  border-color: #f39c12;
+  color: #f39c12;
+}
+.btn-audit:hover {
+  background: rgba(243, 156, 18, 0.12);
+  border-color: #f1c40f;
+  color: #f1c40f;
+  box-shadow: 0 4px 15px rgba(243, 156, 18, 0.2);
+}
+
+/* Scraper / Source Code button — orange accent */
+.btn-scrape {
+  border-color: #e67e22;
+  color: #e67e22;
+}
+.btn-scrape:hover {
+  background: rgba(230, 126, 34, 0.12);
+  border-color: #f0a04b;
+  color: #f0a04b;
+  box-shadow: 0 4px 15px rgba(230, 126, 34, 0.2);
+}
+
 /* ── Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .container { padding: 1rem; }
