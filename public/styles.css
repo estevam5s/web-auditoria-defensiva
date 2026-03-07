@@ -52,6 +52,22 @@ body {
   overflow-x: hidden;
 }
 
+/* ── Matrix binary rain canvas ───────────────────────────────────── */
+#matrixCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.45;
+  transition: opacity 0.8s ease;
+}
+#matrixCanvas.scanning {
+  opacity: 0.72;
+}
+
 /* ── Scanlines effect ────────────────────────────────────────────── */
 .scanlines {
   position: fixed;

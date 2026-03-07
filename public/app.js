@@ -25,6 +25,7 @@ async function startAudit() {
   isScanning = true;
   auditResults = null;
   logLines = [];
+  matrixSetScanning(true);
 
   // UI state
   const btn = $('#btnAudit');
@@ -148,6 +149,7 @@ async function startAudit() {
 
   // Reset button
   isScanning = false;
+  matrixSetScanning(false);
   btn.disabled = false;
   btn.classList.remove('scanning');
   btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg> Iniciar Auditoria`;
@@ -1446,6 +1448,142 @@ function installApp() {
     deferredPrompt = null;
   });
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// MATRIX BINARY RAIN — Efeito de chuva de 0s e 1s
+// ═══════════════════════════════════════════════════════════════════
+(function initMatrixRain() {
+  const canvas = document.getElementById('matrixCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  // Config
+  const FONT_SIZE   = 14;        // px por caractere
+  const CHARS       = ['0', '1'];
+  const COLOR_HEAD  = '#ffffff';  // dígito da frente (mais brilhante)
+  const COLOR_MAIN  = '#00ff41';  // cor principal (verde Matrix)
+  const COLOR_MID   = '#00cc33';
+  const COLOR_TAIL  = '#006618';
+
+  // State
+  let cols = 0;
+  let drops = [];           // y de cada coluna (em caracteres)
+  let speeds = [];          // velocidade de queda de cada coluna
+  let scanningMode = false;
+  let animId = null;
+  let lastFrame = 0;
+
+  // Intervalo entre frames: normal 60ms ≈ 16fps, scanning 30ms ≈ 33fps
+  function frameDelay() { return scanningMode ? 35 : 60; }
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const newCols = Math.floor(canvas.width / FONT_SIZE);
+
+    if (newCols !== cols) {
+      // Preserva drops existentes, preenche novos
+      const old = drops.slice();
+      const oldSpd = speeds.slice();
+      cols  = newCols;
+      drops = [];
+      speeds = [];
+      for (let i = 0; i < cols; i++) {
+        drops[i]  = old[i]  !== undefined ? old[i]  : Math.floor(Math.random() * -80);
+        speeds[i] = oldSpd[i] !== undefined ? oldSpd[i] : 0.4 + Math.random() * 0.8;
+      }
+    }
+  }
+
+  function draw(ts) {
+    animId = requestAnimationFrame(draw);
+    if (ts - lastFrame < frameDelay()) return;
+    lastFrame = ts;
+
+    const h = canvas.height;
+    const w = canvas.width;
+
+    // Fade trail — semi-transparent overlay
+    ctx.fillStyle = 'rgba(10, 10, 15, 0.18)';
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.font = `${FONT_SIZE}px "JetBrains Mono", monospace`;
+
+    for (let i = 0; i < cols; i++) {
+      const y = drops[i];
+      const yPx = y * FONT_SIZE;
+
+      if (yPx > 0 && yPx < h) {
+        // Dígito líder (branco brilhante)
+        ctx.fillStyle = COLOR_HEAD;
+        ctx.shadowColor = COLOR_MAIN;
+        ctx.shadowBlur = scanningMode ? 10 : 6;
+        ctx.fillText(CHARS[Math.random() < 0.5 ? 0 : 1], i * FONT_SIZE, yPx);
+
+        // Dígitos de rastro (um pouco acima)
+        const trailLen = Math.floor(8 + Math.random() * 8);
+        for (let t = 1; t <= trailLen && t <= y; t++) {
+          const alpha = 1 - t / (trailLen + 1);
+          const color = t < 3
+            ? interpolateColor(COLOR_MAIN, COLOR_MID, t / 3)
+            : interpolateColor(COLOR_MID, COLOR_TAIL, (t - 3) / (trailLen - 3));
+          ctx.fillStyle = hexWithAlpha(color, alpha);
+          ctx.shadowBlur = 0;
+          ctx.fillText(CHARS[Math.random() < 0.5 ? 0 : 1], i * FONT_SIZE, (y - t) * FONT_SIZE);
+        }
+      }
+
+      // Avança a gota
+      drops[i] += speeds[i];
+
+      // Reseta quando sai da tela (com atraso aleatório para ficar natural)
+      const rows = Math.floor(h / FONT_SIZE);
+      if (drops[i] > rows + 20) {
+        if (Math.random() < (scanningMode ? 0.03 : 0.012)) {
+          drops[i] = Math.floor(Math.random() * -60);
+          speeds[i] = 0.4 + Math.random() * (scanningMode ? 1.4 : 0.8);
+        }
+      }
+    }
+
+    ctx.shadowBlur = 0;
+  }
+
+  // Helpers
+  function hexWithAlpha(hex, alpha) {
+    const r = parseInt(hex.slice(1,3), 16);
+    const g = parseInt(hex.slice(3,5), 16);
+    const b = parseInt(hex.slice(5,7), 16);
+    return `rgba(${r},${g},${b},${alpha.toFixed(3)})`;
+  }
+  function interpolateColor(hex1, hex2, t) {
+    const r = Math.round(parseInt(hex1.slice(1,3),16)*(1-t) + parseInt(hex2.slice(1,3),16)*t);
+    const g = Math.round(parseInt(hex1.slice(3,5),16)*(1-t) + parseInt(hex2.slice(3,5),16)*t);
+    const b = Math.round(parseInt(hex1.slice(5,7),16)*(1-t) + parseInt(hex2.slice(5,7),16)*t);
+    return '#' + [r,g,b].map(x => x.toString(16).padStart(2,'0')).join('');
+  }
+
+  // Public API
+  window.matrixSetScanning = function(active) {
+    scanningMode = active;
+    canvas.classList.toggle('scanning', active);
+    // Ao iniciar scanning, acelera colunas paradas
+    if (active) {
+      for (let i = 0; i < cols; i++) {
+        speeds[i] = 0.8 + Math.random() * 1.4;
+      }
+    } else {
+      for (let i = 0; i < cols; i++) {
+        speeds[i] = 0.4 + Math.random() * 0.8;
+      }
+    }
+  };
+
+  // Init
+  resize();
+  window.addEventListener('resize', resize);
+  requestAnimationFrame(draw);
+})();
 
 // Register Service Worker
 if ('serviceWorker' in navigator) {
