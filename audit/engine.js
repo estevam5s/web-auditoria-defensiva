@@ -61,23 +61,49 @@ function signEvidence(data) {
 }
 
 // ── Severity scoring ─────────────────────────────────────────────
+// Scoring logic:
+//  - FAIL: full penalty per severity
+//  - WARN: 1/3 of FAIL penalty (warnings are advisory, not failures)
+//  - Dedup by category prefix to prevent double-penalization from basic + deep checks
+//  - Floor of 10 so no site shows literally 0 (which looks like a bug)
 function calculateScore(results) {
-  let score = 100;
-  const penalties = {
-    critical: 25,
-    high: 15,
-    medium: 8,
-    low: 3,
-    info: 0
-  };
+  const failPenalties  = { critical: 25, high: 15, medium: 8, low: 3, info: 0 };
+  const warnPenalties  = { critical:  8, high:  5, medium: 2, low: 1, info: 0 };
+
+  // Dedup by category (prefix before first " — "), keep worst finding per category
+  const severityRank = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
+  const statusRank   = { FAIL: 2, WARN: 1 };
+  const categories   = {};
 
   for (const result of results) {
-    if (result.status === 'FAIL' || result.status === 'WARN') {
-      score -= penalties[result.severity] || 5;
+    const s = result.status;
+    if (s !== 'FAIL' && s !== 'WARN') continue;
+
+    // Normalize category: strip leading emoji chars, take prefix before " — "
+    const raw      = result.check.replace(/^[^\w🔑🔒🔓⚡📦🕵️🔬🗺️🛡️🔍🐛📡⚙️🔷🔐🔗]*/u, '');
+    const category = raw.split(' — ')[0].trim() || raw;
+
+    const current = categories[category];
+    if (!current) {
+      categories[category] = result;
+      continue;
+    }
+    // Replace if this result is worse (higher status rank, then higher severity)
+    const newScore = (statusRank[s] || 0) * 10 + (severityRank[result.severity] || 0);
+    const curScore = (statusRank[current.status] || 0) * 10 + (severityRank[current.severity] || 0);
+    if (newScore > curScore) categories[category] = result;
+  }
+
+  let score = 100;
+  for (const result of Object.values(categories)) {
+    if (result.status === 'FAIL') {
+      score -= failPenalties[result.severity] ?? 5;
+    } else if (result.status === 'WARN') {
+      score -= warnPenalties[result.severity] ?? 2;
     }
   }
 
-  return Math.max(0, Math.min(100, score));
+  return Math.max(10, Math.min(100, score));
 }
 
 function getScoreGrade(score) {
