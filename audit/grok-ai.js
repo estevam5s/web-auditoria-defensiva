@@ -9,40 +9,12 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY || process.env.GROK_API_KEY || 'gs
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
 
-const SYSTEM_PROMPT = `Você é o SUPABASE GUARD AI Assistant, um especialista em segurança de aplicações Supabase e web.
+const SYSTEM_PROMPT = `Você é o SUPABASE GUARD AI Assistant, especialista em segurança de aplicações Supabase.
 
-Sua função é analisar resultados de auditorias de segurança e fornecer:
-1. Análise detalhada de vulnerabilidades encontradas
-2. Recomendações práticas para correção
-3. Explicação técnica das falhas de segurança
-4. Priorização de ações de remediation
-5. Informações confidenciais expostas (chaves de API, tokens, credenciais)
-
-Você tem acesso COMPLETO aos dados da auditoria incluindo:
-- Score de segurança e classificação
-- Todos os resultados detalhados de cada check
-- Evidências assinadas (hash SHA-256, audit ID)
-- Logs completos da auditoria
-- Dados sensíveis detectados (chaves expostas, tokens, etc)
-- Configurações de banco de dados, storage, auth
-- Tabelas e funções RPC expostas
-- Relacionamentos de banco que podem vazar dados
-
-IMPORTANTE: 
-- Forneça informações CONFIDENCIAIS detectadas na auditoria (chaves, tokens, credenciais)
-- Seja específico sobre quais arquivos/endpointsexpõem dados sensíveis
-- Forneça código SQL de exemplo para correção quando aplicável
-- Use linguagem técnica mas acessível
-- Formate respostas com markdown para melhor legibilidade
-- Liste itens críticos primeiro
-- Forneça severity (crítico, alto, médio, baixo) para cada problema
-
-Quando o usuário perguntar sobre:
-- "chaves" ou "tokens" - mostre todas as chaves/credenciais expostas
-- "vulnerabilidades" - liste todas com detalhes técnicos
-- "como corrigir" - forneça passos específicos e código
-- "score" ou "nota" - explique o que afeta a nota
-- "dados expostos" - liste exatamente o que foi encontrado`;
+Responda em português brasileiro de forma concisa e prática.
+Quando houver vulnerabilidades críticas, liste primeiro.
+Forneça código SQL de exemplo quando aplicável para correção.
+Não ultrapasse 500 palavras na resposta.`;
 
 function buildAnalysisPrompt(auditData, userQuestion) {
   const { 
@@ -50,90 +22,43 @@ function buildAnalysisPrompt(auditData, userQuestion) {
     duration, catalogData, evidence 
   } = auditData;
 
-  const criticalResults = results?.filter(r => r.severity === 'critical' && r.status !== 'PASS') || [];
-  const highResults = results?.filter(r => r.severity === 'high' && r.status !== 'PASS') || [];
-  const warnResults = results?.filter(r => r.status === 'WARN') || [];
+  const criticalResults = (results?.filter(r => r.severity === 'critical' && r.status !== 'PASS') || []).slice(0, 5);
+  const highResults = (results?.filter(r => r.severity === 'high' && r.status !== 'PASS') || []).slice(0, 5);
+  const warnResults = (results?.filter(r => r.status === 'WARN') || []).slice(0, 5);
   const passResults = results?.filter(r => r.status === 'PASS') || [];
 
   let auditSummary = `
-# RELATÓRIO DE AUDITORIA — ${projectUrl}
+# AUDITORIA SUPABASE — ${projectUrl}
 
-## 🎯 INFORMAÇÕES GERAIS
-- **URL Auditada:** ${projectUrl}
-- **Project Ref:** ${projectRef || 'N/A'}
-- **Security Score:** ${score}/100 (${grade?.label || 'N/A'})
-- **Duração:** ${duration}
-- **Audit ID:** ${evidence?.auditId || 'N/A'}
-- **Hash SHA-256:** ${evidence?.sha256 || 'N/A'}
-
-## 📊 ESTATÍSTICAS
-- Total de Verificações: ${results?.length || 0}
-- ✅ Passou: ${passResults.length}
-- ⚠️ Avisos: ${warnResults.length}
-- 🔴 Falhou: ${criticalResults.length + highResults.length}
+## INFO
+- URL: ${projectUrl}
+- Score: ${score}/100 (${grade?.label || 'N/A'})
+- Audit ID: ${evidence?.auditId || 'N/A'}
+- Verificações: ${results?.length || 0} | ✅ ${passResults.length} | ⚠️ ${warnResults.length} | 🔴 ${criticalResults.length + highResults.length}
 `;
 
   if (criticalResults.length > 0) {
-    auditSummary += `
-## 🔴 VULNERABILIDADES CRÍTICAS
-`;
+    auditSummary += `\n## CRÍTICAS\n`;
     criticalResults.forEach((r, i) => {
-      auditSummary += `
-### ${i + 1}. ${r.check}
-- **Status:** ${r.status}
-- **Mensagem:** ${r.message}
-- **Detalhes:** ${JSON.stringify(r.details, null, 2)}
-`;
+      auditSummary += `${i + 1}. [${r.severity.toUpperCase()}] ${r.check}: ${r.message}\n`;
     });
   }
 
   if (highResults.length > 0) {
-    auditSummary += `
-## 🟠 VULNERABILIDADES ALTAS
-`;
+    auditSummary += `\n## ALTAS\n`;
     highResults.forEach((r, i) => {
-      auditSummary += `
-### ${i + 1}. ${r.check}
-- **Status:** ${r.status}
-- **Mensagem:** ${r.message}
-- **Detalhes:** ${JSON.stringify(r.details, null, 2)}
-`;
+      auditSummary += `${i + 1}. [${r.severity.toUpperCase()}] ${r.check}: ${r.message}\n`;
     });
   }
 
   if (catalogData) {
-    auditSummary += `
-## 📦 CATÁLOGO DO SUPABASE
-`;
-    if (catalogData.openapi?.tables?.length > 0) {
-      auditSummary += `- **Tabelas descobertas:** ${catalogData.openapi.tables.length}\n`;
-      auditSummary += `- **Lista:** ${catalogData.openapi.tables.map(t => t.name).join(', ')}\n`;
-    }
-    if (catalogData.openapi?.rpcFunctions?.length > 0) {
-      auditSummary += `- **Funções RPC:** ${catalogData.openapi.rpcFunctions.length}\n`;
-    }
-    if (catalogData.restScan) {
-      const exposedTables = catalogData.restScan.filter(t => t.readable);
-      const writableTables = catalogData.restScan.filter(t => t.writable);
-      auditSummary += `- **Tabelas expostas:** ${exposedTables.length}\n`;
-      auditSummary += `- **Tabelas graváveis:** ${writableTables.length}\n`;
+    const tables = catalogData.openapi?.tables?.slice(0, 10).map(t => t.name) || [];
+    if (tables.length > 0) {
+      auditSummary += `\n## TABELAS: ${tables.join(', ')}\n`;
     }
   }
 
-  auditSummary += `
-## ✅ VERIFICAÇÕES PASSADAS
-${passResults.slice(0, 10).map(r => `- ${r.check}: ${r.message}`).join('\n')}
-${passResults.length > 10 ? `\n... e mais ${passResults.length - 10} verificações` : ''}
-`;
-
-  auditSummary += `
-
-## ❓ PERGUNTA DO USUÁRIO
-${userQuestion}
-
----
-
-Com base nestes dados, forneça uma análise detalhada e recomendações específicas.`;
+  auditSummary += `\n## PERGUNTA\n${userQuestion}\n\nResponda em português brasileiro de forma concisa.`;
 
   return auditSummary;
 }
@@ -145,10 +70,10 @@ async function askGrok(auditData, userQuestion) {
   ];
 
   const requestBody = {
-    model: 'grok-2',
+    model: DEFAULT_MODEL,
     messages,
     temperature: 0.7,
-    max_tokens: 8192,
+    max_tokens: 2048,
     stream: false
   };
 
@@ -198,7 +123,7 @@ async function askGrokStream(auditData, userQuestion, onChunk) {
     model: DEFAULT_MODEL,
     messages,
     temperature: 0.7,
-    max_tokens: 8192,
+    max_tokens: 2048,
     stream: true
   };
 
