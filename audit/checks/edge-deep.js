@@ -58,12 +58,29 @@ const TEST_ROLES = {
   },
 };
 
+function isSupabaseUrl(url) {
+  return typeof url === 'string' && url.includes('.supabase.co');
+}
+
 async function deepEdgeFunctionCheck(config, emit) {
   const results = [];
   const baseUrl = config.projectUrl;
   const headers = supabaseHeaders(config.anonKey);
 
   emit({ type: 'log', level: 'info', message: '[Edge Functions] Iniciando análise profunda de controle de role...' });
+
+  // GUARD: Only probe edge functions on actual Supabase URLs
+  if (!isSupabaseUrl(baseUrl)) {
+    emit({ type: 'log', level: 'info', message: '[Edge Functions] URL não é Supabase — pulando análise de Edge Functions.' });
+    results.push({
+      check: 'Edge Functions — Descoberta',
+      status: 'INFO',
+      severity: 'info',
+      message: 'Supabase URL não detectada — análise de Edge Functions requer credenciais Supabase.',
+      details: { note: 'Configure a anon key ou deixe o auto-detect encontrar as credenciais.' }
+    });
+    return results;
+  }
 
   // ═══════════ 1. Function Discovery (GET + POST + OPTIONS) ═══════════
   emit({ type: 'log', level: 'info', message: `[Edge Functions] Escaneando ${EDGE_FUNCTION_NAMES.length} funções potenciais...` });

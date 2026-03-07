@@ -40,8 +40,11 @@ async function restScanDeep(config, emit, catalog = null) {
   const exposedTables = [];
   const writableTables = [];
 
-  const tablesToTest = catalog && catalog.tables && catalog.tables.length > 0
-    ? catalog.tables.map(t => t.name)
+  // Use catalog from parameter, or from config (set by openapi-introspection)
+  const activeCatalog = catalog || config._catalog;
+
+  const tablesToTest = activeCatalog && activeCatalog.tables && activeCatalog.tables.length > 0
+    ? activeCatalog.tables.map(t => t.name)
     : [
         'users', 'profiles', 'accounts', 'posts', 'orders', 'payments',
         'products', 'customers', 'messages', 'notifications', 'settings',
@@ -50,7 +53,7 @@ async function restScanDeep(config, emit, catalog = null) {
         'categories', 'tags', 'media', 'attachments', 'events'
       ];
 
-  emit({ type: 'log', level: 'info', message: `[REST Deep] Testando ${tablesToTest.length} tabelas...` });
+  emit({ type: 'log', level: 'info', message: `[REST Deep] Escaneando ${tablesToTest.length} tabelas REST...` });
 
   const BATCH_SIZE = 8;
   let tested = 0;
@@ -71,11 +74,17 @@ async function restScanDeep(config, emit, catalog = null) {
 
       const tableUrl = `${baseUrl}/rest/v1/${tableName}`;
 
-      const selectRes = await safeFetch(`${tableUrl}?select=*&limit=5`, { headers, timeout: 8000 });
+      const selectRes = await safeFetch(`${tableUrl}?select=*&limit=500&offset=0`, {
+        headers: { ...headers, 'Prefer': 'count=exact' },
+        timeout: 8000
+      });
 
       if (selectRes.ok && Array.isArray(selectRes.json)) {
         testResult.readable = true;
-        testResult.recordCount = selectRes.json.length;
+        // Get total count from Content-Range header if available, else use array length
+        const contentRange = selectRes.headers?.['content-range'];
+        const totalCount = contentRange ? parseInt(contentRange.split('/')[1]) || selectRes.json.length : selectRes.json.length;
+        testResult.recordCount = totalCount;
 
         if (selectRes.json.length > 0) {
           testResult.exposedColumns = Object.keys(selectRes.json[0]);
@@ -151,8 +160,19 @@ async function restScanDeep(config, emit, catalog = null) {
       }
     }
 
-    if (tested % 20 === 0) {
-      emit({ type: 'log', level: 'info', message: `[REST Deep] ${tested}/${tablesToTest.length} tabelas testadas...` });
+    // Log each exposed table like SupabaseGuard does
+    for (const result of batchResults) {
+      if (result.readable) {
+        const level = result.recordCount > 0 ? 'warn' : 'info';
+        emit({ type: 'log', level, message: `[REST Deep] GUEST /rest/v1/${result.table}?select=*&limit=500&offset=0 -> 200 rows=${result.recordCount}` });
+        if (result.recordCount > 0) {
+          emit({ type: 'log', level: 'warn', message: `[REST Deep] Tabela exposta: '${result.table}' retornou ${result.recordCount} registro(s) para GUEST.` });
+        }
+      }
+    }
+
+    if (tested % 20 === 0 && tested > 0) {
+      emit({ type: 'log', level: 'info', message: `[REST Deep] ${tested}/${tablesToTest.length} tabelas...` });
     }
   }
 

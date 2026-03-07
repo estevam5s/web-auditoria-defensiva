@@ -104,7 +104,7 @@ const SENSITIVE_FIELDS = [
   'cvv', 'balance', 'address', 'phone', 'birthDate'
 ];
 
-async function graphqlScan(config, emit) {
+async function graphqlScan(config = {}, emit) {
   const results = [];
   const baseUrl = config.projectUrl;
   const anonKey = config.anonKey;
@@ -244,74 +244,75 @@ async function graphqlScan(config, emit) {
     });
   }
 
-  for (const type of schema.userTypes.slice(0, 10)) {
-    const collectionName = type.name.charAt(0).toLowerCase() + type.name.slice(1) + 'Collection';
+  // Test all queryable Collection fields — use catalog tables if available, else use schema types
+  const catalogTables = (config?._catalog?.tables || []).map(t => t.name);
+  const typesToTest = catalogTables.length > 0
+    ? catalogTables.map(name => ({
+        name: name.charAt(0).toUpperCase() + name.slice(1),
+        collectionName: name + 'Collection',
+        fields: null
+      }))
+    : schema.userTypes.map(t => ({
+        name: t.name,
+        collectionName: t.name.charAt(0).toLowerCase() + t.name.slice(1) + 'Collection',
+        fields: t.fields
+      }));
 
-    const dataQuery = {
-      query: `{ ${collectionName}(first: 3) { edges { node { __typename } } } }`
-    };
+  const queryableCollections = [];
+  const notQueryableCollections = [];
+
+  emit({ type: 'log', level: 'info', message: `[GraphQL] Testando ${Math.min(typesToTest.length, 40)} collections...` });
+
+  for (const typeInfo of typesToTest.slice(0, 40)) {
+    const collectionName = typeInfo.collectionName;
+    const dataQuery = { query: `{ ${collectionName}(first: 3) { edges { node { __typename } } } }` };
 
     const dataRes = await safeFetch(graphqlUrl, {
       method: 'POST',
       headers,
       body: JSON.stringify(dataQuery),
-      timeout: 8000
+      timeout: 6000
     });
 
-    if (dataRes.ok && dataRes.json?.data) {
-      const data = dataRes.json.data[collectionName];
-      if (data?.edges?.length > 0) {
-        results.push({
-          check: 'GraphQL — Data Access',
-          status: 'FAIL',
-          severity: 'high',
-          message: `Dados acessíveis via GraphQL: ${type.name}`,
-          details: {
-            type: type.name,
-            query: collectionName,
-            hasData: true,
-            sampleCount: data.edges.length
-          }
-        });
+    const isCallable = dataRes.ok && dataRes.json?.data !== undefined && !dataRes.json?.errors?.some(e => e.message?.includes('Unknown'));
+    const hasData = isCallable && (dataRes.json?.data?.[collectionName]?.edges?.length > 0);
 
-        const fullQuery = {
-          query: `{ ${collectionName}(first: 1) { edges { node { ... on ${type.name} { ${type.fields?.map(f => f.name).join(' ')} } } } } }`
-        };
+    emit({ type: 'log', level: 'info', message: `[GraphQL PROBE] field=${collectionName} -> ${dataRes.status} callable=${isCallable ? 'yes' : 'no'} data=${hasData ? 'yes' : 'no'}` });
 
-        const fullRes = await safeFetch(graphqlUrl, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(fullQuery),
-          timeout: 8000
-        });
-
-        if (fullRes.ok && fullRes.json?.data) {
-          const nodeData = fullRes.json.data[collectionName]?.edges?.[0]?.node;
-          if (nodeData) {
-            const fields = Object.keys(nodeData);
-            const sensitiveFields = fields.filter(f =>
-              SENSITIVE_FIELDS.some(s => f.toLowerCase().includes(s.toLowerCase()))
-            );
-
-            if (sensitiveFields.length > 0) {
-              results.push({
-                check: 'GraphQL — Sensitive Fields Exposed',
-                status: 'FAIL',
-                severity: 'critical',
-                message: `Campos sensíveis expostos em ${type.name}: ${sensitiveFields.join(', ')}`,
-                details: {
-                  type: type.name,
-                  sensitiveFields,
-                  recommendation: 'Oculte campos sensíveis via RLS ou GraphQL resolvers'
-                }
-              });
-            }
-          }
-        }
-
-        break;
-      }
+    if (isCallable) {
+      queryableCollections.push({ name: typeInfo.name, collection: collectionName, hasData });
+    } else {
+      notQueryableCollections.push(collectionName);
     }
+
+    if (hasData) {
+      results.push({
+        check: 'GraphQL — Data Access',
+        status: 'FAIL',
+        severity: 'high',
+        message: `Dados acessíveis via GraphQL: ${typeInfo.name} (${dataRes.json?.data?.[collectionName]?.edges?.length} registros)`,
+        details: {
+          type: typeInfo.name,
+          query: collectionName,
+          hasData: true,
+          sampleCount: dataRes.json?.data?.[collectionName]?.edges?.length
+        }
+      });
+    }
+  }
+
+  if (queryableCollections.length > 0) {
+    results.push({
+      check: 'GraphQL — Campos Queryable',
+      status: 'WARN',
+      severity: 'high',
+      message: `${queryableCollections.length} collection(s) queryable para GUEST via GraphQL.`,
+      details: {
+        queryable: queryableCollections.map(c => ({ name: c.name, hasData: c.hasData })),
+        withData: queryableCollections.filter(c => c.hasData).map(c => c.name),
+        recommendation: 'Verifique RLS em todas as tabelas expostas via GraphQL. Considere desabilitar introspection em produção.'
+      }
+    });
   }
 
   if (schema.mutations.length > 0) {

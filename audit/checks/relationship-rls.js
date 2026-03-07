@@ -44,15 +44,47 @@ async function relationshipRLSScan(config, emit, tableTests = []) {
 
   emit({ type: 'log', level: 'info', message: '[Relationship RLS] Iniciando verificação de vazamentos via joins...' });
 
-  const tablesToAnalyze = tableTests && tableTests.length > 0
-    ? tableTests.filter(t => t.readable).map(t => t.table)
+  // Use tableTests from parameter, or from config (set by REST scan deep), or fallback
+  const restResults = tableTests && tableTests.length > 0
+    ? tableTests
+    : (config._restScanResults || []);
+
+  const exposedTableNames = restResults.filter(t => t.readable).map(t => t.table);
+
+  // Also use catalog tables if available
+  const catalogTableNames = (config._catalog?.tables || []).map(t => t.name);
+  const allKnownTables = [...new Set([...exposedTableNames, ...catalogTableNames])];
+
+  const tablesToAnalyze = allKnownTables.length > 0
+    ? allKnownTables
     : ['users', 'profiles', 'posts', 'orders', 'comments', 'payments', 'messages', 'files'];
 
-  const relationshipTests = [];
+  emit({ type: 'log', level: 'info', message: `[Relationship RLS] ${tablesToAnalyze.length} tabelas para analisar relações` });
 
+  // Build relationship tests from hardcoded patterns
+  const relationshipTests = [];
   for (const rel of RELATIONSHIP_PATTERNS) {
     if (tablesToAnalyze.includes(rel.source) && tablesToAnalyze.includes(rel.target)) {
       relationshipTests.push(rel);
+    }
+  }
+
+  // Also build dynamic relationship tests: for each exposed table, test join against other exposed tables
+  const exposedTables = restResults.filter(t => t.readable).slice(0, 30);
+  for (const sourceTable of exposedTables) {
+    for (const targetTable of exposedTables) {
+      if (sourceTable.table === targetTable.table) continue;
+      // Skip if already covered by hardcoded patterns
+      const alreadyCovered = relationshipTests.some(r => r.source === sourceTable.table && r.target === targetTable.table);
+      if (alreadyCovered) continue;
+      // Add dynamic test with common alias names
+      relationshipTests.push({
+        source: sourceTable.table,
+        target: targetTable.table,
+        via: `${targetTable.table.replace(/s$/, '')}_id`,
+        aliases: [targetTable.table.replace(/s$/, ''), targetTable.table],
+        dynamic: true
+      });
     }
   }
 

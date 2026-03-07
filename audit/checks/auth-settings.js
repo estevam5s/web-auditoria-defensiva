@@ -31,8 +31,9 @@ async function authSettingsScan(config, emit) {
   if (settingsRes.ok && settingsRes.json) {
     const data = settingsRes.json;
 
-    settings.signupOpen = data.disable_signup === false || data.disable_signup === null;
-    settings.emailAutoConfirm = data.mailer_autoconfirm === true;
+    settings.signupOpen = data.disable_signup === false || data.disable_signup === null || data.disable_signup === undefined;
+    settings.emailAutoConfirm = data.mailer_autoconfirm === true || data.email_confirm_changes === false;
+    settings.emailConfirmDisabled = data.mailer_autoconfirm === true; // explicit flag for reporting
     settings.phoneAutoConfirm = data.phone_autoconfirm === true;
 
     if (data.external) {
@@ -48,6 +49,8 @@ async function authSettingsScan(config, emit) {
       requireSpecialChars: data.password_require_special_chars || false
     };
 
+    emit({ type: 'log', level: 'info', message: `[Auth Settings] /auth/v1/settings -> 200 (signupOpen=${settings.signupOpen}, emailConfirmDisabled=${settings.emailConfirmDisabled})` });
+
     results.push({
       check: 'Auth Settings — Configuration',
       status: 'INFO',
@@ -56,6 +59,7 @@ async function authSettingsScan(config, emit) {
       details: {
         signupOpen: settings.signupOpen,
         emailAutoConfirm: settings.emailAutoConfirm,
+        emailConfirmDisabled: settings.emailConfirmDisabled,
         phoneAutoConfirm: settings.phoneAutoConfirm,
         providers: settings.providers,
         passwordPolicy: settings.passwordPolicy
@@ -66,12 +70,26 @@ async function authSettingsScan(config, emit) {
       settings.vulnerabilities.push('open_signup');
       results.push({
         check: 'Auth Settings — Open Signup',
-        status: 'WARN',
+        status: 'FAIL',
         severity: 'high',
-        message: 'Signup ABERTO: Qualquer pessoa pode criar conta.',
+        message: 'Auth hardening fraco: signup aberto — qualquer pessoa pode criar conta.',
         details: {
           vulnerability: 'open_signup',
-          recommendation: 'Considere desabilitar signup público se não for necessário.'
+          recommendation: 'Considere desabilitar signup público em Auth > Settings > Enable Email Signup se não for necessário.'
+        }
+      });
+    }
+
+    if (settings.emailConfirmDisabled) {
+      settings.vulnerabilities.push('email_confirm_disabled');
+      results.push({
+        check: 'Auth Settings — Email Confirmation Disabled',
+        status: 'FAIL',
+        severity: 'medium',
+        message: 'Auth hardening fraco: confirmação de email desabilitada — contas ativadas instantaneamente sem verificação.',
+        details: {
+          vulnerability: 'email_confirm_disabled',
+          recommendation: 'Habilite confirmação de email em Auth > Settings > Enable email confirmations.'
         }
       });
     }
@@ -114,7 +132,7 @@ async function authSettingsScan(config, emit) {
       });
     }
   } else {
-    emit({ type: 'log', level: 'warn', message: '[Auth Settings] Não foi possível obter configurações' });
+    emit({ type: 'log', level: 'warn', message: `[Auth Settings] /auth/v1/settings -> ${settingsRes.status}` });
   }
 
   emit({ type: 'log', level: 'info', message: '[Auth Settings] Testando endpoints de autenticação...' });

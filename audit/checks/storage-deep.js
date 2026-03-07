@@ -73,6 +73,10 @@ const COMMON_FILES = [
   'key.pem', 'cert.pem', 'server.key', 'private.key',
 ];
 
+function isSupabaseUrl(url) {
+  return typeof url === 'string' && url.includes('.supabase.co');
+}
+
 async function deepStorageCheck(config, emit) {
   const results = [];
   const baseUrl = config.projectUrl;
@@ -211,57 +215,65 @@ async function deepStorageCheck(config, emit) {
   }
 
   // ═══════════ 3. Hidden Bucket Discovery ═══════════
-  emit({ type: 'log', level: 'info', message: `[Storage Deep] Procurando ${BUCKET_NAMES.length} buckets ocultos...` });
-
+  // GUARD: Only probe hidden buckets on actual Supabase URLs to avoid false positives
   const knownNames = knownBuckets.map(b => b.name);
   const hiddenBuckets = [];
 
-  for (const name of BUCKET_NAMES) {
-    if (knownNames.includes(name)) continue;
+  if (isSupabaseUrl(baseUrl)) {
+    emit({ type: 'log', level: 'info', message: `[Storage Deep] Procurando ${BUCKET_NAMES.length} buckets ocultos...` });
 
-    // Try direct public access
-    const publicRes = await safeFetch(`${baseUrl}/storage/v1/object/public/${name}/test`, { timeout: 3000 });
-    const listRes = await safeFetch(`${baseUrl}/storage/v1/object/list/${name}`, {
-      method: 'POST',
-      headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prefix: '', limit: 5 }),
-      timeout: 3000,
-    });
+    for (const name of BUCKET_NAMES) {
+      if (knownNames.includes(name)) continue;
 
-    if ((publicRes.status !== 404 && publicRes.status !== 0 && publicRes.status !== 400) ||
-        (listRes.ok && Array.isArray(listRes.json))) {
-      const files = listRes.ok && Array.isArray(listRes.json) ? listRes.json : [];
-      hiddenBuckets.push({
-        name,
-        accessible: true,
-        fileCount: files.length,
-        publicAccess: publicRes.status !== 404,
+      // Try listing — more reliable than public URL test
+      const listRes = await safeFetch(`${baseUrl}/storage/v1/object/list/${name}`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prefix: '', limit: 5 }),
+        timeout: 3000,
       });
-      emit({ type: 'log', level: 'warn', message: `[Storage Deep] Bucket oculto encontrado: ${name} (${files.length} arquivos)` });
+
+      // Only report if listing succeeds (200) — status 400/404 means bucket doesn't exist
+      if (listRes.ok && Array.isArray(listRes.json)) {
+        const files = listRes.json;
+        hiddenBuckets.push({
+          name,
+          accessible: true,
+          fileCount: files.length,
+        });
+        emit({ type: 'log', level: 'warn', message: `[Storage Deep] Bucket oculto encontrado: ${name} (${files.length} arquivos)` });
+      }
     }
+  } else {
+    emit({ type: 'log', level: 'info', message: '[Storage Deep] URL não é Supabase — pulando busca por buckets ocultos.' });
   }
 
   // ═══════════ 4. Common File Probing in Buckets ═══════════
-  emit({ type: 'log', level: 'info', message: '[Storage Deep] Procurando arquivos críticos em buckets...' });
-
   const allBucketNames = [...knownNames, ...hiddenBuckets.map(h => h.name)];
   const criticalFiles = [];
 
-  for (const bucketName of allBucketNames.slice(0, 15)) {
-    for (const fileName of COMMON_FILES) {
-      const publicUrl = `${baseUrl}/storage/v1/object/public/${bucketName}/${fileName}`;
-      const res = await safeFetch(publicUrl, { method: 'HEAD', timeout: 3000 });
+  if (isSupabaseUrl(baseUrl) && allBucketNames.length > 0) {
+    emit({ type: 'log', level: 'info', message: '[Storage Deep] Procurando arquivos críticos em buckets...' });
 
-      if (res.ok || res.status === 200) {
-        criticalFiles.push({
-          bucket: bucketName,
-          file: fileName,
-          url: publicUrl,
-          size: parseInt(res.headers?.['content-length'] || '0'),
-        });
-        emit({ type: 'log', level: 'warn', message: `[Storage Deep] 🚨 Arquivo crítico público: ${bucketName}/${fileName}` });
+    for (const bucketName of allBucketNames.slice(0, 15)) {
+      for (const fileName of COMMON_FILES) {
+        const publicUrl = `${baseUrl}/storage/v1/object/public/${bucketName}/${fileName}`;
+        const res = await safeFetch(publicUrl, { method: 'HEAD', timeout: 3000 });
+
+        // Only report if file actually exists AND has content (status 200 with content-length > 0)
+        if ((res.ok || res.status === 200) && (parseInt(res.headers?.['content-length'] || '0') > 0 || res.headers?.['content-type'])) {
+          criticalFiles.push({
+            bucket: bucketName,
+            file: fileName,
+            url: publicUrl,
+            size: parseInt(res.headers?.['content-length'] || '0'),
+          });
+          emit({ type: 'log', level: 'warn', message: `[Storage Deep] Arquivo crítico público: ${bucketName}/${fileName}` });
+        }
       }
     }
+  } else if (!isSupabaseUrl(baseUrl)) {
+    emit({ type: 'log', level: 'info', message: '[Storage Deep] URL não é Supabase — pulando probe de arquivos críticos.' });
   }
 
   // ═══════════ 5. Upload Permission Test ═══════════

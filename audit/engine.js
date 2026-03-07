@@ -44,6 +44,7 @@ const { restScanDeep } = require('./checks/rest-scan-deep');
 const { relationshipRLSScan } = require('./checks/relationship-rls');
 const { graphqlScan } = require('./checks/graphql-scan');
 const { authSettingsScan } = require('./checks/auth-settings');
+const { hardeningCheck } = require('./checks/hardening-check');
 
 // ── Evidence signing ─────────────────────────────────────────────
 function signEvidence(data) {
@@ -92,6 +93,9 @@ async function runFullAudit(config, emit) {
   const auditStart = Date.now();
   const results = [];
 
+  // Store original website URL before auto-detect may override projectUrl with supabase URL
+  config._websiteUrl = config.projectUrl;
+
   const checks = [
     { name: '🔑 Auto-Detect Credentials', fn: runAutoDetect, enabled: config.options.checkAutoDetect !== false, usesEmit: true },
     { name: 'DNS & Connectivity', fn: checkDNSInfo, enabled: true },
@@ -114,20 +118,21 @@ async function runFullAudit(config, emit) {
     { name: '📡 OpenAPI Introspection', fn: openAPIIntrospection, enabled: config.options.checkOpenAPI !== false, usesEmit: true },
     { name: '🔍 REST Scan Deep', fn: restScanDeep, enabled: config.options.checkRESTDeep !== false, usesEmit: true },
     { name: '🔗 Relationship RLS Scan', fn: relationshipRLSScan, enabled: config.options.checkRelationshipRLS !== false, usesEmit: true },
-    // ── Deep Analysis Modules (emit-aware) ──
-    { name: '🔬 Deep Source Code Analysis', fn: deepSourceCodeAnalysis, enabled: config.options.checkDeepSource !== false, usesEmit: true },
-    { name: '🗺️ Hidden Route Discovery', fn: deepRouteDiscovery, enabled: config.options.checkDeepRoutes !== false, usesEmit: true },
-    { name: '🛡️ Vulnerability Scanner', fn: deepVulnerabilityScanner, enabled: config.options.checkDeepVuln !== false, usesEmit: true },
-    { name: '🔍 Sensitive Data Detector', fn: deepSensitiveDataDetector, enabled: config.options.checkDeepSensitive !== false, usesEmit: true },
-    { name: '🐛 Error Detector', fn: deepErrorDetector, enabled: config.options.checkDeepErrors !== false, usesEmit: true },
+    { name: '⚙️ Hardening & Rate Limiting', fn: hardeningCheck, enabled: config.options.checkHardening !== false, usesEmit: true },
+    // ── Deep Analysis Modules — use _websiteUrl for web checks ──
+    { name: '🔬 Deep Source Code Analysis', fn: deepSourceCodeAnalysis, enabled: config.options.checkDeepSource !== false, usesEmit: true, useWebsiteUrl: true },
+    { name: '🗺️ Hidden Route Discovery', fn: deepRouteDiscovery, enabled: config.options.checkDeepRoutes !== false, usesEmit: true, useWebsiteUrl: true },
+    { name: '🛡️ Vulnerability Scanner', fn: deepVulnerabilityScanner, enabled: config.options.checkDeepVuln !== false, usesEmit: true, useWebsiteUrl: true },
+    { name: '🔍 Sensitive Data Detector', fn: deepSensitiveDataDetector, enabled: config.options.checkDeepSensitive !== false, usesEmit: true, useWebsiteUrl: true },
+    { name: '🐛 Error Detector', fn: deepErrorDetector, enabled: config.options.checkDeepErrors !== false, usesEmit: true, useWebsiteUrl: true },
     // ── Deep Analysis v2 — Targeted Security ──
     { name: '🔒 Deep RLS Misconfiguration', fn: deepRLSCheck, enabled: config.options.checkDeepRLS !== false, usesEmit: true },
     { name: '🔓 REST/RPC Data Leak (GUEST/USER)', fn: deepRESTRPCLeakCheck, enabled: config.options.checkDeepRESTRPC !== false, usesEmit: true },
     { name: '⚡ Edge Function Role Control', fn: deepEdgeFunctionCheck, enabled: config.options.checkDeepEdge !== false, usesEmit: true },
-    { name: '🔑 Bundle Key Scanner', fn: deepBundleKeyScanner, enabled: config.options.checkDeepBundleKeys !== false, usesEmit: true },
+    { name: '🔑 Bundle Key Scanner', fn: deepBundleKeyScanner, enabled: config.options.checkDeepBundleKeys !== false, usesEmit: true, useWebsiteUrl: true },
     { name: '📦 Deep Storage Abuse', fn: deepStorageCheck, enabled: config.options.checkDeepStorage !== false, usesEmit: true },
-    { name: '🕵️ Credential & PII Detector', fn: deepCredentialPIIDetector, enabled: config.options.checkDeepCredPII !== false, usesEmit: true },
-    { name: '🔧 Stack Detection', fn: detectStack, enabled: true, usesEmit: true },
+    { name: '🕵️ Credential & PII Detector', fn: deepCredentialPIIDetector, enabled: config.options.checkDeepCredPII !== false, usesEmit: true, useWebsiteUrl: true },
+    { name: '🔧 Stack Detection', fn: detectStack, enabled: true, usesEmit: true, useWebsiteUrl: true },
   ];
 
   const enabledChecks = checks.filter(c => c.enabled);
@@ -149,9 +154,14 @@ async function runFullAudit(config, emit) {
     });
 
     try {
+      // Web-focused checks should analyze the original website URL, not the Supabase API URL
+      const checkConfig = check.useWebsiteUrl && config._websiteUrl && config._websiteUrl !== config.projectUrl
+        ? { ...config, projectUrl: config._websiteUrl }
+        : config;
+
       const result = check.usesEmit
-        ? await check.fn(config, emit)
-        : await check.fn(config);
+        ? await check.fn(checkConfig, emit)
+        : await check.fn(checkConfig);
       
       let items = [];
       let catalogData = null;
@@ -184,8 +194,14 @@ async function runFullAudit(config, emit) {
         if (catalogData.findings) config._relationshipResults = catalogData.findings;
         if (catalogData.schema) config._graphqlResults = catalogData.schema;
         if (catalogData.detected) {
-          if (catalogData.detected.supabaseUrl) config.projectUrl = catalogData.detected.supabaseUrl;
+          if (catalogData.detected.supabaseUrl) {
+            // Update projectUrl to the Supabase API URL for subsequent Supabase checks
+            // _websiteUrl keeps the original website URL for web-focused checks
+            config.projectUrl = catalogData.detected.supabaseUrl;
+            config._supabaseUrl = catalogData.detected.supabaseUrl;
+          }
           if (catalogData.detected.anonKey) config.anonKey = catalogData.detected.anonKey;
+          if (catalogData.detected.serviceRoleKey) config._serviceRoleKey = catalogData.detected.serviceRoleKey;
         }
       }
     } catch (err) {
