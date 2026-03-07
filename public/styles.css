@@ -1539,6 +1539,10 @@ input[type="text"]::placeholder {
   to { transform: rotate(360deg); }
 }
 
+.spin {
+  animation: spin 1s linear infinite;
+}
+
 .history-item {
   background: rgba(20, 20, 35, 0.8);
   border: 1px solid rgba(100, 100, 150, 0.2);

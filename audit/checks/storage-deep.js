@@ -233,8 +233,9 @@ async function deepStorageCheck(config, emit) {
         timeout: 3000,
       });
 
-      // Only report if listing succeeds (200) — status 400/404 means bucket doesn't exist
-      if (listRes.ok && Array.isArray(listRes.json)) {
+      // Only report if listing succeeds AND contains actual files
+      // 200+[] is ambiguous (Supabase returns empty array for non-existent buckets too)
+      if (listRes.ok && Array.isArray(listRes.json) && listRes.json.length > 0) {
         const files = listRes.json;
         hiddenBuckets.push({
           name,

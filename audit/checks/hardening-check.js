@@ -20,6 +20,7 @@ const KEY_ENDPOINTS = [
 ];
 
 // Rate limiting headers (any of these indicate protection)
+// NOTE: cf-cache-status is NOT a rate-limit header — it's Cloudflare's cache status
 const RATE_LIMIT_HEADERS = [
   'x-ratelimit-limit',
   'x-ratelimit-remaining',
@@ -29,7 +30,6 @@ const RATE_LIMIT_HEADERS = [
   'retry-after',
   'x-rate-limit-limit',
   'x-rate-limit-remaining',
-  'cf-cache-status', // Cloudflare rate-limiting signal
 ];
 
 // Unsafe cache-control values for data endpoints

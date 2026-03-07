@@ -286,30 +286,22 @@ async function graphqlScan(config = {}, emit) {
     }
 
     if (hasData) {
-      results.push({
-        check: 'GraphQL — Data Access',
-        status: 'FAIL',
-        severity: 'high',
-        message: `Dados acessíveis via GraphQL: ${typeInfo.name} (${dataRes.json?.data?.[collectionName]?.edges?.length} registros)`,
-        details: {
-          type: typeInfo.name,
-          query: collectionName,
-          hasData: true,
-          sampleCount: dataRes.json?.data?.[collectionName]?.edges?.length
-        }
-      });
+      queryableCollections[queryableCollections.length - 1].hasData = true;
     }
   }
+
+  // Aggregate data-accessible tables into a single finding (not one FAIL per table)
+  const tablesWithData = queryableCollections.filter(c => c.hasData);
 
   if (queryableCollections.length > 0) {
     results.push({
       check: 'GraphQL — Campos Queryable',
-      status: 'WARN',
+      status: tablesWithData.length > 0 ? 'FAIL' : 'WARN',
       severity: 'high',
-      message: `${queryableCollections.length} collection(s) queryable para GUEST via GraphQL.`,
+      message: `${queryableCollections.length} collection(s) queryable para GUEST via GraphQL.${tablesWithData.length > 0 ? ` ${tablesWithData.length} retornam dados reais.` : ''}`,
       details: {
         queryable: queryableCollections.map(c => ({ name: c.name, hasData: c.hasData })),
-        withData: queryableCollections.filter(c => c.hasData).map(c => c.name),
+        withData: tablesWithData.map(c => c.name),
         recommendation: 'Verifique RLS em todas as tabelas expostas via GraphQL. Considere desabilitar introspection em produção.'
       }
     });

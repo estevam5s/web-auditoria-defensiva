@@ -69,10 +69,13 @@ async function relationshipRLSScan(config, emit, tableTests = []) {
     }
   }
 
-  // Also build dynamic relationship tests: for each exposed table, test join against other exposed tables
-  const exposedTables = restResults.filter(t => t.readable).slice(0, 30);
+  // Also build dynamic relationship tests: for each exposed table, test join against
+  // at most 2 other tables (by name similarity / convention) to avoid N² explosion
+  const exposedTables = restResults.filter(t => t.readable).slice(0, 24);
   for (const sourceTable of exposedTables) {
+    let dynamicAdded = 0;
     for (const targetTable of exposedTables) {
+      if (dynamicAdded >= 2) break; // max 2 dynamic targets per source table
       if (sourceTable.table === targetTable.table) continue;
       // Skip if already covered by hardcoded patterns
       const alreadyCovered = relationshipTests.some(r => r.source === sourceTable.table && r.target === targetTable.table);
@@ -85,6 +88,7 @@ async function relationshipRLSScan(config, emit, tableTests = []) {
         aliases: [targetTable.table.replace(/s$/, ''), targetTable.table],
         dynamic: true
       });
+      dynamicAdded++;
     }
   }
 

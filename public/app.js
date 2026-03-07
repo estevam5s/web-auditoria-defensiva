@@ -230,8 +230,24 @@ function showScoreCard(results) {
   $('#statWarn').textContent = results.warnings;
   $('#statInfo').textContent = results.info + results.errors;
 
-  $('#scoreMeta').textContent = 
+  $('#scoreMeta').textContent =
     `Projeto: ${results.projectUrl} | Duração: ${results.duration} | ${results.totalChecks} verificações | ${new Date().toLocaleString('pt-BR')}`;
+
+  // Add fix prompt button below score
+  let fixBtn = $('#btnFixPromptScore');
+  if (!fixBtn) {
+    fixBtn = document.createElement('div');
+    fixBtn.id = 'fixPromptScoreContainer';
+    fixBtn.style.cssText = 'margin-top:20px;text-align:center;';
+    fixBtn.innerHTML = `
+      <button id="btnFixPromptScore" onclick="generateFixPromptDirect()" style="background:linear-gradient(135deg,#ff0040,#c0001e);color:#fff;border:none;border-radius:10px;padding:14px 28px;font-size:15px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:10px;letter-spacing:.5px;box-shadow:0 0 20px rgba(255,0,64,.4);transition:opacity .2s,transform .2s;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Gerar Plano de Correção com IA (Score 100/100)
+      </button>
+      <p style="margin:8px 0 0;color:#888;font-size:12px;">A IA analisa todas as falhas e gera um plano completo com SQL, configurações e passos para corrigir o site.</p>
+    `;
+    section.appendChild(fixBtn);
+  }
 
   // Scroll to score
   section.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -380,6 +396,56 @@ function animateNumber(el, from, to, duration) {
 // ═══════════════════════════════════════════════════════════════════
 // AI FIX PROMPT GENERATOR
 // ═══════════════════════════════════════════════════════════════════
+
+// Standalone fix prompt generator — shows modal directly, no AI chat messages
+async function generateFixPromptDirect() {
+  if (!auditResults) {
+    alert('Execute uma auditoria primeiro.');
+    return;
+  }
+
+  const btn = $('#btnFixPromptScore');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Gerando plano de correção...`;
+  }
+
+  // Show overlay spinner
+  const overlay = document.createElement('div');
+  overlay.id = 'fixPromptOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9000;';
+  overlay.innerHTML = `
+    <svg class="spin" viewBox="0 0 24 24" fill="none" stroke="#ff0040" stroke-width="2" width="48" height="48"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+    <p style="color:#fff;margin-top:16px;font-size:16px;font-weight:600;">A IA está gerando seu plano de correção...</p>
+    <p style="color:#888;margin-top:6px;font-size:13px;">Analisando vulnerabilidades e gerando SQL, configs e passos detalhados</p>
+  `;
+  document.body.appendChild(overlay);
+
+  try {
+    const response = await fetch('/api/ai/fix-prompt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ auditId: currentAuditId, auditData: auditResults })
+    });
+
+    const data = await response.json();
+
+    if (data.success && data.prompt) {
+      showFixPromptModal(data.prompt, auditResults.score, data.criticalCount);
+    } else {
+      alert(`Erro ao gerar plano: ${data.error || 'Tente novamente.'}`);
+    }
+  } catch (error) {
+    alert(`Erro de conexão: ${error.message}`);
+  } finally {
+    const ov = $('#fixPromptOverlay');
+    if (ov) ov.remove();
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg> Gerar Plano de Correção com IA (Score 100/100)`;
+    }
+  }
+}
 
 async function generateAIFixPrompt() {
   if (!auditResults) {

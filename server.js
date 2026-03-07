@@ -24,7 +24,7 @@ const { saveAuditToSupabase, getAuditHistory, getAuditById } = require('./audit/
 const { analyzeGitHistory, checkForExposedSecrets } = require('./audit/git-analyzer');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 2998;
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
