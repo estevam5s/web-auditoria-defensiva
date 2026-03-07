@@ -50,6 +50,20 @@ async function startAudit() {
 
   // Gather options
   const anonKey = $('#anonKey')?.value?.trim() || '';
+
+  // Parse custom headers JSON
+  let customHeaders = {};
+  try {
+    const raw = $('#customHeaders')?.value?.trim();
+    if (raw) customHeaders = JSON.parse(raw);
+  } catch { /* ignore invalid JSON */ }
+
+  // Parse custom wordlist
+  const customWordlist = ($('#customWordlist')?.value || '')
+    .split('\n')
+    .map(s => s.trim())
+    .filter(s => s.startsWith('/'));
+
   const options = {
     checkREST: $('#chkREST')?.checked ?? true,
     checkRPC: $('#chkRPC')?.checked ?? true,
@@ -74,7 +88,20 @@ async function startAudit() {
     checkDeepBundleKeys: $('#chkDeepBundleKeys')?.checked ?? true,
     checkDeepStorage: $('#chkDeepStorage')?.checked ?? true,
     checkDeepCredPII: $('#chkDeepCredPII')?.checked ?? true,
-    userMode: document.querySelector('input[name="roleMode"]:checked')?.value === 'both'
+    userMode: document.querySelector('input[name="roleMode"]:checked')?.value === 'both',
+    // Advanced options
+    crawlDepth: parseInt($('#crawlDepth')?.value || '2'),
+    requestTimeout: parseInt($('#reqTimeout')?.value || '10000'),
+    requestDelay: parseInt($('#reqDelay')?.value || '0'),
+    bearerToken: $('#bearerToken')?.value?.trim() || '',
+    customHeaders,
+    customWordlist,
+    checkSSL: $('#chkSSL')?.checked ?? true,
+    checkGitExposure: $('#chkGitExposure')?.checked ?? true,
+    checkOpenRedirect: $('#chkOpenRedirect')?.checked ?? true,
+    crawlSubdomains: $('#chkSubdomains')?.checked ?? false,
+    checkScreenshot: $('#chkScreenshot')?.checked ?? false,
+    passiveMode: $('#chkPassive')?.checked ?? false,
   };
 
   try {

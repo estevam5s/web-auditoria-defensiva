@@ -3,10 +3,11 @@
     Generates a self-contained HTML file with Chart.js visualizations
     ═══════════════════════════════════════════════════════════════════ */
 
-function generateHTMLReport(auditData) {
+function generateHTMLReport(auditData, networkInfo = {}) {
   const results = auditData.results || [];
   const score = auditData.score ?? 0;
   const grade = auditData.grade || {};
+  const { ip = null, hostname = null, hosting = null } = networkInfo;
 
   // Categorize results
   const critical = results.filter(r => r.severity === 'critical' && (r.status === 'FAIL' || r.status === 'WARN'));
@@ -197,6 +198,12 @@ function generateHTMLReport(auditData) {
       .chart-card, .stat-card, .insight-card, .evidence-row { border: 1px solid #ddd; }
     }
     
+    /* Network Cards */
+    .net-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+    .net-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
+    .net-label { font-size: 0.7rem; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.3rem; }
+    .net-value { font-size: 0.95rem; font-weight: 600; word-break: break-all; }
+
     /* Footer */
     .report-footer { text-align: center; padding: 2rem 0; border-top: 1px solid var(--border); color: var(--gray); font-size: 0.8rem; }
   </style>
@@ -209,6 +216,8 @@ function generateHTMLReport(auditData) {
       <p class="subtitle">RELATÓRIO DE AUDITORIA DE SEGURANÇA</p>
       <div class="meta">
         <div class="meta-item">Alvo: <strong>${esc(auditData.projectUrl)}</strong></div>
+        ${ip ? `<div class="meta-item">IP: <strong>${esc(ip)}</strong></div>` : ''}
+        ${hosting ? `<div class="meta-item">Hospedagem: <strong>${esc(hosting)}</strong></div>` : ''}
         <div class="meta-item">Data: <strong>${formatDate(auditData.evidence?.timestamp)}</strong></div>
         <div class="meta-item">Score: <strong>${score}/100 (${grade.grade || '-'})</strong></div>
         <div class="meta-item">Duração: <strong>${auditData.duration || 'N/A'}</strong></div>
@@ -220,10 +229,12 @@ function generateHTMLReport(auditData) {
     <nav class="nav-bar">
       <a href="#score">Score</a>
       <a href="#charts">Gráficos</a>
+      <a href="#network">Rede & Infra</a>
       <a href="#stack">Stack</a>
       <a href="#checked">O Que Verificamos</a>
       <a href="#vulnerabilities">Vulnerabilidades</a>
-      <a href="#routes">Rotas Ocultas</a>
+      <a href="#routes">Rotas Descobertas</a>
+      <a href="#git-exposure">Git Exposure</a>
       <a href="#files">Arquivos Sensíveis</a>
       <a href="#insights">Insights</a>
       <a href="#evidence">Evidência</a>
@@ -303,6 +314,37 @@ function generateHTMLReport(auditData) {
       </div>
     </section>
     
+    <!-- Network & Infrastructure -->
+    <section id="network">
+      <h2>🌐 Rede & Infraestrutura</h2>
+      <div class="net-grid">
+        <div class="net-card">
+          <div class="net-label">Hostname</div>
+          <div class="net-value">${esc(hostname || (auditData.projectUrl ? (()=>{try{return new URL(auditData.projectUrl).hostname}catch{return auditData.projectUrl}})() : 'N/A'))}</div>
+        </div>
+        <div class="net-card">
+          <div class="net-label">Endereço IP</div>
+          <div class="net-value" style="color:var(--blue)">${esc(ip || 'Não resolvido')}</div>
+        </div>
+        <div class="net-card">
+          <div class="net-label">Provedor de Hospedagem</div>
+          <div class="net-value" style="color:var(--purple)">${esc(hosting || detectedHosting(results) || 'Não identificado')}</div>
+        </div>
+        <div class="net-card">
+          <div class="net-label">Protocolo</div>
+          <div class="net-value" style="color:${auditData.projectUrl?.startsWith('https') ? 'var(--accent)' : 'var(--red)'}">${auditData.projectUrl?.startsWith('https') ? 'HTTPS ✓' : 'HTTP ⚠'}</div>
+        </div>
+        <div class="net-card">
+          <div class="net-label">Auditado em</div>
+          <div class="net-value">${formatDate(auditData.evidence?.timestamp)}</div>
+        </div>
+        <div class="net-card">
+          <div class="net-label">Audit ID</div>
+          <div class="net-value" style="font-family:var(--mono);font-size:0.7rem">${esc((auditData.evidence?.auditId || 'N/A').substring(0, 24))}...</div>
+        </div>
+      </div>
+    </section>
+
     <!-- Stack -->
     <section id="stack">
       <h2>🔧 Stack Detectado</h2>
@@ -392,26 +434,131 @@ function generateHTMLReport(auditData) {
       </div>
     </section>
     
-    <!-- Hidden Routes -->
+    <!-- All Routes Discovered -->
     <section id="routes">
-      <h2>🗺️ Rotas Ocultas Descobertas</h2>
-      ${routes.length > 0 ? `
-        <div style="overflow-x:auto;">
-          <table class="data-table">
-            <thead><tr><th>Rota</th><th>Status</th><th>Tipo</th></tr></thead>
-            <tbody>
-              ${routes.map(r => `
-                <tr>
-                  <td style="font-family:var(--mono);font-size:0.8rem">${esc(typeof r.path === 'string' ? r.path : JSON.stringify(r.path))}</td>
-                  <td><span class="badge badge-${r.status === 'PASS' ? 'pass' : 'warn'}">${esc(String(r.status))}</span></td>
-                  <td>${esc(String(r.type))}</td>
-                </tr>
+      <h2>🗺️ Rotas Descobertas</h2>
+      ${(() => {
+        // Get full route data from route-discovery results
+        const routeResult = results.find(r => r.check?.includes('Routes — Hidden') || r.check?.includes('Route'));
+        const allRoutes = routeResult?.details?.allRoutes || routeResult?.details?.routes || routes;
+        const byCategory = routeResult?.details?.byCategory || {};
+        const criticals = (allRoutes).filter(r => r.risk === 'critical' || r.risk === 'high');
+        const sitemapResult = results.find(r => r.check?.includes('Sitemap'));
+        const sitemapUrls = sitemapResult?.details?.urls || [];
+        const sourceResult = results.find(r => r.check?.includes('Source'));
+        const sourceRoutes = sourceResult?.details?.routes || [];
+
+        if (allRoutes.length === 0 && routes.length === 0) {
+          return '<p style="color:var(--gray)">Módulo de descoberta de rotas não executado ou nenhuma rota encontrada. Execute com a opção "Hidden Routes" ativada.</p>';
+        }
+
+        return `
+          ${criticals.length > 0 ? `
+            <div style="background:rgba(255,0,64,0.1);border:1px solid rgba(255,0,64,0.3);border-radius:8px;padding:1rem;margin-bottom:1.5rem">
+              <strong style="color:var(--red)">⚠ ${criticals.length} rota(s) crítica(s)/alta(s) descoberta(s)!</strong>
+              <p style="color:var(--gray);font-size:0.85rem;margin-top:0.5rem">Estas rotas representam risco de segurança e devem ser protegidas ou removidas imediatamente.</p>
+            </div>
+          ` : ''}
+
+          ${Object.keys(byCategory).length > 0 ? `
+            <h3 style="color:var(--accent);margin-bottom:1rem">Por Categoria</h3>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-bottom:2rem">
+              ${Object.entries(byCategory).map(([cat, catRoutes]) => `
+                <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:1rem">
+                  <div style="font-weight:600;color:var(--accent);margin-bottom:0.5rem;text-transform:capitalize">${esc(cat)} (${catRoutes.length})</div>
+                  ${catRoutes.slice(0, 10).map(r => {
+                    const risk = r.risk || 'low';
+                    const riskColor = risk === 'critical' ? 'var(--red)' : risk === 'high' ? '#ff6622' : risk === 'medium' ? 'var(--orange)' : 'var(--gray)';
+                    const statusColor = r.status >= 200 && r.status < 300 ? 'var(--accent)' : r.status === 401 || r.status === 403 ? 'var(--orange)' : 'var(--gray)';
+                    return `<div style="display:flex;justify-content:space-between;padding:0.25rem 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.8rem">
+                      <span style="font-family:var(--mono);color:${riskColor}">${esc(r.path || r)}</span>
+                      <span style="color:${statusColor}">${r.status || ''}</span>
+                    </div>`;
+                  }).join('')}
+                  ${catRoutes.length > 10 ? `<div style="color:var(--gray);font-size:0.75rem;margin-top:0.5rem">+${catRoutes.length - 10} mais...</div>` : ''}
+                </div>
               `).join('')}
-            </tbody>
-          </table>
-        </div>
-        <p style="color:var(--gray);font-size:0.8rem;margin-top:0.5rem">Total: ${routes.length} rota(s)</p>
-      ` : '<p style="color:var(--gray)">Nenhuma rota oculta descoberta.</p>'}
+            </div>
+          ` : ''}
+
+          <h3 style="color:var(--accent);margin-bottom:1rem">Todas as Rotas (${allRoutes.length || routes.length})</h3>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead><tr><th>Rota</th><th>HTTP</th><th>Categoria</th><th>Risco</th></tr></thead>
+              <tbody>
+                ${(allRoutes.length > 0 ? allRoutes : routes).slice(0, 100).map(r => {
+                  const rPath = typeof r === 'string' ? r : (r.path || r.url || JSON.stringify(r));
+                  const rStatus = r.status || '—';
+                  const rCat = r.category || r.type || '—';
+                  const rRisk = r.risk || '—';
+                  const riskColor = rRisk === 'critical' ? 'badge-critical' : rRisk === 'high' ? 'badge-high' : rRisk === 'medium' ? 'badge-medium' : 'badge-info';
+                  const httpColor = rStatus >= 200 && rStatus < 300 ? '#00ff41' : rStatus === 401 || rStatus === 403 ? '#ff8c00' : '#8888aa';
+                  return `<tr>
+                    <td style="font-family:var(--mono);font-size:0.75rem">${esc(rPath)}</td>
+                    <td style="color:${httpColor};font-weight:600">${rStatus}</td>
+                    <td>${esc(String(rCat))}</td>
+                    <td><span class="badge ${riskColor}">${esc(String(rRisk))}</span></td>
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+          <p style="color:var(--gray);font-size:0.8rem;margin-top:0.5rem">
+            Mostrando ${Math.min(allRoutes.length || routes.length, 100)} de ${allRoutes.length || routes.length} rota(s) descoberta(s)
+            ${sitemapUrls.length > 0 ? ` · ${sitemapUrls.length} URL(s) no sitemap.xml` : ''}
+            ${sourceRoutes.length > 0 ? ` · ${sourceRoutes.length} rota(s) extraída(s) do código fonte` : ''}
+          </p>
+        `;
+      })()}
+    </section>
+
+    <!-- Git Exposure -->
+    <section id="git-exposure">
+      <h2>🔍 Exposição Git & Histórico</h2>
+      ${(() => {
+        const gitRoutes = results.find(r => r.check?.includes('Hidden'))?.details?.allRoutes?.filter(r =>
+          r.path?.includes('.git') || r.path?.includes('.svn') || r.path?.includes('.hg')
+        ) || [];
+        const gitFindings = results.filter(r => r.check?.toLowerCase().includes('git') || r.message?.toLowerCase().includes('git'));
+
+        if (gitRoutes.length === 0 && gitFindings.length === 0) {
+          return `<div style="background:rgba(0,255,65,0.05);border:1px solid rgba(0,255,65,0.2);border-radius:8px;padding:1rem">
+            <strong style="color:var(--accent)">✓ Nenhum arquivo git exposto detectado</strong>
+            <p style="color:var(--gray);font-size:0.85rem;margin-top:0.5rem">Arquivos como <code>.git/HEAD</code>, <code>.git/config</code> e <code>.gitignore</code> não estão acessíveis publicamente.</p>
+          </div>`;
+        }
+
+        return `
+          <div style="background:rgba(255,0,64,0.1);border:1px solid rgba(255,0,64,0.3);border-radius:8px;padding:1rem;margin-bottom:1.5rem">
+            <strong style="color:var(--red)">⚠ Arquivos git encontrados acessíveis publicamente!</strong>
+            <p style="color:var(--gray);font-size:0.85rem;margin-top:0.5rem">Isso pode expor código fonte, credenciais, histórico de commits e configurações sensíveis.</p>
+          </div>
+          ${gitRoutes.length > 0 ? `
+            <div style="overflow-x:auto;margin-bottom:1rem">
+              <table class="data-table">
+                <thead><tr><th>Arquivo</th><th>HTTP</th><th>Risco</th></tr></thead>
+                <tbody>
+                  ${gitRoutes.map(r => `<tr>
+                    <td style="font-family:var(--mono);color:var(--red)">${esc(r.path)}</td>
+                    <td style="color:#00ff41">${r.status}</td>
+                    <td><span class="badge badge-critical">CRÍTICO</span></td>
+                  </tr>`).join('')}
+                </tbody>
+              </table>
+            </div>
+          ` : ''}
+          <div style="background:var(--bg3);border-radius:8px;padding:1rem;margin-top:1rem">
+            <strong style="color:var(--orange)">Como Mitigar:</strong>
+            <pre style="margin-top:0.5rem;font-size:0.8rem;color:var(--gray);white-space:pre-wrap"># Nginx — bloquear acesso a .git
+location ~ /\\.git {
+    deny all;
+    return 404;
+}
+# Apache — .htaccess
+RedirectMatch 404 /\\.git</pre>
+          </div>
+        `;
+      })()}
     </section>
     
     <!-- Sensitive Files -->
@@ -616,29 +763,41 @@ function formatDate(iso) {
 function extractRoutes(results) {
   const routes = [];
   for (const r of results) {
+    // Primary: route-discovery stores discovered routes as details.allRoutes
+    if (r.details?.allRoutes && Array.isArray(r.details.allRoutes)) {
+      for (const route of r.details.allRoutes) {
+        routes.push({
+          path: route.path || route.url || route,
+          status: route.status || route.statusCode || '—',
+          type: route.category || route.type || '—',
+          risk: route.risk || '—',
+        });
+      }
+    }
+    if (r.details?.criticalRoutes && Array.isArray(r.details.criticalRoutes)) {
+      for (const route of r.details.criticalRoutes) {
+        routes.push({ path: route.path, status: route.status || '—', type: route.category || '—', risk: 'critical' });
+      }
+    }
     if (r.details?.routes && Array.isArray(r.details.routes)) {
       for (const route of r.details.routes) {
         routes.push({
           path: route.path || route.url || route,
           status: route.status || route.statusCode || '—',
-          type: route.category || route.type || '—'
+          type: route.category || route.type || '—',
+          risk: route.risk || '—',
         });
       }
     }
     if (r.details?.discovered && Array.isArray(r.details.discovered)) {
       for (const d of r.details.discovered) {
-        routes.push({ path: d.path || d.url || d, status: d.status || '—', type: d.category || '—' });
+        routes.push({ path: d.path || d.url || d, status: d.status || '—', type: d.category || '—', risk: '—' });
       }
     }
     if (r.details?.hiddenRoutes && Array.isArray(r.details.hiddenRoutes)) {
       for (const h of r.details.hiddenRoutes) {
-        routes.push({ path: typeof h === 'string' ? h : h.path || h.url, status: h.status || '—', type: h.category || '—' });
+        routes.push({ path: typeof h === 'string' ? h : h.path || h.url, status: h.status || '—', type: h.category || '—', risk: '—' });
       }
-    }
-    // Extract from messages
-    if (r.check?.match(/Route|Rota/i) && r.message) {
-      const pathMatch = r.message.match(/(\/[a-zA-Z0-9_./-]+)/g);
-      if (pathMatch) pathMatch.forEach(p => routes.push({ path: p, status: r.status, type: 'Discovered' }));
     }
   }
   // Deduplicate
@@ -649,6 +808,12 @@ function extractRoutes(results) {
     seen.add(key);
     return true;
   });
+}
+
+function detectedHosting(results) {
+  const stackResult = results.find(r => r.check === 'Stack Detection');
+  const hostingList = stackResult?.details?.categories?.Hosting || [];
+  return hostingList[0] || null;
 }
 
 function extractSensitiveFiles(results) {

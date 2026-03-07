@@ -138,6 +138,50 @@
             <label class="radio-item"><input type="radio" name="roleMode" value="guest" checked> GUEST only</label>
             <label class="radio-item"><input type="radio" name="roleMode" value="both"> GUEST vs USER</label>
           </div>
+
+          <!-- Advanced Configuration -->
+          <div class="deep-scan-divider">
+            <span>⚙️ Configuração Avançada</span>
+          </div>
+          <div class="adv-config-grid">
+            <div class="adv-config-item">
+              <label for="crawlDepth">Profundidade de Crawl</label>
+              <select id="crawlDepth">
+                <option value="1">Superficial (1 nível)</option>
+                <option value="2" selected>Padrão (2 níveis)</option>
+                <option value="3">Profundo (3 níveis)</option>
+                <option value="4">Exaustivo (4 níveis)</option>
+              </select>
+            </div>
+            <div class="adv-config-item">
+              <label for="reqTimeout">Timeout por Request (ms)</label>
+              <input type="number" id="reqTimeout" value="10000" min="2000" max="60000" step="1000">
+            </div>
+            <div class="adv-config-item">
+              <label for="reqDelay">Delay entre Requests (ms)</label>
+              <input type="number" id="reqDelay" value="0" min="0" max="5000" step="100">
+            </div>
+            <div class="adv-config-item">
+              <label for="bearerToken">Bearer Token (User Mode)</label>
+              <input type="text" id="bearerToken" placeholder="eyJhbGci..." spellcheck="false">
+            </div>
+          </div>
+          <div class="adv-config-full">
+            <label for="customHeaders">Headers HTTP Customizados (JSON)</label>
+            <textarea id="customHeaders" rows="2" placeholder='{"X-Custom-Header": "valor", "Cookie": "session=abc"}'></textarea>
+          </div>
+          <div class="check-grid deep-grid" style="margin-top:0.75rem">
+            <label class="check-item deep"><input type="checkbox" id="chkSSL" checked> 🔒 Análise SSL/TLS</label>
+            <label class="check-item deep"><input type="checkbox" id="chkGitExposure" checked> 🔍 Git Exposure Check</label>
+            <label class="check-item deep"><input type="checkbox" id="chkOpenRedirect" checked> 🔗 Open Redirect</label>
+            <label class="check-item deep"><input type="checkbox" id="chkSubdomains"> 🌐 Scan Subdomínios</label>
+            <label class="check-item deep"><input type="checkbox" id="chkScreenshot"> 📸 Screenshots (Puppeteer)</label>
+            <label class="check-item deep"><input type="checkbox" id="chkPassive"> 👁️ Modo Passivo (sem writes)</label>
+          </div>
+          <div class="adv-config-full">
+            <label for="customWordlist">Wordlist de Rotas (uma por linha)</label>
+            <textarea id="customWordlist" rows="3" placeholder="/api/endpoint-secreto&#10;/admin/painel-oculto&#10;/internal/status"></textarea>
+          </div>
         </div>
       </details>
     </section>

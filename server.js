@@ -191,12 +191,25 @@ app.post('/api/report/html', (req, res) => {
 });
 
 // ─── HTML Report (view in browser) ───────────────────────────────
-app.post('/api/report/html/view', (req, res) => {
+app.post('/api/report/html/view', async (req, res) => {
   const { auditData } = req.body;
   if (!auditData) return res.status(400).json({ error: 'auditData required' });
 
+  // Resolve IP and detect hosting
+  const networkInfo = {};
   try {
-    const html = generateHTMLReport(auditData);
+    const dns = require('dns').promises;
+    const urlObj = new URL(auditData.projectUrl);
+    networkInfo.hostname = urlObj.hostname;
+    const { address } = await dns.lookup(urlObj.hostname);
+    networkInfo.ip = address;
+    // Extract hosting from stack detection results
+    const stackResult = (auditData.results || []).find(r => r.check === 'Stack Detection');
+    networkInfo.hosting = (stackResult?.details?.categories?.Hosting || [])[0] || null;
+  } catch { /* DNS lookup optional */ }
+
+  try {
+    const html = generateHTMLReport(auditData, networkInfo);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(html);
   } catch (err) {

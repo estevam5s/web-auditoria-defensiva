@@ -1,232 +1,274 @@
 /*  ═══════════════════════════════════════════════════════════════════
     SITE SCRAPER — Downloads target site source code as ZIP
-    Uses website-scraper + puppeteer for dynamic SPA content
+    Recursive crawler: HTML pages + CSS + JS + images + fonts
+    Uses node-fetch v2 + archiver — no ESM dependencies
     ═══════════════════════════════════════════════════════════════════ */
 
-const path = require('path');
-const fs = require('fs');
+const fetch = require('node-fetch');
 const archiver = require('archiver');
-const os = require('os');
 
-async function scrapeSiteToZip(targetUrl, outputStream, onProgress) {
-  const tmpDir = path.join(os.tmpdir(), `supabase-guard-scrape-${Date.now()}`);
+const DEFAULT_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
-  onProgress?.('Preparando scraper...');
-
-  try {
-    // Dynamic import for ESM modules
-    const scrapeModule = await import('website-scraper');
-    const scrape = scrapeModule.default || scrapeModule;
-
-    let PuppeteerPlugin;
-    try {
-      const puppeteerPluginModule = await import('website-scraper-puppeteer');
-      PuppeteerPlugin = puppeteerPluginModule.default || puppeteerPluginModule;
-    } catch (e) {
-      onProgress?.('Puppeteer plugin não disponível, usando modo básico...');
-      PuppeteerPlugin = null;
-    }
-
-    onProgress?.(`Iniciando download de: ${targetUrl}`);
-
-    const options = {
-      urls: [targetUrl],
-      directory: tmpDir,
-      recursive: true,
-      maxRecursiveDepth: 3,
-      maxDepth: 3,
-      sources: [
-        { selector: 'img', attr: 'src' },
-        { selector: 'link[rel="stylesheet"]', attr: 'href' },
-        { selector: 'script', attr: 'src' },
-        { selector: 'a', attr: 'href' },
-        { selector: 'link[rel="icon"]', attr: 'href' },
-        { selector: 'source', attr: 'src' },
-        { selector: 'video', attr: 'src' },
-      ],
-      subdirectories: [
-        { directory: 'images', extensions: ['.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp', '.ico'] },
-        { directory: 'css', extensions: ['.css'] },
-        { directory: 'js', extensions: ['.js', '.mjs'] },
-        { directory: 'fonts', extensions: ['.woff', '.woff2', '.ttf', '.eot', '.otf'] },
-        { directory: 'media', extensions: ['.mp4', '.webm', '.mp3', '.ogg'] },
-      ],
-      request: {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        }
-      },
-      urlFilter: (url) => {
-        // Only download from same domain + CDN assets
-        try {
-          const base = new URL(targetUrl);
-          const check = new URL(url);
-          if (check.hostname === base.hostname) return true;
-          // Allow common CDNs
-          const cdns = ['cdn.', 'fonts.', 'static.', 'assets.', 'unpkg.com', 'cdnjs.', 'jsdelivr.'];
-          return cdns.some(c => check.hostname.includes(c));
-        } catch {
-          return false;
-        }
-      },
-      plugins: [],
-    };
-
-    // Add Puppeteer plugin if available (for SPA support)
-    if (PuppeteerPlugin) {
-      options.plugins.push(
-        new PuppeteerPlugin({
-          launchOptions: {
-            headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-          },
-          scrollToBottom: {
-            timeout: 10000,
-            viewportN: 10
-          },
-          blockNavigation: true,
-        })
-      );
-      onProgress?.('Puppeteer ativo: suporte a SPA/SSR...');
-    }
-
-    onProgress?.('Baixando páginas e recursos...');
-    
-    await scrape(options);
-
-    onProgress?.('Download concluído. Criando arquivo ZIP...');
-
-    // Create ZIP from scraped directory
-    return new Promise((resolve, reject) => {
-      const archive = archiver('zip', { zlib: { level: 9 } });
-
-      archive.on('error', (err) => reject(err));
-      archive.on('end', () => {
-        onProgress?.(`ZIP criado: ${(archive.pointer() / 1024 / 1024).toFixed(2)} MB`);
-        // Cleanup temp dir
-        cleanDir(tmpDir);
-        resolve();
-      });
-
-      archive.pipe(outputStream);
-      archive.directory(tmpDir, 'source-code');
-      archive.finalize();
-    });
-
-  } catch (err) {
-    cleanDir(tmpDir);
-    throw new Error(`Scraping falhou: ${err.message}`);
-  }
-}
-
-function cleanDir(dir) {
-  try {
-    if (fs.existsSync(dir)) {
-      fs.rmSync(dir, { recursive: true, force: true });
-    }
-  } catch {}
-}
-
-// Light-weight alternative: fetch only key assets without puppeteer
+/**
+ * Robust recursive site downloader.
+ * Crawls same-domain pages (depth 2), downloads all CSS/JS/images/fonts.
+ */
 async function lightScrape(targetUrl, outputStream, onProgress) {
-  const fetch = require('node-fetch');
-  const archive = archiver('zip', { zlib: { level: 9 } });
-
+  const archive = archiver('zip', { zlib: { level: 6 } });
   archive.pipe(outputStream);
 
-  onProgress?.('Modo leve: baixando HTML e assets...');
+  let base;
+  try {
+    base = new URL(targetUrl);
+  } catch {
+    throw new Error(`URL inválida: ${targetUrl}`);
+  }
+
+  const baseOrigin = base.origin;
+  const baseHostname = base.hostname;
+  const visitedPages = new Set();
+  const assetsMap = new Map(); // resolvedUrl -> zipPath
+
+  const FETCH_HEADERS = {
+    'User-Agent': DEFAULT_UA,
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8',
+    'Accept-Encoding': 'identity',
+  };
+
+  async function fetchSafe(url, extraOpts = {}) {
+    try {
+      return await fetch(url, {
+        headers: FETCH_HEADERS,
+        timeout: 12000,
+        redirect: 'follow',
+        ...extraOpts,
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  function resolveUrl(src, fromUrl) {
+    if (!src || src.startsWith('data:') || src.startsWith('javascript:') || src.startsWith('mailto:')) return null;
+    try {
+      return new URL(src.trim().split(/[?#]/)[0], fromUrl).href;
+    } catch {
+      return null;
+    }
+  }
+
+  function urlToZipPath(url, prefix = 'pages') {
+    try {
+      const u = new URL(url);
+      let p = u.pathname.replace(/^\//, '') || 'index.html';
+      if (p.endsWith('/')) p += 'index.html';
+      if (!p.match(/\.[a-zA-Z0-9]{1,6}$/)) p += '/index.html';
+      return `${prefix}/${p.replace(/[<>:"|?*\\]/g, '_')}`;
+    } catch {
+      return `${prefix}/page_${Math.random().toString(36).slice(2)}.html`;
+    }
+  }
+
+  function assetZipPath(resolvedUrl) {
+    try {
+      const url = new URL(resolvedUrl);
+      const filename = (url.pathname.split('/').pop() || `asset_${assetsMap.size}`).substring(0, 120);
+      const ext = filename.split('.').pop().toLowerCase();
+      const dir = ext === 'css' ? 'css'
+        : ['js', 'mjs', 'jsx', 'ts', 'tsx'].includes(ext) ? 'js'
+        : ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'ico', 'bmp', 'avif'].includes(ext) ? 'images'
+        : ['woff', 'woff2', 'ttf', 'eot', 'otf'].includes(ext) ? 'fonts'
+        : ['mp4', 'webm', 'ogg', 'mp3'].includes(ext) ? 'media'
+        : 'assets';
+      return `${dir}/${filename}`;
+    } catch {
+      return `assets/asset_${assetsMap.size}`;
+    }
+  }
+
+  const ASSET_PATTERNS = [
+    /<link[^>]+rel=["'][^"']*stylesheet[^"']*["'][^>]+href=["']([^"'>]+)["']/gi,
+    /<link[^>]+href=["']([^"'>]+\.css[^"'>]*)["']/gi,
+    /<script[^>]+src=["']([^"'>]+)["']/gi,
+    /<img[^>]+src=["']([^"'>]+)["']/gi,
+    /<source[^>]+src=["']([^"'>]+)["']/gi,
+    /<link[^>]+rel=["'][^"']*icon[^"']*["'][^>]+href=["']([^"'>]+)["']/gi,
+    /url\(["']?([^"')]+\.(woff2?|ttf|eot|otf|svg|png|jpg|jpeg|gif|webp|ico))["']?\)/gi,
+  ];
+
+  function collectAssets(html, fromUrl) {
+    for (const pattern of ASSET_PATTERNS) {
+      pattern.lastIndex = 0;
+      let m;
+      while ((m = pattern.exec(html)) !== null) {
+        const resolved = resolveUrl(m[1], fromUrl);
+        if (resolved && !assetsMap.has(resolved)) {
+          assetsMap.set(resolved, assetZipPath(resolved));
+        }
+      }
+    }
+  }
+
+  function extractInternalLinks(html, fromUrl) {
+    const links = new Set();
+    const re = /href=["']([^"'#][^"']*)["']/gi;
+    let m;
+    while ((m = re.exec(html)) !== null) {
+      const resolved = resolveUrl(m[1], fromUrl);
+      if (!resolved) continue;
+      try {
+        const u = new URL(resolved);
+        if (u.hostname === baseHostname && !visitedPages.has(resolved.split('#')[0])) {
+          links.add(resolved.split('#')[0]);
+        }
+      } catch {}
+    }
+    return [...links];
+  }
+
+  async function crawlPage(url, depth) {
+    if (visitedPages.has(url) || visitedPages.size >= 50) return;
+    visitedPages.add(url);
+
+    const res = await fetchSafe(url);
+    if (!res || !res.ok) return;
+
+    const ct = res.headers.get('content-type') || '';
+    if (!ct.includes('html') && !ct.includes('text/plain')) return;
+
+    let html;
+    try { html = await res.text(); } catch { return; }
+
+    const zipPath = url === targetUrl.split('#')[0] ? 'index.html' : urlToZipPath(url);
+    archive.append(html, { name: zipPath });
+    onProgress?.(`✓ Página: ${new URL(url).pathname || '/'}`);
+
+    collectAssets(html, url);
+
+    if (depth > 0) {
+      const links = extractInternalLinks(html, url);
+      for (const link of links.slice(0, 15)) {
+        await crawlPage(link, depth - 1);
+      }
+    }
+  }
 
   try {
-    // 1. Fetch main HTML
-    const mainRes = await fetch(targetUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-      timeout: 15000,
-    });
-    const html = await mainRes.text();
-    archive.append(html, { name: 'index.html' });
-    onProgress?.('✓ index.html');
+    onProgress?.(`Conectando em: ${targetUrl}`);
 
-    // 2. Extract and fetch CSS
-    const cssUrls = extractUrls(html, targetUrl, /<link[^>]*href=["']([^"']+\.css[^"']*)["']/gi);
-    for (const [name, url] of cssUrls.slice(0, 20)) {
-      try {
-        const res = await fetch(url, { timeout: 8000 });
-        if (res.ok) {
-          archive.append(await res.text(), { name: `css/${name}` });
-          onProgress?.(`✓ css/${name}`);
-        }
-      } catch {}
+    // ─── 1. Main page ───────────────────────────────────────────
+    const mainRes = await fetchSafe(targetUrl);
+    if (!mainRes || !mainRes.ok) {
+      throw new Error(`Não foi possível acessar ${targetUrl} (HTTP ${mainRes?.status || 'timeout'})`);
     }
 
-    // 3. Extract and fetch JS
-    const jsUrls = extractUrls(html, targetUrl, /<script[^>]*src=["']([^"']+\.js[^"']*)["']/gi);
-    for (const [name, url] of jsUrls.slice(0, 30)) {
-      try {
-        const res = await fetch(url, { timeout: 8000 });
-        if (res.ok) {
-          archive.append(await res.text(), { name: `js/${name}` });
-          onProgress?.(`✓ js/${name}`);
-        }
-      } catch {}
-    }
+    const mainHtml = await mainRes.text();
+    visitedPages.add(targetUrl.split('#')[0]);
+    archive.append(mainHtml, { name: 'index.html' });
+    onProgress?.('✓ index.html baixado');
 
-    // 4. Fetch common paths
-    const commonPaths = [
-      'robots.txt', 'sitemap.xml', 'manifest.json', 'favicon.ico',
-      'sw.js', 'service-worker.js', '.well-known/security.txt',
+    collectAssets(mainHtml, targetUrl);
+
+    // ─── 2. Crawl internal pages (depth 2) ───────────────────────
+    onProgress?.('Crawling páginas internas...');
+    const initialLinks = extractInternalLinks(mainHtml, targetUrl);
+    for (const link of initialLinks.slice(0, 30)) {
+      await crawlPage(link, 1);
+    }
+    onProgress?.(`✓ ${visitedPages.size} páginas coletadas`);
+
+    // ─── 3. Static utility files ─────────────────────────────────
+    const staticFiles = [
+      'robots.txt', 'sitemap.xml', 'sitemap_index.xml', 'manifest.json',
+      'manifest.webmanifest', 'browserconfig.xml', '.well-known/security.txt',
+      'humans.txt', 'ads.txt', 'app-ads.txt', 'sw.js', 'service-worker.js',
     ];
-    for (const p of commonPaths) {
+    for (const f of staticFiles) {
+      const res = await fetchSafe(`${baseOrigin}/${f}`, { timeout: 6000 });
+      if (!res?.ok) continue;
       try {
-        const res = await fetch(`${targetUrl}/${p}`, { timeout: 5000 });
-        if (res.ok) {
-          const ct = res.headers.get('content-type') || '';
-          const content = ct.includes('image') ? await res.buffer() : await res.text();
-          if (content.length > 0 && content.length < 5 * 1024 * 1024) {
-            archive.append(content, { name: p });
-            onProgress?.(`✓ ${p}`);
-          }
+        const ct = res.headers.get('content-type') || '';
+        const content = (ct.includes('image') || f.endsWith('.ico'))
+          ? await res.buffer()
+          : await res.text();
+        if (content && content.length > 0) {
+          archive.append(content, { name: f });
+          onProgress?.(`✓ ${f}`);
         }
       } catch {}
     }
 
-    // 5. Try to find and fetch source maps
-    for (const [name, url] of jsUrls.slice(0, 10)) {
+    // ─── 4. Download all collected assets ────────────────────────
+    const assetEntries = [...assetsMap.entries()].slice(0, 250);
+    onProgress?.(`Baixando ${assetEntries.length} assets (CSS, JS, imagens, fontes)...`);
+
+    let downloaded = 0;
+    const usedZipPaths = new Set(['index.html']);
+
+    for (const [assetUrl, zipPath] of assetEntries) {
+      // Avoid path collisions
+      let finalPath = zipPath;
+      let counter = 1;
+      while (usedZipPaths.has(finalPath)) {
+        const parts = zipPath.split('.');
+        const ext = parts.pop();
+        finalPath = `${parts.join('.')}_${counter++}.${ext}`;
+      }
+      usedZipPaths.add(finalPath);
+
+      const res = await fetchSafe(assetUrl, { timeout: 8000 });
+      if (!res?.ok) continue;
+
       try {
-        const mapUrl = url + '.map';
-        const res = await fetch(mapUrl, { timeout: 8000 });
-        if (res.ok) {
-          archive.append(await res.text(), { name: `sourcemaps/${name}.map` });
-          onProgress?.(`✓ sourcemap: ${name}.map`);
+        const ct = res.headers.get('content-type') || '';
+        const isBinary = ct.includes('image') || ct.includes('font') || ct.includes('octet-stream')
+          || /\.(woff2?|ttf|eot|otf|ico|png|jpg|jpeg|gif|webp|svg|bmp|avif|mp4|webm|mp3|ogg)$/i.test(assetUrl);
+
+        const content = isBinary ? await res.buffer() : await res.text();
+        const size = Buffer.isBuffer(content) ? content.length : Buffer.byteLength(content, 'utf8');
+
+        if (size > 0 && size < 20 * 1024 * 1024) {
+          archive.append(content, { name: finalPath });
+          downloaded++;
+          if (downloaded % 25 === 0) onProgress?.(`✓ ${downloaded} assets baixados...`);
         }
       } catch {}
     }
+    onProgress?.(`✓ ${downloaded} assets baixados`);
 
+    // ─── 5. Source maps ──────────────────────────────────────────
+    const jsEntries = assetEntries.filter(([url]) => /\.js$/i.test(url.split('?')[0]));
+    let mapsFound = 0;
+    for (const [jsUrl, jsPath] of jsEntries.slice(0, 40)) {
+      const res = await fetchSafe(jsUrl + '.map', { timeout: 5000 });
+      if (!res?.ok) continue;
+      try {
+        const text = await res.text();
+        if (text && text.length > 10 && text.includes('"version"')) {
+          const mapName = jsPath.split('/').pop();
+          archive.append(text, { name: `sourcemaps/${mapName}.map` });
+          mapsFound++;
+        }
+      } catch {}
+    }
+    if (mapsFound > 0) onProgress?.(`✓ ${mapsFound} source maps encontrados`);
+
+    // ─── 6. Finalize ─────────────────────────────────────────────
     await archive.finalize();
-    onProgress?.(`ZIP criado: ${(archive.pointer() / 1024 / 1024).toFixed(2)} MB`);
+    const sizeMB = (archive.pointer() / 1024 / 1024).toFixed(2);
+    onProgress?.(`✓ ZIP finalizado: ${sizeMB} MB | ${visitedPages.size} páginas | ${downloaded} assets`);
 
   } catch (err) {
-    archive.abort();
-    throw new Error(`Light scrape falhou: ${err.message}`);
+    try { archive.abort(); } catch {}
+    throw new Error(`Scrape falhou: ${err.message}`);
   }
 }
 
-function extractUrls(html, baseUrl, regex) {
-  const results = [];
-  const seen = new Set();
-  let match;
-  while ((match = regex.exec(html)) !== null) {
-    let src = match[1];
-    if (src.startsWith('//')) src = 'https:' + src;
-    else if (src.startsWith('/')) src = baseUrl + src;
-    else if (!src.startsWith('http')) src = baseUrl + '/' + src;
-
-    if (seen.has(src)) continue;
-    seen.add(src);
-
-    const name = src.split('/').pop().split('?')[0] || `asset_${results.length}`;
-    results.push([name, src]);
-  }
-  return results;
+/** Full scrape with website-scraper (disk-based, not for serverless) */
+async function scrapeSiteToZip(targetUrl, outputStream, onProgress) {
+  // Delegate to lightScrape — more reliable in Node/serverless environments
+  return lightScrape(targetUrl, outputStream, onProgress);
 }
 
 module.exports = { scrapeSiteToZip, lightScrape };
