@@ -89,7 +89,21 @@ const getClientInfo = (userAgent) => {
 };
 
 async function saveAuditToSupabase(auditData, userIp, userAgent) {
+  console.log('\n========== SAVE AUDIT TO SUPABASE ==========');
+  console.log('auditData:', JSON.stringify({
+    auditId: auditData.evidence?.auditId,
+    projectUrl: auditData.projectUrl,
+    score: auditData.score,
+    grade: auditData.grade,
+    totalChecks: auditData.totalChecks,
+    hasResults: !!auditData.results,
+    resultsCount: auditData.results?.length || 0,
+    hasCatalogData: !!auditData.catalogData
+  }, null, 2));
+  
   const clientInfo = getClientInfo(userAgent);
+  console.log('Client Info:', clientInfo);
+  console.log('User IP:', userIp);
 
   const auditRecord = {
     audit_id: auditData.evidence?.auditId || `audit-${Date.now()}`,
@@ -117,16 +131,23 @@ async function saveAuditToSupabase(auditData, userIp, userAgent) {
     status: 'completed'
   };
 
+  console.log('Attempting to insert into audits table...');
+  console.log('Record keys:', Object.keys(auditRecord));
+  
   const result = await supabaseFetch('audits', {
     method: 'POST',
     body: JSON.stringify(auditRecord)
   });
 
+  console.log('Insert result:', result);
+
   if (result.success && result.data && result.data[0]) {
     const auditId = result.data[0].id;
+    console.log('✅ Audit saved successfully! ID:', auditId);
 
     // Save individual results
     if (auditData.results && auditData.results.length > 0) {
+      console.log(`Saving ${auditData.results.length} individual results...`);
       const resultsToInsert = auditData.results.map(r => ({
         audit_id: auditId,
         check_name: r.check,
@@ -136,10 +157,11 @@ async function saveAuditToSupabase(auditData, userIp, userAgent) {
         details_json: r.details || {}
       }));
 
-      await supabaseFetch('audit_results', {
+      const resultsResult = await supabaseFetch('audit_results', {
         method: 'POST',
         body: JSON.stringify(resultsToInsert)
       });
+      console.log('Results save result:', resultsResult);
     }
 
     // Save vulnerabilities
@@ -148,6 +170,7 @@ async function saveAuditToSupabase(auditData, userIp, userAgent) {
     ) || [];
 
     if (vulnerabilities.length > 0) {
+      console.log(`Saving ${vulnerabilities.length} vulnerabilities...`);
       const vulnToInsert = vulnerabilities.map(v => ({
         audit_id: auditId,
         severity: v.severity,
@@ -157,15 +180,19 @@ async function saveAuditToSupabase(auditData, userIp, userAgent) {
         details_json: v.details || {}
       }));
 
-      await supabaseFetch('vulnerabilities', {
+      const vulnResult = await supabaseFetch('vulnerabilities', {
         method: 'POST',
         body: JSON.stringify(vulnToInsert)
       });
+      console.log('Vulnerabilities save result:', vulnResult);
     }
 
+    console.log('========== SAVE COMPLETE ==========\n');
     return { success: true, auditId: auditId };
   }
 
+  console.error('❌ Failed to save audit:', result.error);
+  console.log('========== SAVE FAILED ==========\n');
   return { success: false, error: result.error };
 }
 

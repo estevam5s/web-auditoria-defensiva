@@ -1,0 +1,245 @@
+[INIT] scan criado: 325d3708-1733-4087-8208-856bcb3795e4
+[11:23:42] [QUEUE] enqueued id=325d3708-1733-4087-8208-856bcb3795e4
+[11:23:42] [QUEUE] picked job=325d3708-1733-4087-8208-856bcb3795e4 worker=2c417c87-21d3-4fc7-9e34-f8c552fa41e2
+[11:23:42] [BOOT] scan iniciado
+[11:23:42] [CONFIG] Write probe ANON REST: OFF (methods=POST,PATCH,PUT,DELETE; max_tables=12)
+[11:23:42] [STEP] Public Snapshot
+[11:23:42] Collecting initial HTML: https://www.estevamsouza.com.br/
+[11:23:43] Detected scripts: 9
+[11:23:43] Downloading script: https://www.estevamsouza.com.br/assets/index-CitENTfB.js
+[11:23:43] Downloading script: https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2
+[11:23:43] Downloading script: https://www.estevamsouza.com.br/admin/js/env.js
+[11:23:43] Downloading script: https://www.estevamsouza.com.br/js/dynamic-content.js
+[11:23:43] Downloading script: https://www.estevamsouza.com.br/js/chat-widget.js
+[11:23:43] Downloading script: https://www.estevamsouza.com.br/js/music-player.js
+[11:23:43] Downloading script: https://www.estevamsouza.com.br/js/custom-cursor.js
+[11:23:43] Downloading script: https://www.estevamsouza.com.br/js/cookie-consent.js
+[11:23:43] Downloading script: https://www.estevamsouza.com.br/js/visitor-tracker.js
+[11:23:43] Downloading chunk: https://www.estevamsouza.com.br/assets/index-CitENTfB.js
+[11:23:43] [DONE] Public Snapshot
+[11:23:43] [STEP] Supabase Discovery
+[11:23:43] Detected SUPABASE_URL (auto): https://aczmelazcwtfdmxuderw.supabase.co
+[11:23:43] Detected ANON token (auto): eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjem1lbGF6Y3d0ZmRteHVkZXJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0OTM1MTAsImV4cCI6MjA4NjA2OTUxMH0.QcGLHOOK4TSD9Bm1rRFqoTVsDRHt19qRkFaLFpQceSk
+[11:23:43] Token reference: data/scans/325d3708-1733-4087-8208-856bcb3795e4/snapshot/all.js
+[11:23:43] [DONE] Supabase Discovery
+[11:23:43] [STEP] OpenAPI + Rotas
+[11:23:46] ✅ [EXPOSURE] OpenAPI metadata leak - Public OpenAPI catalog exposed 92 routes (tables=89, rpcs=3).
+[11:23:46] [OPENAPI] /rest/v1/ -> 200 (tables=89, rpcs=3)
+[11:23:46] [DONE] OpenAPI + Rotas
+[11:23:46] [STEP] Public GraphQL
+[11:23:47] [GRAPHQL PROBE 1/8] field=about_photosCollection -> 200 callable=yes data=no
+[11:23:48] [GRAPHQL PROBE 2/8] field=about_sectionCollection -> 200 callable=yes data=no
+[11:23:48] [GRAPHQL PROBE 3/8] field=about_skillsCollection -> 200 callable=yes data=no
+[11:23:48] [GRAPHQL PROBE 4/8] field=academic_coursesCollection -> 200 callable=yes data=no
+[11:23:48] [GRAPHQL PROBE 5/8] field=admin_availabilityCollection -> 200 callable=yes data=no
+[11:23:48] [GRAPHQL PROBE 6/8] field=api_configsCollection -> 200 callable=yes data=no
+[11:23:48] [GRAPHQL PROBE 7/8] field=automation_logsCollection -> 200 callable=no data=no
+[11:23:48] [GRAPHQL PROBE 8/8] field=automationsCollection -> 200 callable=no data=no
+[11:23:48] [GRAPHQL] /graphql/v1 -> 200 (types=930)
+[11:23:48] ✅ [EXPOSURE] Public GraphQL introspection - GraphQL '/graphql/v1' exposed schema catalog to GUEST (types=930, queryable fields=8).
+[11:23:48] [DONE] Public GraphQL
+[11:23:48] [STEP] Auth Hardening
+[11:23:49] [AUTH] /auth/v1/settings -> 200 (signupOpen=true, emailConfirmDisabled=true)
+[11:23:49] ✅ [EXPOSURE] Weak auth hardening (open signup) - Auth settings indicate open signup for GUEST.
+[11:23:49] ✅ [EXPOSURE] Weak auth hardening (email confirmation disabled) - Auth settings indicate no mandatory email confirmation.
+[11:23:49] [DONE] Auth Hardening
+[11:23:49] [STEP] REST Scan
+[11:23:49] [REST 1/60] GUEST /rest/v1/linkedin_posts?select=*&limit=500&offset=0 -> 200 rows=0
+[11:23:49] [REST 2/60] GUEST /rest/v1/study_resources?select=*&limit=500&offset=0 -> 200 rows=63
+[11:23:49] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'study_resources' returned 63 record(s) for GUEST.
+[11:23:49] [REST 3/60] GUEST /rest/v1/doc_articles?select=*&limit=500&offset=0 -> 200 rows=24
+[11:23:49] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'doc_articles' returned 24 record(s) for GUEST.
+[11:23:49] [REST 4/60] GUEST /rest/v1/study_checkins?select=*&limit=500&offset=0 -> 200 rows=1
+[11:23:49] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'study_checkins' returned 1 record(s) for GUEST.
+[11:23:49] [REST 5/60] GUEST /rest/v1/python_scripts?select=*&limit=500&offset=0 -> 200 rows=10
+[11:23:49] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'python_scripts' returned 10 record(s) for GUEST.
+[11:23:50] [REST 6/60] GUEST /rest/v1/study_daily_summary?select=*&limit=500&offset=0 -> 200 rows=1
+[11:23:50] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'study_daily_summary' returned 1 record(s) for GUEST.
+[11:23:50] [REST 7/60] GUEST /rest/v1/de_tools?select=*&limit=500&offset=0 -> 200 rows=20
+[11:23:50] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'de_tools' returned 20 record(s) for GUEST.
+[11:23:50] [REST 8/60] GUEST /rest/v1/study_topics?select=*&limit=500&offset=0 -> 200 rows=17
+[11:23:50] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'study_topics' returned 17 record(s) for GUEST.
+[11:23:50] [REST 9/60] GUEST /rest/v1/bd_ativo?select=*&limit=500&offset=0 -> 200 rows=0
+[11:23:50] [REST 10/60] GUEST /rest/v1/study_schedule?select=*&limit=500&offset=0 -> 200 rows=112
+[11:23:50] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'study_schedule' returned 112 record(s) for GUEST.
+[11:23:50] [REST 11/60] GUEST /rest/v1/study_sessions?select=*&limit=500&offset=0 -> 200 rows=0
+[11:23:50] [REST 12/60] GUEST /rest/v1/counters?select=*&limit=500&offset=0 -> 200 rows=3
+[11:23:50] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'counters' returned 3 record(s) for GUEST.
+[11:23:51] [REST 13/60] GUEST /rest/v1/career_goals?select=*&limit=500&offset=0 -> 200 rows=0
+[11:23:51] [REST 14/60] GUEST /rest/v1/study_achievements?select=*&limit=500&offset=0 -> 200 rows=21
+[11:23:51] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'study_achievements' returned 21 record(s) for GUEST.
+[11:23:51] [REST 15/60] GUEST /rest/v1/study_pomodoro_sessions?select=*&limit=500&offset=0 -> 200 rows=0
+[11:23:51] [REST 16/60] GUEST /rest/v1/linkedin_profile?select=*&limit=500&offset=0 -> 200 rows=1
+[11:23:51] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'linkedin_profile' returned 1 record(s) for GUEST.
+[11:23:51] [REST 17/60] GUEST /rest/v1/study_streaks?select=*&limit=500&offset=0 -> 200 rows=1
+[11:23:51] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'study_streaks' returned 1 record(s) for GUEST.
+[11:23:51] [REST 18/60] GUEST /rest/v1/report_daily_snapshots?select=*&limit=500&offset=0 -> 200 rows=0
+[11:23:51] [REST 19/60] GUEST /rest/v1/chat_users?select=*&limit=500&offset=0 -> 200 rows=1
+[11:23:51] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'chat_users' returned 1 record(s) for GUEST.
+[11:23:52] [REST 20/60] GUEST /rest/v1/roadmap_items?select=*&limit=500&offset=0 -> 200 rows=78
+[11:23:52] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'roadmap_items' returned 78 record(s) for GUEST.
+[11:23:52] [REST 21/60] GUEST /rest/v1/chat_messages?select=*&limit=500&offset=0 -> 200 rows=51
+[11:23:52] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'chat_messages' returned 51 record(s) for GUEST.
+[11:23:52] [REST 22/60] GUEST /rest/v1/study_categories?select=*&limit=500&offset=0 -> 200 rows=8
+[11:23:52] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'study_categories' returned 8 record(s) for GUEST.
+[11:23:52] [REST 23/60] GUEST /rest/v1/admin_availability?select=*&limit=500&offset=0 -> 200 rows=1
+[11:23:52] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'admin_availability' returned 1 record(s) for GUEST.
+[11:23:52] [REST 24/60] GUEST /rest/v1/study_levels?select=*&limit=500&offset=0 -> 200 rows=7
+[11:23:52] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'study_levels' returned 7 record(s) for GUEST.
+[11:23:52] [REST 25/60] GUEST /rest/v1/career_milestones?select=*&limit=500&offset=0 -> 200 rows=0
+[11:23:52] [REST 26/60] GUEST /rest/v1/contact_messages?select=*&limit=500&offset=0 -> 200 rows=0
+[11:23:52] [REST 27/60] GUEST /rest/v1/social_links?select=*&limit=500&offset=0 -> 200 rows=3
+[11:23:52] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'social_links' returned 3 record(s) for GUEST.
+[11:23:53] [REST 28/60] GUEST /rest/v1/page_views?select=*&limit=500&offset=0 -> 200 rows=0
+[11:23:53] [REST 29/60] GUEST /rest/v1/automation_logs?select=*&limit=500&offset=0 -> 200 rows=0
+[11:23:53] [REST 30/60] GUEST /rest/v1/linkedin_network?select=*&limit=500&offset=0 -> 200 rows=0
+[11:23:53] [REST 31/60] GUEST /rest/v1/roadmap_phases?select=*&limit=500&offset=0 -> 200 rows=24
+[11:23:53] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'roadmap_phases' returned 24 record(s) for GUEST.
+[11:23:53] [REST 32/60] GUEST /rest/v1/study_weekly_summary?select=*&limit=500&offset=0 -> 200 rows=0
+[11:23:53] [REST 33/60] GUEST /rest/v1/study_projects?select=*&limit=500&offset=0 -> 200 rows=8
+[11:23:53] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'study_projects' returned 8 record(s) for GUEST.
+[11:23:53] [REST 34/60] GUEST /rest/v1/report_templates?select=*&limit=500&offset=0 -> 200 rows=3
+[11:23:53] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'report_templates' returned 3 record(s) for GUEST.
+[11:23:53] [REST 35/60] GUEST /rest/v1/blog_posts?select=*&limit=500&offset=0 -> 200 rows=4
+[11:23:53] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'blog_posts' returned 4 record(s) for GUEST.
+[11:23:54] [REST 36/60] GUEST /rest/v1/services?select=*&limit=500&offset=0 -> 200 rows=3
+[11:23:54] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'services' returned 3 record(s) for GUEST.
+[11:23:54] [REST 37/60] GUEST /rest/v1/study_materials?select=*&limit=500&offset=0 -> 200 rows=16
+[11:23:54] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'study_materials' returned 16 record(s) for GUEST.
+[11:23:54] [REST 38/60] GUEST /rest/v1/report_logs?select=*&limit=500&offset=0 -> 200 rows=0
+[11:23:54] [REST 39/60] GUEST /rest/v1/v_report_summary?select=*&limit=500&offset=0 -> 200 rows=0
+[11:23:54] [REST 40/60] GUEST /rest/v1/service_pricing?select=*&limit=500&offset=0 -> 200 rows=10
+[11:23:54] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'service_pricing' returned 10 record(s) for GUEST.
+[11:23:54] [REST 41/60] GUEST /rest/v1/study_notes?select=*&limit=500&offset=0 -> 200 rows=0
+[11:23:54] [REST 42/60] GUEST /rest/v1/report_configs?select=*&limit=500&offset=0 -> 200 rows=4
+[11:23:54] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'report_configs' returned 4 record(s) for GUEST.
+[11:23:55] [REST 43/60] GUEST /rest/v1/pricing_plans?select=*&limit=500&offset=0 -> 200 rows=3
+[11:23:55] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'pricing_plans' returned 3 record(s) for GUEST.
+[11:23:55] [REST 44/60] GUEST /rest/v1/blog_comments?select=*&limit=500&offset=0 -> 200 rows=2
+[11:23:55] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'blog_comments' returned 2 record(s) for GUEST.
+[11:23:55] [REST 45/60] GUEST /rest/v1/projects?select=*&limit=500&offset=0 -> 200 rows=18
+[11:23:55] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'projects' returned 18 record(s) for GUEST.
+[11:23:55] [REST 46/60] GUEST /rest/v1/study_ai_conversations?select=*&limit=500&offset=0 -> 200 rows=0
+[11:23:55] [REST 47/60] GUEST /rest/v1/bigtech_projects?select=*&limit=500&offset=0 -> 200 rows=46
+[11:23:55] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'bigtech_projects' returned 46 record(s) for GUEST.
+[11:23:55] [REST 48/60] GUEST /rest/v1/skills?select=*&limit=500&offset=0 -> 200 rows=8
+[11:23:55] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'skills' returned 8 record(s) for GUEST.
+[11:23:55] [REST 49/60] GUEST /rest/v1/supabase_usage?select=*&limit=500&offset=0 -> 200 rows=1
+[11:23:55] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'supabase_usage' returned 1 record(s) for GUEST.
+[11:23:55] [REST 50/60] GUEST /rest/v1/linkedin_ai_tips?select=*&limit=500&offset=0 -> 200 rows=0
+[11:23:56] [REST 51/60] GUEST /rest/v1/testimonials?select=*&limit=500&offset=0 -> 200 rows=3
+[11:23:56] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'testimonials' returned 3 record(s) for GUEST.
+[11:23:56] [REST 52/60] GUEST /rest/v1/linkedin_experiences?select=*&limit=500&offset=0 -> 200 rows=0
+[11:23:56] [REST 53/60] GUEST /rest/v1/about_skills?select=*&limit=500&offset=0 -> 200 rows=6
+[11:23:56] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'about_skills' returned 6 record(s) for GUEST.
+[11:23:56] [REST 54/60] GUEST /rest/v1/about_photos?select=*&limit=500&offset=0 -> 200 rows=1
+[11:23:56] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'about_photos' returned 1 record(s) for GUEST.
+[11:23:56] [REST 55/60] GUEST /rest/v1/api_configs?select=*&limit=500&offset=0 -> 200 rows=16
+[11:23:56] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'api_configs' returned 16 record(s) for GUEST.
+[11:23:56] [REST 56/60] GUEST /rest/v1/resumes?select=*&limit=500&offset=0 -> 200 rows=14
+[11:23:56] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'resumes' returned 14 record(s) for GUEST.
+[11:23:56] [REST 57/60] GUEST /rest/v1/career_consultations?select=*&limit=500&offset=0 -> 200 rows=5
+[11:23:56] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'career_consultations' returned 5 record(s) for GUEST.
+[11:23:56] [REST 58/60] GUEST /rest/v1/experience?select=*&limit=500&offset=0 -> 200 rows=3
+[11:23:56] 🚨 [EXPOSURE] Public REST table/route - Public REST access: 'experience' returned 3 record(s) for GUEST.
+[11:23:57] [REST 59/60] GUEST /rest/v1/github_repos_cache?select=*&limit=500&offset=0 -> 200 rows=0
+[11:23:57] [REST 60/60] GUEST /rest/v1/linkedin_jobs?select=*&limit=500&offset=0 -> 200 rows=0
+[11:23:57] Write probe (POST/PATCH/PUT/DELETE) is disabled.
+[11:23:57] [DONE] REST Scan
+[11:23:57] [STEP] Relationship RLS Scan
+[11:23:57] [REL 1/24][1/3] GUEST /rest/v1/study_resources?select=*%2Clevel%28*%29&limit=5&offset=0 -> 400
+[11:23:57] [REL 1/24][2/3] GUEST /rest/v1/study_resources?select=*%2Clevels%28*%29&limit=5&offset=0 -> 400
+[11:23:57] [REL 1/24][3/3] GUEST /rest/v1/study_resources?select=*%2Csection%28*%29&limit=5&offset=0 -> 400
+[11:23:57] [REL 2/24][1/3] GUEST /rest/v1/doc_articles?select=*%2Ccategory%28*%29&limit=5&offset=0 -> 400
+[11:23:57] [REL 2/24][2/3] GUEST /rest/v1/doc_articles?select=*%2Ccategorys%28*%29&limit=5&offset=0 -> 400
+[11:23:58] [REL 2/24][3/3] GUEST /rest/v1/doc_articles?select=*%2Clinkedin_posts%28*%29&limit=5&offset=0 -> 400
+[11:23:58] [REL 3/24][1/3] GUEST /rest/v1/study_checkins?select=*%2Cschedule%28*%29&limit=5&offset=0 -> 400
+[11:23:58] [REL 3/24][2/3] GUEST /rest/v1/study_checkins?select=*%2Cschedules%28*%29&limit=5&offset=0 -> 400
+[11:23:58] [REL 3/24][3/3] GUEST /rest/v1/study_checkins?select=*%2Clinkedin_posts%28*%29&limit=5&offset=0 -> 400
+[11:23:58] [REL 4/24][1/3] GUEST /rest/v1/python_scripts?select=*%2Clinkedin_posts%28*%29&limit=5&offset=0 -> 400
+[11:23:58] [REL 4/24][2/3] GUEST /rest/v1/python_scripts?select=*%2Cstudy_resources%28*%29&limit=5&offset=0 -> 400
+[11:23:58] [REL 4/24][3/3] GUEST /rest/v1/python_scripts?select=*%2Cdoc_articles%28*%29&limit=5&offset=0 -> 400
+[11:23:58] [REL 5/24][1/3] GUEST /rest/v1/study_daily_summary?select=*%2Clinkedin_posts%28*%29&limit=5&offset=0 -> 400
+[11:23:59] [REL 5/24][2/3] GUEST /rest/v1/study_daily_summary?select=*%2Cstudy_resources%28*%29&limit=5&offset=0 -> 400
+[11:23:59] [REL 5/24][3/3] GUEST /rest/v1/study_daily_summary?select=*%2Cdoc_articles%28*%29&limit=5&offset=0 -> 400
+[11:23:59] [REL 6/24][1/3] GUEST /rest/v1/de_tools?select=*%2Clinkedin_posts%28*%29&limit=5&offset=0 -> 400
+[11:23:59] [REL 6/24][2/3] GUEST /rest/v1/de_tools?select=*%2Cstudy_resources%28*%29&limit=5&offset=0 -> 400
+[11:23:59] [REL 6/24][3/3] GUEST /rest/v1/de_tools?select=*%2Cdoc_articles%28*%29&limit=5&offset=0 -> 400
+[11:23:59] [REL 7/24][1/3] GUEST /rest/v1/study_topics?select=*%2Ccategory%28*%29&limit=5&offset=0 -> 400
+[11:23:59] [REL 7/24][2/3] GUEST /rest/v1/study_topics?select=*%2Ccategorys%28*%29&limit=5&offset=0 -> 400
+[11:24:00] [REL 7/24][3/3] GUEST /rest/v1/study_topics?select=*%2Clinkedin_posts%28*%29&limit=5&offset=0 -> 400
+[11:24:00] [REL 8/24][1/3] GUEST /rest/v1/study_schedule?select=*%2Ctopic%28*%29&limit=5&offset=0 -> 400
+[11:24:00] [REL 8/24][2/3] GUEST /rest/v1/study_schedule?select=*%2Ctopics%28*%29&limit=5&offset=0 -> 400
+[11:24:00] [REL 8/24][3/3] GUEST /rest/v1/study_schedule?select=*%2Ccategory%28*%29&limit=5&offset=0 -> 400
+[11:24:00] [REL 9/24][1/3] GUEST /rest/v1/counters?select=*%2Clinkedin_posts%28*%29&limit=5&offset=0 -> 400
+[11:24:00] [REL 9/24][2/3] GUEST /rest/v1/counters?select=*%2Cstudy_resources%28*%29&limit=5&offset=0 -> 400
+[11:24:00] [REL 9/24][3/3] GUEST /rest/v1/counters?select=*%2Cdoc_articles%28*%29&limit=5&offset=0 -> 400
+[11:24:00] [REL 10/24][1/3] GUEST /rest/v1/study_achievements?select=*%2Clinkedin_posts%28*%29&limit=5&offset=0 -> 400
+[11:24:01] [REL 10/24][2/3] GUEST /rest/v1/study_achievements?select=*%2Cstudy_resources%28*%29&limit=5&offset=0 -> 400
+[11:24:01] [REL 10/24][3/3] GUEST /rest/v1/study_achievements?select=*%2Cdoc_articles%28*%29&limit=5&offset=0 -> 400
+[11:24:01] [REL 11/24][1/3] GUEST /rest/v1/linkedin_profile?select=*%2Clinkedin_posts%28*%29&limit=5&offset=0 -> 400
+[11:24:01] [REL 11/24][2/3] GUEST /rest/v1/linkedin_profile?select=*%2Cstudy_resources%28*%29&limit=5&offset=0 -> 400
+[11:24:01] [REL 11/24][3/3] GUEST /rest/v1/linkedin_profile?select=*%2Cdoc_articles%28*%29&limit=5&offset=0 -> 400
+[11:24:01] [REL 12/24][1/3] GUEST /rest/v1/study_streaks?select=*%2Clinkedin_posts%28*%29&limit=5&offset=0 -> 400
+[11:24:01] [REL 12/24][2/3] GUEST /rest/v1/study_streaks?select=*%2Cstudy_resources%28*%29&limit=5&offset=0 -> 400
+[11:24:01] [REL 12/24][3/3] GUEST /rest/v1/study_streaks?select=*%2Cdoc_articles%28*%29&limit=5&offset=0 -> 400
+[11:24:02] [REL 13/24][1/3] GUEST /rest/v1/chat_users?select=*%2Clinkedin_posts%28*%29&limit=5&offset=0 -> 400
+[11:24:02] [REL 13/24][2/3] GUEST /rest/v1/chat_users?select=*%2Cstudy_resources%28*%29&limit=5&offset=0 -> 400
+[11:24:02] [REL 13/24][3/3] GUEST /rest/v1/chat_users?select=*%2Cdoc_articles%28*%29&limit=5&offset=0 -> 400
+[11:24:02] [REL 14/24][1/3] GUEST /rest/v1/roadmap_items?select=*%2Cphase%28*%29&limit=5&offset=0 -> 400
+[11:24:02] [REL 14/24][2/3] GUEST /rest/v1/roadmap_items?select=*%2Cphases%28*%29&limit=5&offset=0 -> 400
+[11:24:02] [REL 14/24][3/3] GUEST /rest/v1/roadmap_items?select=*%2Ctrack%28*%29&limit=5&offset=0 -> 400
+[11:24:02] [REL 15/24][1/3] GUEST /rest/v1/chat_messages?select=*%2Cconversation%28*%29&limit=5&offset=0 -> 400
+[11:24:02] [REL 15/24][2/3] GUEST /rest/v1/chat_messages?select=*%2Cconversations%28*%29&limit=5&offset=0 -> 400
+[11:24:03] [REL 15/24][3/3] GUEST /rest/v1/chat_messages?select=*%2Csender%28*%29&limit=5&offset=0 -> 400
+[11:24:03] [REL 16/24][1/3] GUEST /rest/v1/study_categories?select=*%2Clinkedin_posts%28*%29&limit=5&offset=0 -> 400
+[11:24:03] [REL 16/24][2/3] GUEST /rest/v1/study_categories?select=*%2Cstudy_resources%28*%29&limit=5&offset=0 -> 400
+[11:24:03] [REL 16/24][3/3] GUEST /rest/v1/study_categories?select=*%2Cdoc_articles%28*%29&limit=5&offset=0 -> 400
+[11:24:03] [REL 17/24][1/3] GUEST /rest/v1/admin_availability?select=*%2Clinkedin_posts%28*%29&limit=5&offset=0 -> 400
+[11:24:03] [REL 17/24][2/3] GUEST /rest/v1/admin_availability?select=*%2Cstudy_resources%28*%29&limit=5&offset=0 -> 400
+[11:24:03] [REL 17/24][3/3] GUEST /rest/v1/admin_availability?select=*%2Cdoc_articles%28*%29&limit=5&offset=0 -> 400
+[11:24:04] [REL 18/24][1/3] GUEST /rest/v1/study_levels?select=*%2Clinkedin_posts%28*%29&limit=5&offset=0 -> 400
+[11:24:04] [REL 18/24][2/3] GUEST /rest/v1/study_levels?select=*%2Cstudy_resources%28*%29&limit=5&offset=0 -> 200
+[11:24:04] ⚠️ [EXPOSURE] Relationship-based RLS indirect leak - Relation query 'study_resources(*)' returned chained data for GUEST in 'study_levels'.
+[11:24:04] [REL 18/24][3/3] GUEST /rest/v1/study_levels?select=*%2Cdoc_articles%28*%29&limit=5&offset=0 -> 400
+[11:24:04] [REL 19/24][1/3] GUEST /rest/v1/social_links?select=*%2Clinkedin_posts%28*%29&limit=5&offset=0 -> 400
+[11:24:04] [REL 19/24][2/3] GUEST /rest/v1/social_links?select=*%2Cstudy_resources%28*%29&limit=5&offset=0 -> 400
+[11:24:04] [REL 19/24][3/3] GUEST /rest/v1/social_links?select=*%2Cdoc_articles%28*%29&limit=5&offset=0 -> 400
+[11:24:04] [REL 20/24][1/3] GUEST /rest/v1/roadmap_phases?select=*%2Ctrack%28*%29&limit=5&offset=0 -> 400
+[11:24:04] [REL 20/24][2/3] GUEST /rest/v1/roadmap_phases?select=*%2Ctracks%28*%29&limit=5&offset=0 -> 400
+[11:24:05] [REL 20/24][3/3] GUEST /rest/v1/roadmap_phases?select=*%2Clinkedin_posts%28*%29&limit=5&offset=0 -> 400
+[11:24:05] [REL 21/24][1/3] GUEST /rest/v1/study_projects?select=*%2Clinkedin_posts%28*%29&limit=5&offset=0 -> 400
+[11:24:05] [REL 21/24][2/3] GUEST /rest/v1/study_projects?select=*%2Cstudy_resources%28*%29&limit=5&offset=0 -> 400
+[11:24:05] [REL 21/24][3/3] GUEST /rest/v1/study_projects?select=*%2Cdoc_articles%28*%29&limit=5&offset=0 -> 400
+[11:24:05] [REL 22/24][1/3] GUEST /rest/v1/report_templates?select=*%2Clinkedin_posts%28*%29&limit=5&offset=0 -> 400
+[11:24:05] [REL 22/24][2/3] GUEST /rest/v1/report_templates?select=*%2Cstudy_resources%28*%29&limit=5&offset=0 -> 400
+[11:24:05] [REL 22/24][3/3] GUEST /rest/v1/report_templates?select=*%2Cdoc_articles%28*%29&limit=5&offset=0 -> 400
+[11:24:05] [REL 23/24][1/3] GUEST /rest/v1/blog_posts?select=*%2Clinkedin_posts%28*%29&limit=5&offset=0 -> 400
+[11:24:06] [REL 23/24][2/3] GUEST /rest/v1/blog_posts?select=*%2Cstudy_resources%28*%29&limit=5&offset=0 -> 400
+[11:24:06] [REL 23/24][3/3] GUEST /rest/v1/blog_posts?select=*%2Cdoc_articles%28*%29&limit=5&offset=0 -> 400
+[11:24:06] [REL 24/24][1/3] GUEST /rest/v1/services?select=*%2Clinkedin_posts%28*%29&limit=5&offset=0 -> 400
+[11:24:06] [REL 24/24][2/3] GUEST /rest/v1/services?select=*%2Cstudy_resources%28*%29&limit=5&offset=0 -> 400
+[11:24:06] [REL 24/24][3/3] GUEST /rest/v1/services?select=*%2Cdoc_articles%28*%29&limit=5&offset=0 -> 400
+[11:24:06] [DONE] Relationship RLS Scan
+[11:24:06] [STEP] RPC Scan
+[11:24:06] [RPC 1/3] GUEST /rest/v1/rpc/generate_daily_snapshot -> 400 rows=0
+[11:24:06] [RPC 2/3] GUEST /rest/v1/rpc/increment_resume_downloads -> 404 rows=0
+[11:24:06] [RPC 3/3] GUEST /rest/v1/rpc/get_report_data -> 404 rows=0
+[11:24:06] [DONE] RPC Scan
+[11:24:06] [STEP] Storage Scan
+[11:24:07] [STORAGE] GUEST /storage/v1/bucket -> 400 buckets=0
+[11:24:07] [DONE] Storage Scan
+[11:24:07] [STEP] Edge Functions
+[11:24:07] [DONE] Edge Functions
+[11:24:07] [STEP] Realtime Probe
+[11:24:07] [REALTIME] /realtime/v1/websocket -> 0
+[11:24:07] [REALTIME JOIN] supported=yes connected=true joined=true
+[11:24:07] ⚠️ [EXPOSURE] Realtime allows anonymous channel join - Channel join probe succeeded for GUEST on realtime endpoint.
+[11:24:07] [DONE] Realtime Probe
+[11:24:07] [STEP] Hardening + Abuse Checks
+[11:24:07] ✅ [EXPOSURE] Hardening: missing rate-limit signaling - 147 endpoints were detected without rate-limit signaling.
+[11:24:07] ✅ [EXPOSURE] Hardening: cache on data endpoints - 68 responses with unsafe cache behavior were detected on data endpoints.
+[11:24:07] [DONE] Hardening + Abuse Checks
+[11:24:07] [OK] relatório completo gerado
+[11:24:09] [QUEUE] finished job=325d3708-1733-4087-8208-856bcb3795e4
+[11:24:09] Retention enabled: artifacts will be deleted in 30 min.

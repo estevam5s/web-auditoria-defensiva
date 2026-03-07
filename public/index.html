@@ -40,6 +40,7 @@
         <span class="badge">v3.0.0</span>
         <span class="badge">Engine: Node.js</span>
         <span class="badge">Evidence: SHA-256</span>
+        <span class="badge badge-history" onclick="toggleHistory()" style="cursor:pointer;">📊 Histórico</span>
         <span class="badge badge-ai" onclick="showAIChat()" style="cursor:pointer;">🤖 AI: Grok</span>
       </div>
     </header>
@@ -347,6 +348,60 @@
             📋 Dados sensíveis
           </button>
         </div>
+      </div>
+    </section>
+
+    <!-- Audit History Section -->
+    <section class="history-section" id="historySection" style="display: none;">
+      <div class="history-header">
+        <h3>📊 Histórico de Auditorias</h3>
+        <div class="history-actions">
+          <button class="btn-history" onclick="loadAuditHistory()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+            Atualizar
+          </button>
+          <button class="btn-history btn-supabase" onclick="showSupabaseAudits()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            Ver do Supabase
+          </button>
+        </div>
+      </div>
+      
+      <div class="history-stats" id="historyStats">
+        <div class="stat-card">
+          <span class="stat-number" id="localAuditsCount">0</span>
+          <span class="stat-label">Locais</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="supabaseAuditsCount">0</span>
+          <span class="stat-label">Supabase</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="totalAuditsCount">0</span>
+          <span class="stat-label">Total</span>
+        </div>
+      </div>
+
+      <div class="history-list" id="historyList">
+        <div class="history-loading" id="historyLoading" style="display: none;">
+          <div class="spinner"></div>
+          <span>Carregando auditorias...</span>
+        </div>
+        <div class="history-empty" id="historyEmpty">
+          <p>Nenhuma auditoria encontrada.</p>
+          <p>Execute uma auditoria para começar!</p>
+        </div>
+      </div>
+
+      <div class="history-supabase-details" id="supabaseDetails" style="display: none;">
+        <h4>Detalhes da Auditoria (Supabase)</h4>
+        <div class="supabase-audit-info" id="supabaseAuditInfo"></div>
+        <div class="supabase-vulnerabilities" id="supabaseVulnerabilities"></div>
       </div>
     </section>
 

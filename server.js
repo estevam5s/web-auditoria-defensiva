@@ -34,7 +34,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 const auditStore = new Map();
 
 function storeAudit(data, userIp = null, userAgent = null) {
-  if (!data || !data.evidence?.auditId) return;
+  if (!data || !data.evidence?.auditId) {
+    console.error('❌ Cannot store audit: missing data or auditId');
+    return;
+  }
   auditStore.set(data.evidence.auditId, data);
   // Keep only last 20
   if (auditStore.size > 20) {
@@ -43,30 +46,53 @@ function storeAudit(data, userIp = null, userAgent = null) {
   }
   
   // Debug log
+  console.log('\n============================================');
   console.log('=== STORING AUDIT ===');
+  console.log('============================================');
   console.log('Audit ID:', data.evidence.auditId);
   console.log('Project URL:', data.projectUrl);
-  console.log('Score:', data.score);
+  console.log('Score:', data.score, `(${data.grade?.grade} - ${data.grade?.label})`);
+  console.log('Total Checks:', data.totalChecks);
+  console.log('Passed:', data.passed, '| Failed:', data.failed, '| Warnings:', data.warnings);
+  console.log('Results count:', data.results?.length || 0);
+  console.log('Has catalogData:', !!data.catalogData);
+  console.log('Evidence SHA256:', data.evidence?.sha256);
+  console.log('User IP:', userIp);
+  console.log('User Agent:', userAgent ? userAgent.substring(0, 100) : 'N/A');
   console.log('SUPABASE_URL set:', !!process.env.SUPABASE_URL);
   console.log('SUPABASE_ANON_KEY set:', !!process.env.SUPABASE_ANON_KEY);
+  console.log('============================================\n');
   
   // Try to save to Supabase
   const supabaseUrl = process.env.SUPABASE_URL || 'https://qmrceufksvlfdwnwftst.supabase.co';
   const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtcmNldWZrc3ZsZmR3bndmdHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NzQ0ODEsImV4cCI6MjA4ODQ1MDQ4MX0.NXX4jvBXumkAp2L8z56q5pLXoXJaVUNPnjBwn4XUPPE';
   
   console.log('Using Supabase URL:', supabaseUrl);
+  console.log('Calling saveAuditToSupabase...\n');
   
   saveAuditToSupabase(data, userIp, userAgent)
     .then(result => {
-      console.log('Save result:', result);
+      console.log('\n============================================');
+      console.log('=== SAVE RESULT ===');
+      console.log('============================================');
+      console.log('Success:', result.success);
       if (result.success) {
         console.log(`✅ AUDIT SAVED TO SUPABASE: ${result.auditId}`);
+        console.log('You can view this audit at:');
+        console.log(`   Local: http://localhost:${PORT}/audit/${data.evidence.auditId}`);
+        console.log(`   API:   http://localhost:${PORT}/api/db/audit/${result.auditId}`);
       } else {
         console.error('❌ Failed to save:', result.error);
       }
+      console.log('============================================\n');
     })
     .catch(err => {
-      console.error('❌ Exception saving:', err.message);
+      console.error('\n============================================');
+      console.error('=== SAVE EXCEPTION ===');
+      console.error('============================================');
+      console.error('Exception saving audit:', err.message);
+      console.error('Stack:', err.stack);
+      console.error('============================================\n');
     });
 }
 
@@ -237,14 +263,34 @@ app.get('/audit/:id', (req, res) => {
 });
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+  // Test Supabase connection
+  let supabaseStatus = 'not_configured';
+  let supabaseAuditsCount = 0;
+  
+  if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+    try {
+      const testResult = await getAuditHistory(1);
+      supabaseStatus = testResult.success ? 'connected' : 'error';
+      const countResult = await supabaseFetch('audits?select=id', {});
+      supabaseAuditsCount = countResult.success ? (countResult.data?.length || 0) : 0;
+    } catch (e) {
+      supabaseStatus = 'error: ' + e.message;
+    }
+  }
+
   res.json({
     status: 'ok',
     engine: 'supabase-guard',
     version: '3.0.0',
-    features: ['pdf-report', 'html-report', 'site-scraper', 'stack-detection', 'deep-analysis-v2', 'auto-detect', 'openapi-introspection', 'rest-scan-deep', 'relationship-rls', 'graphql-scan', 'auth-settings-deep', 'supabase-catalog', 'supabase-db-save', 'git-history-analysis'],
+    features: ['pdf-report', 'html-report', 'site-scraper', 'stack-detection', 'deep-analysis-v2', 'auto-detect', 'openapi-introspection', 'rest-scan-deep', 'relationship-rls', 'graphql-scan', 'auth-settings-deep', 'supabase-catalog', 'supabase-db-save', 'git-history-analysis', 'audit-history'],
     storedAudits: auditStore.size,
-    supabaseConfigured: !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY),
+    supabase: {
+      configured: !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY),
+      status: supabaseStatus,
+      url: process.env.SUPABASE_URL ? process.env.SUPABASE_URL.substring(0, 30) + '...' : null,
+      auditsInDb: supabaseAuditsCount
+    }
   });
 });
 
@@ -260,6 +306,126 @@ app.get('/api/db/audits', async (req, res) => {
 app.get('/api/db/audit/:id', async (req, res) => {
   const result = await getAuditById(req.params.id);
   res.json(result);
+});
+
+// Get combined audit history (local + Supabase)
+app.get('/api/audits/history', async (req, res) => {
+  try {
+    // Get local audits
+    const localAudits = [];
+    for (const [id, data] of auditStore.entries()) {
+      localAudits.push({
+        source: 'local',
+        auditId: id,
+        projectUrl: data.projectUrl,
+        score: data.score,
+        grade: data.grade,
+        duration: data.duration,
+        timestamp: data.evidence?.timestamp,
+        totalChecks: data.totalChecks,
+        passed: data.passed,
+        failed: data.failed,
+        warnings: data.warnings
+      });
+    }
+
+    // Get Supabase audits
+    const supabaseResult = await getAuditHistory(50);
+    const supabaseAudits = supabaseResult.success ? supabaseResult.data.map(a => ({
+      source: 'supabase',
+      auditId: a.audit_id,
+      projectUrl: a.project_url,
+      score: a.score,
+      grade: { grade: a.grade, label: a.grade_label },
+      duration: a.duration,
+      timestamp: a.evidence_timestamp,
+      totalChecks: a.total_checks,
+      passed: a.passed_count,
+      failed: a.failed_count,
+      warnings: a.warnings_count,
+      userIp: a.user_ip,
+      userMachine: a.user_machine,
+      userOs: a.user_os,
+      userRegion: a.user_region
+    })) : [];
+
+    // Combine and sort by timestamp
+    const allAudits = [...localAudits, ...supabaseAudits].sort((a, b) => 
+      new Date(b.timestamp) - new Date(a.timestamp)
+    );
+
+    res.json({
+      success: true,
+      localCount: localAudits.length,
+      supabaseCount: supabaseAudits.length,
+      totalCount: allAudits.length,
+      audits: allAudits
+    });
+  } catch (err) {
+    console.error('Error fetching audit history:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Get full audit details from Supabase by audit_id
+app.get('/api/audits/db/full/:auditId', async (req, res) => {
+  try {
+    const { auditId } = req.params;
+    
+    // Get main audit data
+    const auditResult = await getAuditById(auditId);
+    if (!auditResult.success) {
+      return res.status(404).json({ success: false, error: 'Audit not found' });
+    }
+
+    const audit = auditResult.data;
+
+    // Get individual results
+    const resultsResult = await supabaseFetch(
+      `audit_results?audit_id=eq.${audit.id}&select=*&order=severity asc`
+    );
+
+    // Get vulnerabilities
+    const vulnResult = await getVulnerabilitiesByAudit(audit.id);
+
+    res.json({
+      success: true,
+      audit: {
+        id: audit.id,
+        auditId: audit.audit_id,
+        projectUrl: audit.project_url,
+        projectRef: audit.project_ref,
+        score: audit.score,
+        grade: audit.grade,
+        gradeLabel: audit.grade_label,
+        totalChecks: audit.total_checks,
+        passed: audit.passed_count,
+        failed: audit.failed_count,
+        warnings: audit.warnings_count,
+        errors: audit.errors_count,
+        info: audit.info_count,
+        duration: audit.duration,
+        evidence: {
+          sha256: audit.evidence_sha256,
+          timestamp: audit.evidence_timestamp,
+          auditId: audit.audit_id
+        },
+        results: resultsResult.success ? resultsResult.data : [],
+        vulnerabilities: vulnResult.success ? vulnResult.data : [],
+        user: {
+          ip: audit.user_ip,
+          machine: audit.user_machine,
+          os: audit.user_os,
+          browser: audit.user_browser,
+          region: audit.user_region
+        },
+        createdAt: audit.created_at
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching full audit:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // ─── Git Analysis Routes ───────────────────────────────────────

@@ -810,3 +810,297 @@ function showResults(results, score, grade, duration, evidence) {
     </div>
   `;
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// Audit History Functions
+// ═══════════════════════════════════════════════════════════════════
+
+let auditHistoryData = null;
+
+function toggleHistory() {
+  const section = $('#historySection');
+  if (section.style.display === 'none' || !section.style.display) {
+    section.style.display = 'block';
+    loadAuditHistory();
+    section.scrollIntoView({ behavior: 'smooth' });
+  } else {
+    section.style.display = 'none';
+  }
+}
+
+async function loadAuditHistory() {
+  const loading = $('#historyLoading');
+  const empty = $('#historyEmpty');
+  const list = $('#historyList');
+  
+  loading.style.display = 'flex';
+  empty.style.display = 'none';
+  
+  try {
+    const response = await fetch('/api/audits/history');
+    const data = await response.json();
+    
+    auditHistoryData = data;
+    
+    $('#localAuditsCount').textContent = data.localCount || 0;
+    $('#supabaseAuditsCount').textContent = data.supabaseCount || 0;
+    $('#totalAuditsCount').textContent = data.totalCount || 0;
+    
+    loading.style.display = 'none';
+    
+    if (data.audits && data.audits.length > 0) {
+      renderAuditList(data.audits);
+    } else {
+      empty.style.display = 'block';
+    }
+  } catch (err) {
+    loading.style.display = 'none';
+    empty.style.display = 'block';
+    appendLog('error', 'HISTORY', `Erro ao carregar histórico: ${err.message}`);
+  }
+}
+
+function renderAuditList(audits) {
+  const list = $('#historyList');
+  list.innerHTML = '';
+  
+  for (const audit of audits) {
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    
+    const gradeColor = getGradeColor(audit.grade?.grade || 'F');
+    const sourceIcon = audit.source === 'supabase' ? '☁️' : '💾';
+    const sourceLabel = audit.source === 'supabase' ? 'Supabase' : 'Local';
+    
+    item.innerHTML = `
+      <div class="history-item-header">
+        <span class="history-source">${sourceIcon} ${sourceLabel}</span>
+        <span class="history-grade" style="color: ${gradeColor}">${audit.grade?.grade || 'F'}</span>
+      </div>
+      <div class="history-item-url">${escapeHtml(audit.projectUrl || 'N/A')}</div>
+      <div class="history-item-meta">
+        <span>Score: <strong style="color: ${gradeColor}">${audit.score || 0}</strong>/100</span>
+        <span>Checks: ${audit.totalChecks || 0}</span>
+        <span>Pass: ${audit.passed || 0}</span>
+        <span class="history-fail">Fail: ${audit.failed || 0}</span>
+        <span class="history-warn">Warn: ${audit.warnings || 0}</span>
+      </div>
+      <div class="history-item-time">
+        ${formatDate(audit.timestamp)}
+        ${audit.duration ? `• ${audit.duration}` : ''}
+        ${audit.userRegion && audit.userRegion !== 'Unknown' ? `• ${audit.userRegion}` : ''}
+        ${audit.userMachine && audit.userMachine !== 'Unknown' ? `• ${audit.userMachine}` : ''}
+      </div>
+      <div class="history-item-actions">
+        ${audit.source === 'supabase' ? 
+          `<button class="btn-sm" onclick="viewSupabaseAudit('${audit.auditId}')">📊 Ver Detalhes</button>` : 
+          `<button class="btn-sm" onclick="viewAuditById('${audit.auditId}')">👁️ Ver</button>`
+        }
+        <button class="btn-sm btn-secondary" onclick="loadAuditForCompare('${audit.source}', '${audit.auditId}')">🔄 Usar</button>
+      </div>
+    `;
+    
+    list.appendChild(item);
+  }
+}
+
+function getGradeColor(grade) {
+  const colors = {
+    'A': '#00ff41',
+    'B': '#7fff00',
+    'C': '#ffff00',
+    'D': '#ff8c00',
+    'F': '#ff0040'
+  };
+  return colors[grade] || '#ff0040';
+}
+
+function formatDate(timestamp) {
+  if (!timestamp) return 'N/A';
+  const date = new Date(timestamp);
+  return date.toLocaleString('pt-BR', { 
+    day: '2-digit', 
+    month: '2-digit', 
+    year: 'numeric', 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+}
+
+async function viewSupabaseAudit(auditId) {
+  const details = $('#supabaseDetails');
+  const info = $('#supabaseAuditInfo');
+  const vulns = $('#supabaseVulnerabilities');
+  
+  details.style.display = 'block';
+  info.innerHTML = '<div class="spinner"></div> Carregando...';
+  vulns.innerHTML = '';
+  
+  try {
+    const response = await fetch(`/api/audits/db/full/${auditId}`);
+    const data = await response.json();
+    
+    if (!data.success) {
+      info.innerHTML = `<p style="color: #ff0040">Erro: ${data.error}</p>`;
+      return;
+    }
+    
+    const audit = data.audit;
+    const gradeColor = getGradeColor(audit.grade);
+    
+    info.innerHTML = `
+      <div class="supabase-audit-card">
+        <div class="supabase-audit-header">
+          <div class="supabase-score" style="border-color: ${gradeColor}">
+            <span class="score-value" style="color: ${gradeColor}">${audit.score}</span>
+            <span class="score-label">${audit.grade}</span>
+          </div>
+          <div class="supabase-info">
+            <h4>${escapeHtml(audit.projectUrl)}</h4>
+            <p>ID: ${audit.auditId}</p>
+            <p>Ref: ${audit.projectRef || 'N/A'}</p>
+          </div>
+        </div>
+        
+        <div class="supabase-stats">
+          <div class="stat"><span class="stat-pass">${audit.passed}</span> Pass</div>
+          <div class="stat"><span class="stat-fail">${audit.failed}</span> Fail</div>
+          <div class="stat"><span class="stat-warn">${audit.warnings}</span> Warn</div>
+          <div class="stat"><span>${audit.totalChecks}</span> Total</div>
+        </div>
+        
+        <div class="supabase-user-info">
+          <h5>Informações do Usuário</h5>
+          <p>IP: ${audit.user?.ip || 'N/A'}</p>
+          <p>Machine: ${audit.user?.machine || 'N/A'} | OS: ${audit.user?.os || 'N/A'}</p>
+          <p>Browser: ${audit.user?.browser || 'N/A'} | Region: ${audit.user?.region || 'N/A'}</p>
+        </div>
+        
+        <div class="supabase-evidence">
+          <h5>Evidência Assinada</h5>
+          <p>SHA-256: <code>${audit.evidence?.sha256 || 'N/A'}</code></p>
+          <p>Timestamp: ${formatDate(audit.evidence?.timestamp)}</p>
+          <p>Criado em: ${formatDate(audit.createdAt)}</p>
+        </div>
+        
+        <div class="supabase-results-summary">
+          <h5>Resultados (${audit.results?.length || 0})</h5>
+          <div class="results-summary-list">
+            ${(audit.results || []).slice(0, 10).map(r => `
+              <div class="result-summary-item ${r.status.toLowerCase()}">
+                <span class="result-check">${escapeHtml(r.check_name)}</span>
+                <span class="result-status ${r.status}">${r.status}</span>
+                <span class="result-severity ${r.severity}">${r.severity}</span>
+              </div>
+            `).join('')}
+            ${audit.results?.length > 10 ? `<p class="more-results">... e mais ${audit.results.length - 10} resultados</p>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+    
+    if (audit.vulnerabilities && audit.vulnerabilities.length > 0) {
+      vulns.innerHTML = `
+        <h5>Vulnerabilidades Críticas/Altas (${audit.vulnerabilities.length})</h5>
+        <div class="vuln-list">
+          ${audit.vulnerabilities.map(v => `
+            <div class="vuln-item ${v.severity}">
+              <div class="vuln-header">
+                <span class="vuln-severity ${v.severity}">${v.severity.toUpperCase()}</span>
+                <span class="vuln-category">${escapeHtml(v.category)}</span>
+              </div>
+              <div class="vuln-title">${escapeHtml(v.title)}</div>
+              <div class="vuln-desc">${escapeHtml(v.description)}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } else {
+      vulns.innerHTML = '<p class="no-vulns">Nenhuma vulnerabilidade crítica/alta encontrada.</p>';
+    }
+    
+    details.scrollIntoView({ behavior: 'smooth' });
+  } catch (err) {
+    info.innerHTML = `<p style="color: #ff0040">Erro: ${err.message}</p>`;
+  }
+}
+
+function viewAuditById(auditId) {
+  window.open(`/audit/${auditId}`, '_blank');
+}
+
+async function loadAuditForCompare(source, auditId) {
+  try {
+    let data;
+    
+    if (source === 'supabase') {
+      const response = await fetch(`/api/audits/db/full/${auditId}`);
+      const result = await response.json();
+      if (!result.success) {
+        appendLog('error', 'HISTORY', `Erro:        return;
+      ${result.error}`);
+ }
+      
+      const audit = result.audit;
+      data = {
+        projectUrl: audit.projectUrl,
+        projectRef: audit.projectRef,
+        score: audit.score,
+        grade: { grade: audit.grade, label: audit.gradeLabel },
+        totalChecks: audit.totalChecks,
+        passed: audit.passed,
+        failed: audit.failed,
+        warnings: audit.warnings,
+        errors: audit.errors,
+        info: audit.info,
+        duration: audit.duration,
+        results: audit.results.map(r => ({
+          check: r.check_name,
+          status: r.status,
+          severity: r.severity,
+          message: r.message,
+          details: r.details_json
+        })),
+        evidence: audit.evidence
+      };
+    } else {
+      const response = await fetch(`/api/audit/${auditId}`);
+      data = await response.json();
+    }
+    
+    if (data && data.evidence?.auditId) {
+      auditResults = data;
+      $('#projectUrl').value = data.projectUrl;
+      showScoreCard(data);
+      showResultsList(data.results);
+      showEvidence(data);
+      appendLog('info', 'HISTORY', `Auditoria carregada: ${data.projectUrl}`);
+    }
+  } catch (err) {
+    appendLog('error', 'HISTORY', `Erro ao carregar: ${err.message}`);
+  }
+}
+
+function showSupabaseAudits() {
+  if (auditHistoryData && auditHistoryData.audits) {
+    const supabaseOnly = auditHistoryData.audits.filter(a => a.source === 'supabase');
+    renderAuditList(supabaseOnly);
+    appendLog('info', 'HISTORY', `Mostrando ${supabaseOnly.length} auditorias do Supabase`);
+  } else {
+    loadAuditHistory();
+  }
+}
+
+// Auto-load history on page load (silent)
+document.addEventListener('DOMContentLoaded', () => {
+  fetch('/api/health')
+    .then(res => res.json())
+    .then(data => {
+      console.log('=== System Status ===');
+      console.log('Supabase Configured:', data.supabase?.configured);
+      console.log('Supabase Status:', data.supabase?.status);
+      console.log('Audits in DB:', data.supabase?.auditsInDb);
+      console.log('=====================');
+    })
+    .catch(err => console.error('Health check error:', err));
+});

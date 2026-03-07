@@ -1,12 +1,13 @@
 -- ═══════════════════════════════════════════════════════════════════
--- SUPABASE GUARD - Database Schema
+-- SUPABASE GUARD - Database Schema v2.0
 -- Script completo para criação de tabelas, políticas e configurações
+-- Versão otimizada para salvar auditorias automaticamente
 -- ═══════════════════════════════════════════════════════════════════
 
 -- ============================================================
 -- TABELA: audits
 -- Armazena os resultados completos das auditorias
--- ============================================================
+-- ═══════════════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS audits (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -64,7 +65,7 @@ CREATE INDEX IF NOT EXISTS idx_audits_score ON audits(score);
 -- ============================================================
 -- TABELA: audit_results
 -- Armazena cada resultado individual de check
--- ============================================================
+-- ═══════════════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS audit_results (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -90,7 +91,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_results_status ON audit_results(status);
 -- ============================================================
 -- TABELA: vulnerabilities
 -- Armazena vulnerabilidades encontradas em cada auditoria
--- ============================================================
+-- ═══════════════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS vulnerabilities (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -127,7 +128,7 @@ CREATE INDEX IF NOT EXISTS idx_vulnerabilities_category ON vulnerabilities(categ
 -- ============================================================
 -- TABELA: exposed_secrets
 -- Armazena segredos/chaves expostas encontradas
--- ============================================================
+-- ═══════════════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS exposed_secrets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -165,7 +166,7 @@ CREATE INDEX IF NOT EXISTS idx_exposed_secrets_type ON exposed_secrets(secret_ty
 -- ============================================================
 -- TABELA: scan_history
 -- Histórico de scans por URL
--- ============================================================
+-- ═══════════════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS scan_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -198,7 +199,7 @@ CREATE INDEX IF NOT EXISTS idx_scan_history_created_at ON scan_history(created_a
 -- ============================================================
 -- TABELA: user_sessions
 -- Armazena sessões de usuários (opcional)
--- ============================================================
+-- ═══════════════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS user_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -223,7 +224,7 @@ CREATE INDEX IF NOT EXISTS idx_user_sessions_email ON user_sessions(user_email);
 -- ============================================================
 -- TABELA: audit_logs
 -- Logs de auditoria do sistema
--- ============================================================
+-- ═══════════════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS audit_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -248,9 +249,9 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
 
--- ============================================================
+-- ═══════════════════════════════════════════════════════════════════
 -- POLÍTICAS RLS (Row Level Security)
--- ============================================================
+-- ═══════════════════════════════════════════════════════════════════
 
 -- Habilitar RLS em todas as tabelas
 ALTER TABLE audits ENABLE ROW LEVEL SECURITY;
@@ -262,10 +263,10 @@ ALTER TABLE user_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================
--- CORREÇÃO: Políticas RLS para permitir acesso anônimo
+-- CORREÇÃO: Políticas RLS para permitir acesso total
+-- (Desabilitado para permitir inserção sem autenticação)
 -- ============================================================
 
--- Desabilitar RLS temporariamente para inserção (ou usar service role)
 ALTER TABLE audits DISABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_results DISABLE ROW LEVEL SECURITY;
 ALTER TABLE vulnerabilities DISABLE ROW LEVEL SECURITY;
@@ -274,50 +275,14 @@ ALTER TABLE scan_history DISABLE ROW LEVEL SECURITY;
 ALTER TABLE user_sessions DISABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs DISABLE ROW LEVEL SECURITY;
 
--- Se preferir manter RLS, use estas políticas (descomente acima e comente estas):
-/*
--- Políticas para audits (com RLS)
-DROP POLICY IF EXISTS "Audits are viewable by owners" ON audits;
-DROP POLICY IF EXISTS "Anyone can insert audits" ON audits;
-DROP POLICY IF EXISTS "Anyone can update audits" ON audits;
-
-CREATE POLICY "allow_all_audits" ON audits FOR ALL USING (true) WITH CHECK (true);
-
--- Políticas para audit_results
-DROP POLICY IF EXISTS "Anyone can insert audit_results" ON audit_results;
-CREATE POLICY "allow_all_audit_results" ON audit_results FOR ALL USING (true) WITH CHECK (true);
-
--- Políticas para vulnerabilities
-DROP POLICY IF EXISTS "Anyone can insert vulnerabilities" ON vulnerabilities;
-CREATE POLICY "allow_all_vulnerabilities" ON vulnerabilities FOR ALL USING (true) WITH CHECK (true);
-
--- Políticas para exposed_secrets
-DROP POLICY IF EXISTS "Anyone can insert exposed_secrets" ON exposed_secrets;
-CREATE POLICY "allow_all_exposed_secrets" ON exposed_secrets FOR ALL USING (true) WITH CHECK (true);
-
--- Políticas para scan_history
-DROP POLICY IF EXISTS "Anyone can insert scan_history" ON scan_history;
-DROP POLICY IF EXISTS "Anyone can select scan_history" ON scan_history;
-CREATE POLICY "allow_all_scan_history" ON scan_history FOR ALL USING (true) WITH CHECK (true);
-
--- Políticas para user_sessions
-DROP POLICY IF EXISTS "Users can manage own sessions" ON user_sessions;
-CREATE POLICY "allow_all_sessions" ON user_sessions FOR ALL USING (true) WITH CHECK (true);
-
--- Políticas para audit_logs
-DROP POLICY IF EXISTS "Anyone can insert audit_logs" ON audit_logs;
-CREATE POLICY "allow_all_audit_logs" ON audit_logs FOR ALL USING (true) WITH CHECK (true);
-*/
-
--- ============================================================
+-- ═══════════════════════════════════════════════════════════════════
 -- FUNÇÕES AUXILIARES
--- ============================================================
+-- ═══════════════════════════════════════════════════════════════════
 
 -- Função para atualizar score médio de um projeto
 CREATE OR REPLACE FUNCTION update_project_stats()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Trigger logic can be added here if needed
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -350,10 +315,61 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ============================================================
+-- Função para obter contagem de auditorias por dia
+CREATE OR REPLACE FUNCTION get_audits_count_by_day(days INTEGER DEFAULT 30)
+RETURNS TABLE (
+    date DATE,
+    count INTEGER,
+    avg_score DECIMAL
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        DATE(a.created_at) as date,
+        COUNT(*)::INTEGER,
+        AVG(a.score)::DECIMAL(5,2)
+    FROM audits a
+    WHERE a.created_at >= NOW() - (days || ' days')::INTERVAL
+    GROUP BY DATE(a.created_at)
+    ORDER BY date DESC;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Função para obter top vulnerabilidades
+CREATE OR REPLACE FUNCTION get_top_vulnerabilities(limit_count INTEGER DEFAULT 10)
+RETURNS TABLE (
+    category VARCHAR(100),
+    severity VARCHAR(50),
+    count INTEGER,
+    title VARCHAR(500)
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        v.category,
+        v.severity,
+        COUNT(*)::INTEGER,
+        v.title
+    FROM vulnerabilities v
+    GROUP BY v.category, v.severity, v.title
+    ORDER BY 
+        CASE v.severity 
+            WHEN 'critical' THEN 1 
+            WHEN 'high' THEN 2 
+            WHEN 'medium' THEN 3 
+            ELSE 4 
+        END,
+        count DESC
+    LIMIT limit_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ═══════════════════════════════════════════════════════════════════
+-- VIEWS
+-- ═══════════════════════════════════════════════════════════════════
+
 -- VIEW: recent_audits
 -- Visualização de auditorias recentes
--- ============================================================
 CREATE OR REPLACE VIEW recent_audits AS
 SELECT 
     a.id,
@@ -373,10 +389,8 @@ FROM audits a
 ORDER BY a.created_at DESC
 LIMIT 100;
 
--- ============================================================
 -- VIEW: vulnerabilities_by_severity
 -- Visualização de vulnerabilidades por severidade
--- ============================================================
 CREATE OR REPLACE VIEW vulnerabilities_by_severity AS
 SELECT 
     v.audit_id,
@@ -398,11 +412,21 @@ ORDER BY
     END,
     v.created_at DESC;
 
--- ============================================================
--- CONFIGURAÇÕES ADICIONAIS
--- ============================================================
+-- VIEW: dashboard_stats
+-- Estatísticas gerais para dashboard
+CREATE OR REPLACE VIEW dashboard_stats AS
+SELECT 
+    (SELECT COUNT(*) FROM audits) as total_audits,
+    (SELECT COUNT(*) FROM audits WHERE created_at >= NOW() - INTERVAL '24 hours') as audits_last_24h,
+    (SELECT AVG(score) FROM audits)::DECIMAL(5,2) as avg_score,
+    (SELECT COUNT(*) FROM vulnerabilities WHERE severity IN ('critical', 'high')) as critical_vulnerabilities,
+    (SELECT COUNT(*) FROM vulnerabilities WHERE status = 'open') as open_vulnerabilities,
+    (SELECT COUNT(DISTINCT project_url) FROM audits) as unique_projects;
 
--- Comentários nas tabelas
+-- ═══════════════════════════════════════════════════════════════════
+-- COMENTÁRIOS
+-- ═══════════════════════════════════════════════════════════════════
+
 COMMENT ON TABLE audits IS 'Armazena os resultados completos das auditorias de segurança';
 COMMENT ON TABLE audit_results IS 'Armazena cada resultado individual de check';
 COMMENT ON TABLE vulnerabilities IS 'Armazena vulnerabilidades encontradas';
@@ -411,15 +435,6 @@ COMMENT ON TABLE scan_history IS 'Histórico de scans por URL';
 COMMENT ON TABLE user_sessions IS 'Sessões de usuários';
 COMMENT ON TABLE audit_logs IS 'Logs de auditoria do sistema';
 
--- Habilitar auto-update de timestamps
-CREATE OR REPLACE FUNCTION update_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- ============================================================
+-- ═══════════════════════════════════════════════════════════════════
 -- FIM DO SCRIPT
--- ============================================================
+-- ═══════════════════════════════════════════════════════════════════
