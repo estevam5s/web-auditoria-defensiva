@@ -111,9 +111,9 @@ async function openAPIIntrospection(config, emit) {
           details: {
             url: restUrl,
             totalRoutes: catalog.totalRoutes,
-            tables: catalog.totalTables,
+            tablesCount: catalog.totalTables,
             rpcs: catalog.totalRPCs,
-            tablesList: catalog.tables.map(t => t.name).slice(0, 50),
+            tables: catalog.tables.map(t => ({ name: t.name, columnCount: t.columnCount })).slice(0, 50),
             rpcList: catalog.rpcFunctions.map(f => f.name),
             recommendation: 'Restrinja o acesso ao schema via Dashboard > API Settings > Expose schemas'
           }

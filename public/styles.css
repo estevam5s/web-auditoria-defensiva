@@ -1372,6 +1372,19 @@ input[type="text"]::placeholder {
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
+/* Checklist Button — green gradient */
+.btn-checklist {
+  border-color: rgba(0, 255, 65, 0.4);
+  color: #00cc33;
+  background: linear-gradient(135deg, rgba(0, 255, 65, 0.08) 0%, rgba(0, 191, 255, 0.06) 100%);
+}
+.btn-checklist:hover {
+  background: linear-gradient(135deg, rgba(0, 255, 65, 0.18) 0%, rgba(0, 191, 255, 0.12) 100%);
+  border-color: #00ff41;
+  color: #00ff41;
+  box-shadow: 0 4px 15px rgba(0, 255, 65, 0.25);
+}
+
 /* Floating AI Button */
 .floating-ai-btn {
   position: fixed;

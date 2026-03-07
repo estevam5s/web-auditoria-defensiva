@@ -210,7 +210,7 @@ function buildFixPromptInput(auditData) {
   // Extract exposed tables
   const exposedTables = [];
   for (const r of results) {
-    if (r.check?.includes('REST') && r.details?.tables) {
+    if (r.check?.includes('REST') && Array.isArray(r.details?.tables)) {
       for (const t of r.details.tables) {
         if (t.readable) exposedTables.push(`${t.name} (${t.recordCount || 0} registros, gravável: ${t.writable || false})`);
       }
@@ -223,10 +223,11 @@ function buildFixPromptInput(auditData) {
     findingsBlock += `\n### ${r.check} [${r.severity.toUpperCase()}] [${r.status}]\n`;
     findingsBlock += `**Mensagem:** ${r.message}\n`;
     if (r.details?.recommendation) findingsBlock += `**Recomendação:** ${r.details.recommendation}\n`;
-    if (r.details?.functions) findingsBlock += `**Funções:** ${(r.details.functions || []).slice(0, 10).map(f => f.name || f).join(', ')}\n`;
-    if (r.details?.tables) findingsBlock += `**Tabelas:** ${(r.details.tables || []).slice(0, 15).map(t => t.name || t.table).join(', ')}\n`;
-    if (r.details?.files) findingsBlock += `**Arquivos:** ${(r.details.files || []).slice(0, 10).map(f => f.file || f).join(', ')}\n`;
-    if (r.details?.missing) findingsBlock += `**Headers ausentes:** ${(r.details.missing || []).join(', ')}\n`;
+    if (Array.isArray(r.details?.functions)) findingsBlock += `**Funções:** ${r.details.functions.slice(0, 10).map(f => f.name || f).join(', ')}\n`;
+    if (Array.isArray(r.details?.tables)) findingsBlock += `**Tabelas:** ${r.details.tables.slice(0, 15).map(t => t.name || t.table).join(', ')}\n`;
+    if (Array.isArray(r.details?.files)) findingsBlock += `**Arquivos:** ${r.details.files.slice(0, 10).map(f => f.file || f).join(', ')}\n`;
+    if (Array.isArray(r.details?.missing)) findingsBlock += `**Headers ausentes:** ${r.details.missing.join(', ')}\n`;
+    else if (typeof r.details?.missing === 'string') findingsBlock += `**Headers ausentes:** ${r.details.missing}\n`;
   }
 
   // Catalog context

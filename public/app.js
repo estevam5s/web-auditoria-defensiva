@@ -320,6 +320,62 @@ function showEvidence(results) {
     <div class="evidence-line"><span class="evidence-key">Duração:</span> ${results.duration}</div>
     <div class="evidence-line"><span class="evidence-key">Verificações:</span> ${results.totalChecks}</div>
   `;
+
+  // Inject checklist buttons if not already present
+  const auditId = results.evidence?.auditId;
+  if (auditId && !$('#btnChecklistView')) {
+    const reportActions = $('.report-actions') || section.querySelector('.report-actions');
+    if (reportActions) {
+      const checklistBtns = document.createElement('div');
+      checklistBtns.className = 'checklist-action-group';
+      checklistBtns.style.cssText = 'display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem;';
+      checklistBtns.innerHTML = `
+        <a id="btnChecklistView"
+           href="/checklist/${auditId}"
+           target="_blank"
+           style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.55rem 1.1rem;background:linear-gradient(135deg,#0d2b1a,#0a1f12);border:1px solid rgba(0,255,65,0.4);border-radius:8px;color:#00ff41;font-size:0.82rem;font-weight:600;text-decoration:none;cursor:pointer;transition:all 0.2s;"
+           onmouseover="this.style.borderColor='#00ff41';this.style.boxShadow='0 0 12px rgba(0,255,65,0.2)'"
+           onmouseout="this.style.borderColor='rgba(0,255,65,0.4)';this.style.boxShadow=''">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+          </svg>
+          Checklist do Cliente
+        </a>
+        <button id="btnChecklistExport"
+           onclick="downloadChecklistHTML()"
+           style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.55rem 1.1rem;background:linear-gradient(135deg,#1a1a2e,#12121c);border:1px solid rgba(0,255,65,0.25);border-radius:8px;color:#6a6a8a;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s;"
+           onmouseover="this.style.borderColor='rgba(0,255,65,0.5)';this.style.color='#00ff41'"
+           onmouseout="this.style.borderColor='rgba(0,255,65,0.25)';this.style.color='#6a6a8a'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Exportar Checklist
+        </button>
+      `;
+      reportActions.appendChild(checklistBtns);
+    }
+  }
+}
+
+async function downloadChecklistHTML() {
+  if (!currentAuditId) { alert('Execute uma auditoria primeiro.'); return; }
+  const btn = $('#btnChecklistExport');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  try {
+    const resp = await fetch(`/api/checklist/${currentAuditId}/export`);
+    if (!resp.ok) { const d = await resp.json(); throw new Error(d.error || 'Erro ao exportar'); }
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `checklist-security-${currentAuditId.substring(0,8)}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('Erro ao exportar checklist: ' + err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+  }
 }
 
 // ── Filter Results ───────────────────────────────────────────────
@@ -813,9 +869,17 @@ let currentAuditId = null;
 function showAIChat() {
   $('#aiChatSection').style.display = 'block';
   $('#aiChatSection').scrollIntoView({ behavior: 'smooth' });
-  
+
   // Also show floating button
   $('#floatingAIBtn').classList.add('show');
+}
+
+function openChecklist() {
+  if (!currentAuditId) {
+    alert('Execute uma auditoria primeiro para gerar o checklist.');
+    return;
+  }
+  window.open(`/checklist/${currentAuditId}`, '_blank');
 }
 
 async function sendAIQuestion(question) {

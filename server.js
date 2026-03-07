@@ -22,6 +22,7 @@ const { generateSupabaseCatalog, generateCatalogHTML } = require('./audit/report
 const { askGrok, askGrokStream, generateFixPrompt } = require('./audit/grok-ai');
 const { saveAuditToSupabase, getAuditHistory, getAuditById } = require('./audit/supabase-db');
 const { analyzeGitHistory, checkForExposedSecrets } = require('./audit/git-analyzer');
+const { generateChecklistHTML } = require('./audit/checklist-generator');
 
 const app = express();
 const PORT = process.env.PORT || 2998;
@@ -606,6 +607,32 @@ app.get('/api/ai/audit/:id', (req, res) => {
     evidence: data.evidence,
     duration: data.duration
   });
+});
+
+// ─── Checklist Routes ──────────────────────────────────────────────
+
+// Serve checklist page (fetches data client-side via /api/audit/:id)
+app.get('/checklist/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'checklist.html'));
+});
+
+// Export checklist as standalone HTML (no server dependency)
+app.get('/api/checklist/:id/export', (req, res) => {
+  const { id } = req.params;
+  const data = auditStore.get(id);
+  if (!data) {
+    return res.status(404).json({ error: 'Auditoria não encontrada. Execute uma nova auditoria.' });
+  }
+  try {
+    const html = generateChecklistHTML(data);
+    const filename = `checklist-security-${id.substring(0, 8)}.html`;
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(html);
+  } catch (err) {
+    console.error('Checklist export error:', err.message);
+    res.status(500).json({ error: 'Erro ao gerar checklist: ' + err.message });
+  }
 });
 
 // SPA fallback
