@@ -1385,6 +1385,18 @@ input[type="text"]::placeholder {
   box-shadow: 0 4px 15px rgba(0, 255, 65, 0.25);
 }
 
+/* Checklist Export Button */
+.btn-checklist-export {
+  border-color: rgba(0, 255, 65, 0.2);
+  color: #6a6a8a;
+  background: transparent;
+}
+.btn-checklist-export:hover {
+  border-color: rgba(0, 255, 65, 0.5);
+  color: #00ff41;
+  background: rgba(0, 255, 65, 0.05);
+}
+
 /* Floating AI Button */
 .floating-ai-btn {
   position: fixed;

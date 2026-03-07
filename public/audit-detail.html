@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Supabase Guard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+  <style>
+    :root {
+      --bg: #0a0a0f; --bg2: #0d0d14; --bg3: #111118; --bg4: #181828;
+      --border: #1a1a2e; --border2: #252540;
+      --text: #e0e0e8; --text2: #8888aa; --text3: #44445a;
+      --green: #00ff41; --green-dim: #00cc33; --green-glow: rgba(0,255,65,.15);
+      --red: #ff0040; --red-glow: rgba(255,0,64,.15);
+      --orange: #ff8c00; --orange-glow: rgba(255,140,0,.15);
+      --yellow: #e6e600; --yellow-glow: rgba(230,230,0,.1);
+      --blue: #00bfff; --blue-glow: rgba(0,191,255,.15);
+      --purple: #a855f7;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Inter', system-ui, sans-serif;
+      --r: 8px; --r2: 12px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 14px; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+
+    /* ── Loading ── */
+    #loading { position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;gap:1rem; }
+    #loading p { color:var(--text2);font-size:.9rem; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .spin { animation:spin .9s linear infinite;transform-origin:center; }
+
+    /* ── Top Bar ── */
+    .topbar {
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+      padding: .75rem 2rem;
+      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .topbar-brand { display:flex;align-items:center;gap:.6rem; }
+    .topbar-brand-name { font-weight:700;color:var(--green);font-size:.95rem;letter-spacing:.03em; }
+    .topbar-brand-sub { font-size:.7rem;color:var(--text2);text-transform:uppercase;letter-spacing:.08em; }
+    .topbar-divider { width:1px;height:24px;background:var(--border);flex-shrink:0; }
+    .topbar-url { font-family:var(--mono);font-size:.8rem;color:var(--blue);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+    .topbar-actions { display:flex;gap:.5rem;margin-left:auto; }
+    .topbar-btn {
+      display:inline-flex;align-items:center;gap:.35rem;
+      padding:.4rem .9rem;border-radius:var(--r);font-size:.78rem;font-weight:600;
+      cursor:pointer;border:none;text-decoration:none;transition:all .2s;
+    }
+    .topbar-btn-outline { background:transparent;border:1px solid var(--border2);color:var(--text2); }
+    .topbar-btn-outline:hover { border-color:var(--green);color:var(--green); }
+    .topbar-btn-primary { background:linear-gradient(135deg,rgba(0,255,65,.12),rgba(0,191,255,.08));border:1px solid rgba(0,255,65,.4);color:var(--green-dim); }
+    .topbar-btn-primary:hover { border-color:var(--green);color:var(--green);box-shadow:0 0 12px var(--green-glow); }
+
+    /* ── Container ── */
+    .container { max-width:1280px;margin:0 auto;padding:1.5rem 2rem;display:flex;flex-direction:column;gap:1.5rem; }
+
+    /* ── Site Hero ── */
+    .site-hero {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r2);
+      padding: 1.5rem 2rem;
+      display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+    }
+    .site-favicon {
+      width: 56px; height: 56px; border-radius: var(--r);
+      background: var(--bg4); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; overflow: hidden;
+    }
+    .site-favicon img { width: 100%; height: 100%; object-fit: cover; }
+    .site-favicon-placeholder { font-size: 1.6rem; }
+    .site-info { flex: 1; min-width: 0; }
+    .site-name { font-size: 1.2rem; font-weight: 700; color: var(--text); margin-bottom: .2rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .site-url { font-family: var(--mono); font-size: .78rem; color: var(--blue); }
+    .site-meta { display:flex;gap:1rem;flex-wrap:wrap;margin-top:.6rem; }
+    .site-meta-tag { font-size:.72rem;color:var(--text2);background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:.2rem .5rem; }
+    .score-hero {
+      display: flex; flex-direction: column; align-items: center; gap: .4rem;
+      flex-shrink: 0;
+    }
+    .score-circle-wrap { position:relative;width:90px;height:90px; }
+    .score-circle-wrap svg { transform: rotate(-90deg); }
+    .score-num {
+      position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      font-family:var(--mono);font-size:1.5rem;font-weight:700;line-height:1;
+    }
+    .score-grade { font-size:.65rem;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-top:.15rem; }
+    .score-label { font-size:.72rem;color:var(--text2);text-align:center; }
+
+    /* ── Stats Row ── */
+    .stats-row { display:grid;grid-template-columns:repeat(5,1fr);gap:1rem; }
+    .stat-card {
+      background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);
+      padding:1rem;display:flex;flex-direction:column;gap:.35rem;position:relative;overflow:hidden;
+      transition:transform .2s,border-color .2s;
+    }
+    .stat-card:hover { transform:translateY(-2px); }
+    .stat-card::after { content:'';position:absolute;top:0;left:0;right:0;height:2px; }
+    .stat-card.c-critical::after { background:var(--red); } .stat-card.c-critical:hover { border-color:var(--red); }
+    .stat-card.c-high::after { background:var(--orange); } .stat-card.c-high:hover { border-color:var(--orange); }
+    .stat-card.c-medium::after { background:var(--yellow); } .stat-card.c-medium:hover { border-color:var(--yellow); }
+    .stat-card.c-low::after { background:var(--blue); } .stat-card.c-low:hover { border-color:var(--blue); }
+    .stat-card.c-pass::after { background:var(--green); } .stat-card.c-pass:hover { border-color:var(--green); }
+    .stat-num { font-size:2rem;font-weight:700;font-family:var(--mono);line-height:1; }
+    .stat-card.c-critical .stat-num { color:var(--red); }
+    .stat-card.c-high .stat-num { color:var(--orange); }
+    .stat-card.c-medium .stat-num { color:var(--yellow); }
+    .stat-card.c-low .stat-num { color:var(--blue); }
+    .stat-card.c-pass .stat-num { color:var(--green); }
+    .stat-lbl { font-size:.72rem;color:var(--text2);text-transform:uppercase;letter-spacing:.05em; }
+    .stat-sub { font-size:.7rem;color:var(--text3); }
+
+    /* ── Charts ── */
+    .charts-row { display:grid;grid-template-columns:1fr 2fr 1fr;gap:1rem; }
+    .chart-card {
+      background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);
+      padding:1.25rem;
+    }
+    .chart-title { font-size:.75rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:1rem;text-align:center; }
+    .chart-wrap { height:180px;position:relative;display:flex;align-items:center;justify-content:center; }
+    .chart-wrap-bar { height:200px;position:relative; }
+
+    /* ── Section ── */
+    .section { background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden; }
+    .section-head {
+      padding:.85rem 1.25rem;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:.6rem;
+      background:var(--bg4);
+    }
+    .section-head-title { font-size:.85rem;font-weight:600;color:var(--text); }
+    .section-head-count {
+      margin-left:auto;font-size:.72rem;font-family:var(--mono);
+      color:var(--text2);background:var(--bg3);border:1px solid var(--border);
+      border-radius:20px;padding:.15rem .6rem;
+    }
+
+    /* ── Stack ── */
+    .stack-grid { display:flex;flex-wrap:wrap;gap:.6rem;padding:1rem 1.25rem; }
+    .stack-tag {
+      display:inline-flex;align-items:center;gap:.4rem;
+      padding:.35rem .8rem;border-radius:20px;font-size:.78rem;font-weight:600;
+      background:var(--bg4);border:1px solid var(--border2);color:var(--text);
+      white-space:nowrap;
+    }
+    .stack-tag .dot { width:7px;height:7px;border-radius:50%;flex-shrink:0; }
+
+    /* ── Findings Table ── */
+    .findings-list { max-height:600px;overflow-y:auto; }
+    .finding-item {
+      display:grid;grid-template-columns:auto 1fr auto;gap:.75rem;
+      padding:.85rem 1.25rem;border-bottom:1px solid var(--border);
+      align-items:start;cursor:pointer;transition:background .15s;
+    }
+    .finding-item:last-child { border-bottom:none; }
+    .finding-item:hover { background:rgba(255,255,255,.02); }
+    .finding-item.expanded { background:rgba(0,191,255,.03); }
+    .sev-pill {
+      display:inline-flex;align-items:center;gap:.25rem;
+      padding:.2rem .55rem;border-radius:20px;font-size:.68rem;font-weight:700;
+      text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;
+      flex-shrink:0;
+    }
+    .sev-critical { background:var(--red-glow);color:var(--red);border:1px solid rgba(255,0,64,.25); }
+    .sev-high { background:var(--orange-glow);color:var(--orange);border:1px solid rgba(255,140,0,.25); }
+    .sev-medium { background:var(--yellow-glow);color:var(--yellow);border:1px solid rgba(230,230,0,.25); }
+    .sev-low { background:var(--blue-glow);color:var(--blue);border:1px solid rgba(0,191,255,.25); }
+    .sev-info { background:rgba(168,85,247,.1);color:var(--purple);border:1px solid rgba(168,85,247,.25); }
+    .sev-pass { background:var(--green-glow);color:var(--green);border:1px solid rgba(0,255,65,.25); }
+    .finding-main { min-width:0; }
+    .finding-check { font-weight:600;font-size:.85rem;color:var(--text);margin-bottom:.2rem; }
+    .finding-msg { font-size:.78rem;color:var(--text2);line-height:1.4; }
+    .finding-details {
+      display:none;margin-top:.75rem;padding:.75rem 1rem;
+      background:var(--bg);border:1px solid var(--border);border-radius:var(--r);
+      font-family:var(--mono);font-size:.75rem;color:#aaaacc;
+      white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto;
+      line-height:1.6;
+    }
+    .finding-details.open { display:block; }
+    .finding-toggle { font-size:.7rem;color:var(--text3);flex-shrink:0;padding:.2rem .5rem;border-radius:4px;border:1px solid var(--border);background:var(--bg4);cursor:pointer;white-space:nowrap; }
+    .finding-status-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px; }
+    .dot-fail { background:var(--red);box-shadow:0 0 6px var(--red-glow); }
+    .dot-warn { background:var(--orange);box-shadow:0 0 6px var(--orange-glow); }
+    .dot-pass { background:var(--green);box-shadow:0 0 6px var(--green-glow); }
+    .dot-info { background:var(--purple); }
+
+    /* ── Findings filter ── */
+    .findings-filter {
+      display:flex;gap:.4rem;padding:.75rem 1.25rem;background:var(--bg4);border-bottom:1px solid var(--border);flex-wrap:wrap;
+    }
+    .filter-chip {
+      padding:.25rem .7rem;border-radius:20px;font-size:.72rem;font-weight:600;
+      border:1px solid var(--border2);background:transparent;color:var(--text2);
+      cursor:pointer;transition:all .2s;
+    }
+    .filter-chip.active { background:rgba(0,255,65,.1);border-color:rgba(0,255,65,.4);color:var(--green); }
+    .filter-chip:hover:not(.active) { border-color:var(--border2);color:var(--text); }
+
+    /* ── Evidence ── */
+    .evidence-grid {
+      display:grid;grid-template-columns:1fr 1fr;gap:0;
+    }
+    .ev-item {
+      padding:.75rem 1.25rem;border-bottom:1px solid var(--border);border-right:1px solid var(--border);
+      display:flex;flex-direction:column;gap:.2rem;
+    }
+    .ev-item:nth-child(2n) { border-right:none; }
+    .ev-item:nth-last-child(-n+2) { border-bottom:none; }
+    .ev-key { font-size:.7rem;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;font-weight:600; }
+    .ev-val { font-family:var(--mono);font-size:.8rem;color:var(--text);word-break:break-all; }
+    .ev-val.green { color:var(--green); }
+    .ev-val.red { color:var(--red); }
+
+    /* ── Footer ── */
+    .footer {
+      text-align:center;padding:1.5rem;font-size:.75rem;color:var(--text3);
+      border-top:1px solid var(--border);margin-top:.5rem;
+    }
+    .footer a { color:var(--text2);text-decoration:none; }
+    .footer a:hover { color:var(--green); }
+
+    /* ── No data ── */
+    .empty { text-align:center;padding:2.5rem;color:var(--text2);font-size:.85rem; }
+
+    /* ── Responsive ── */
+    @media (max-width:900px) {
+      .stats-row { grid-template-columns:repeat(3,1fr); }
+      .charts-row { grid-template-columns:1fr 1fr; }
+      .charts-row .chart-card:nth-child(2) { grid-column:1/-1; }
+    }
+    @media (max-width:600px) {
+      .container { padding:1rem; }
+      .topbar { padding:.6rem 1rem; }
+      .stats-row { grid-template-columns:1fr 1fr; }
+      .charts-row { grid-template-columns:1fr; }
+      .evidence-grid { grid-template-columns:1fr; }
+      .ev-item:nth-child(2n) { border-right:none; }
+      .ev-item { border-right:none; }
+      .site-hero { flex-direction:column;align-items:flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="loading">
+  <svg class="spin" viewBox="0 0 24 24" fill="none" stroke="#00ff41" stroke-width="2" width="42" height="42">
+    <path d="M21 12a9 9 0 11-6.219-8.56"/>
+  </svg>
+  <p>Carregando dashboard...</p>
+</div>
+
+<!-- TOP BAR -->
+<nav class="topbar" id="topbar" style="display:none">
+  <div class="topbar-brand">
+    <svg viewBox="0 0 40 40" width="28" height="28">
+      <defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00ff41"/><stop offset="100%" stop-color="#00bfff"/></linearGradient></defs>
+      <path d="M20 2L34 9v14c0 8-7 14-14 16C13 37 6 31 6 23V9z" fill="url(#g)" opacity=".15" stroke="url(#g)" stroke-width="1"/>
+      <text x="20" y="25" text-anchor="middle" fill="url(#g)" font-size="11" font-weight="700" font-family="monospace">SG</text>
+    </svg>
+    <div>
+      <div class="topbar-brand-name">Supabase Guard</div>
+      <div class="topbar-brand-sub">Dashboard de Auditoria</div>
+    </div>
+  </div>
+  <div class="topbar-divider"></div>
+  <div class="topbar-url" id="topbarUrl">—</div>
+  <div class="topbar-actions">
+    <a href="/" class="topbar-btn topbar-btn-outline">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      Início
+    </a>
+    <button class="topbar-btn topbar-btn-outline" id="btnPrint" onclick="window.print()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Imprimir
+    </button>
+    <a id="btnChecklist" href="#" target="_blank" class="topbar-btn topbar-btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      Checklist do Cliente
+    </a>
+  </div>
+</nav>
+
+<div class="container" id="content" style="display:none">
+
+  <!-- SITE HERO -->
+  <div class="site-hero">
+    <div class="site-favicon" id="siteFavicon">
+      <span class="site-favicon-placeholder">🌐</span>
+    </div>
+    <div class="site-info">
+      <div class="site-name" id="siteName">—</div>
+      <div class="site-url" id="siteUrl">—</div>
+      <div class="site-meta" id="siteMeta"></div>
+    </div>
+    <div class="score-hero">
+      <div class="score-circle-wrap">
+        <svg width="90" height="90" viewBox="0 0 90 90">
+          <circle cx="45" cy="45" r="38" fill="none" stroke="#1a1a2e" stroke-width="7"/>
+          <circle id="scoreArc" cx="45" cy="45" r="38" fill="none" stroke-width="7"
+            stroke-linecap="round" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+        </svg>
+        <div class="score-num">
+          <span id="scoreNum" style="color:#00ff41">—</span>
+          <span class="score-grade" id="scoreGrade">—</span>
+        </div>
+      </div>
+      <div class="score-label" id="scoreLabel">—</div>
+    </div>
+  </div>
+
+  <!-- STATS ROW -->
+  <div class="stats-row">
+    <div class="stat-card c-critical">
+      <div class="stat-num" id="statCritical">0</div>
+      <div class="stat-lbl">🔴 Críticos</div>
+      <div class="stat-sub">Ação imediata</div>
+    </div>
+    <div class="stat-card c-high">
+      <div class="stat-num" id="statHigh">0</div>
+      <div class="stat-lbl">🟠 Altos</div>
+      <div class="stat-sub">Alto risco</div>
+    </div>
+    <div class="stat-card c-medium">
+      <div class="stat-num" id="statMedium">0</div>
+      <div class="stat-lbl">🟡 Médios</div>
+      <div class="stat-sub">Risco moderado</div>
+    </div>
+    <div class="stat-card c-low">
+      <div class="stat-num" id="statLow">0</div>
+      <div class="stat-lbl">🔵 Baixos</div>
+      <div class="stat-sub">Boas práticas</div>
+    </div>
+    <div class="stat-card c-pass">
+      <div class="stat-num" id="statPass">0</div>
+      <div class="stat-lbl">✅ Aprovados</div>
+      <div class="stat-sub">Sem problemas</div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">Por Severidade</div>
+      <div class="chart-wrap"><canvas id="chartSev"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Vulnerabilidades por Categoria</div>
+      <div class="chart-wrap-bar"><canvas id="chartCat"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Status das Verificações</div>
+      <div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
+    </div>
+  </div>
+
+  <!-- STACK DETECTED -->
+  <div class="section" id="stackSection" style="display:none">
+    <div class="section-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+      </svg>
+      <span class="section-head-title">Stack Tecnológico Detectado</span>
+    </div>
+    <div class="stack-grid" id="stackGrid"></div>
+  </div>
+
+  <!-- FINDINGS -->
+  <div class="section">
+    <div class="section-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <span class="section-head-title">Todas as Verificações</span>
+      <span class="section-head-count" id="findingsCount">0</span>
+    </div>
+    <div class="findings-filter" id="findingsFilter">
+      <button class="filter-chip active" onclick="filterFindings('all', this)">Todos</button>
+      <button class="filter-chip" onclick="filterFindings('FAIL', this)">🔴 Falhou</button>
+      <button class="filter-chip" onclick="filterFindings('WARN', this)">🟠 Alerta</button>
+      <button class="filter-chip" onclick="filterFindings('PASS', this)">✅ Passou</button>
+    </div>
+    <div class="findings-list" id="findingsList"></div>
+  </div>
+
+  <!-- EVIDENCE -->
+  <div class="section">
+    <div class="section-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+      </svg>
+      <span class="section-head-title">Evidência Criptográfica</span>
+    </div>
+    <div class="evidence-grid" id="evidenceGrid"></div>
+  </div>
+
+</div><!-- /container -->
+
+<div class="footer">
+  Supabase Guard — Dashboard de Auditoria &nbsp;·&nbsp; <a href="/">Voltar ao início</a>
+</div>
+
+<script>
+/* ── Init ── */
+const auditId = location.pathname.split('/').pop();
+let data = null;
+
+async function load() {
+  try {
+    const r = await fetch(`/api/audit/${auditId}`);
+    if (!r.ok) throw new Error(r.status);
+    data = await r.json();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('topbar').style.display = '';
+    document.getElementById('content').style.display = '';
+    render();
+  } catch (e) {
+    document.getElementById('loading').innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="#ff0040" stroke-width="2" width="48" height="48"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <p style="color:#ff0040;font-size:1rem;font-weight:700">Dashboard não encontrado</p>
+      <p style="color:#6a6a8a;font-size:.85rem">Execute uma nova auditoria ou recarregue a sessão.</p>
+      <a href="/" style="margin-top:1rem;padding:.5rem 1.2rem;background:#111118;border:1px solid #1a1a2e;color:#e0e0e8;border-radius:8px;text-decoration:none;font-size:.85rem;">← Voltar ao Início</a>`;
+  }
+}
+
+function render() {
+  document.title = `Dashboard — ${data.projectUrl || 'Supabase Guard'}`;
+
+  renderHero();
+  renderStats();
+  renderCharts();
+  renderStack();
+  renderFindings();
+  renderEvidence();
+
+  // Set checklist link
+  document.getElementById('btnChecklist').href = `/checklist/${auditId}`;
+  document.getElementById('topbarUrl').textContent = data.projectUrl || '—';
+}
+
+/* ── Hero ── */
+function renderHero() {
+  const { projectUrl, score, grade } = data;
+  const g = grade || {};
+
+  document.getElementById('siteName').textContent = projectUrl ? new URL(projectUrl).hostname : '—';
+  document.getElementById('siteUrl').textContent = projectUrl || '—';
+
+  // Try favicon
+  if (projectUrl) {
+    try {
+      const origin = new URL(projectUrl).origin;
+      const img = document.createElement('img');
+      img.src = `${origin}/favicon.ico`;
+      img.onerror = () => { img.remove(); };
+      img.onload = () => { document.querySelector('.site-favicon-placeholder')?.remove(); };
+      document.getElementById('siteFavicon').prepend(img);
+    } catch {}
+  }
+
+  // Meta tags
+  const meta = document.getElementById('siteMeta');
+  const scanDate = data.evidence?.timestamp ? new Date(data.evidence.timestamp).toLocaleDateString('pt-BR') : '—';
+  meta.innerHTML = `
+    <span class="site-meta-tag">📅 ${scanDate}</span>
+    <span class="site-meta-tag">⏱️ ${data.duration || '—'}</span>
+    <span class="site-meta-tag">🔍 ${data.totalChecks || 0} verificações</span>
+    <span class="site-meta-tag" style="color:${g.color || '#888'}">${g.grade || '?'} — ${g.label || '—'}</span>
+  `;
+
+  // Score circle
+  const numEl = document.getElementById('scoreNum');
+  const arc = document.getElementById('scoreArc');
+  const circumference = 238.76;
+  const sc = Math.max(0, Math.min(100, score || 0));
+  const gradeColors = { A:'#00ff41', B:'#7fff00', C:'#e6e600', D:'#ff8c00', F:'#ff0040' };
+  const color = gradeColors[g.grade] || '#888';
+  arc.style.stroke = color;
+  arc.style.strokeDashoffset = circumference - (sc / 100) * circumference;
+  numEl.textContent = sc;
+  numEl.style.color = color;
+  document.getElementById('scoreGrade').textContent = g.grade || '?';
+  document.getElementById('scoreLabel').textContent = g.label || '—';
+}
+
+/* ── Stats ── */
+function renderStats() {
+  const results = data.results || [];
+  const c = (sev) => results.filter(r => r.severity === sev && r.status !== 'PASS').length;
+  document.getElementById('statCritical').textContent = c('critical');
+  document.getElementById('statHigh').textContent = c('high');
+  document.getElementById('statMedium').textContent = c('medium');
+  document.getElementById('statLow').textContent = c('low');
+  document.getElementById('statPass').textContent = results.filter(r => r.status === 'PASS').length;
+}
+
+/* ── Charts ── */
+function renderCharts() {
+  Chart.defaults.color = '#8888aa';
+  Chart.defaults.borderColor = '#1a1a2e';
+  const results = data.results || [];
+
+  const sevCounts = ['critical','high','medium','low','info'].map(s =>
+    results.filter(r => r.severity === s && r.status !== 'PASS').length);
+  const sevLabels = ['Crítico','Alto','Médio','Baixo','Info'];
+  const sevColors = ['#ff0040','#ff8c00','#e6e600','#00bfff','#a855f7'];
+  const filtered = sevLabels.map((l,i)=>({l,v:sevCounts[i],c:sevColors[i]})).filter(x=>x.v>0);
+  if (filtered.length) {
+    new Chart(document.getElementById('chartSev'), {
+      type:'doughnut',
+      data:{ labels:filtered.map(x=>x.l), datasets:[{data:filtered.map(x=>x.v),backgroundColor:filtered.map(x=>x.c),borderWidth:2,borderColor:'#111118'}] },
+      options:{ cutout:'65%',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:6,boxWidth:10}}} }
+    });
+  }
+
+  const cats = {};
+  results.filter(r=>r.status!=='PASS').forEach(r=>{
+    const cat = (r.check||'').split(' — ')[0].split(' Deep')[0].trim().split(' ').slice(0,2).join(' ');
+    cats[cat] = (cats[cat]||0)+1;
+  });
+  const catSorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  if (catSorted.length) {
+    new Chart(document.getElementById('chartCat'), {
+      type:'bar',
+      data:{ labels:catSorted.map(([k])=>k), datasets:[{label:'Issues',data:catSorted.map(([,v])=>v),backgroundColor:catSorted.map(([,v])=>v>=5?'rgba(255,0,64,.7)':v>=3?'rgba(255,140,0,.7)':'rgba(230,230,0,.5)'),borderRadius:4,borderSkipped:false}] },
+      options:{ indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#1a1a2e'},ticks:{font:{size:10}}},y:{grid:{display:false},ticks:{font:{size:10},color:'#aaaacc'}}} }
+    });
+  }
+
+  const sc = {PASS:0,FAIL:0,WARN:0,INFO:0};
+  results.forEach(r=>{ sc[r.status in sc ? r.status : 'INFO']++; });
+  new Chart(document.getElementById('chartStatus'), {
+    type:'doughnut',
+    data:{ labels:['Aprovado','Falhou','Alerta','Info'], datasets:[{data:[sc.PASS,sc.FAIL,sc.WARN,sc.INFO],backgroundColor:['#00cc33','#ff0040','#ff8c00','#a855f7'],borderWidth:2,borderColor:'#111118'}] },
+    options:{ cutout:'65%',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:6,boxWidth:10}}} }
+  });
+}
+
+/* ── Stack ── */
+function renderStack() {
+  const results = data.results || [];
+  const stackResult = results.find(r => r.check?.toLowerCase().includes('stack') && r.details);
+  const catalog = data.catalogData;
+
+  const technologies = [];
+
+  // From stack detection
+  if (stackResult?.details) {
+    const d = stackResult.details;
+    const fields = ['framework','language','hosting','database','auth','ui','bundler','deployment'];
+    fields.forEach(f => { if (d[f]) technologies.push({ name: d[f], type: f }); });
+    if (Array.isArray(d.technologies)) d.technologies.slice(0,8).forEach(t => technologies.push({ name: t, type: 'tech' }));
+    if (Array.isArray(d.detected)) d.detected.slice(0,8).forEach(t => technologies.push({ name: t, type: 'tech' }));
+    if (d.cms) technologies.push({ name: d.cms, type: 'cms' });
+    if (d.cdn) technologies.push({ name: d.cdn, type: 'cdn' });
+  }
+
+  // From catalog tables count
+  if (catalog?.openapi?.tables?.length) {
+    technologies.push({ name: `${catalog.openapi.tables.length} tabelas`, type: 'database' });
+  }
+  if (catalog?.openapi?.rpcFunctions?.length) {
+    technologies.push({ name: `${catalog.openapi.rpcFunctions.length} RPCs`, type: 'api' });
+  }
+
+  const typeColors = {
+    framework:'#00bfff', language:'#a855f7', hosting:'#00ff41', database:'#ff8c00',
+    auth:'#ff0040', ui:'#e6e600', bundler:'#6a6a8a', deployment:'#00cc33',
+    cms:'#ff6622', cdn:'#00bfff', api:'#a855f7', tech:'#8888aa'
+  };
+
+  if (technologies.length === 0) return;
+
+  document.getElementById('stackSection').style.display = '';
+  const grid = document.getElementById('stackGrid');
+  grid.innerHTML = [...new Map(technologies.map(t=>[t.name,t])).values()].map(t => `
+    <span class="stack-tag">
+      <span class="dot" style="background:${typeColors[t.type]||'#6a6a8a'}"></span>
+      ${esc(String(t.name))}
+    </span>
+  `).join('');
+}
+
+/* ── Findings ── */
+let allFindings = [];
+function renderFindings() {
+  allFindings = [...(data.results || [])].sort((a,b) => {
+    const o = {critical:0,high:1,medium:2,low:3,info:4};
+    return (o[a.severity]??5)-(o[b.severity]??5);
+  });
+  document.getElementById('findingsCount').textContent = allFindings.length;
+  renderFindingsList(allFindings);
+}
+
+function renderFindingsList(items) {
+  const list = document.getElementById('findingsList');
+  if (!items.length) { list.innerHTML = '<div class="empty">Nenhuma verificação encontrada.</div>'; return; }
+
+  list.innerHTML = items.map((r, i) => {
+    const sev = r.severity || 'info';
+    const st = r.status || 'INFO';
+    const dotCls = st==='FAIL'?'dot-fail':st==='WARN'?'dot-warn':st==='PASS'?'dot-pass':'dot-info';
+    const details = r.details ? JSON.stringify(r.details, null, 2) : null;
+    return `
+      <div class="finding-item" data-status="${st}" onclick="toggleFinding(this)">
+        <div class="finding-status-dot ${dotCls}"></div>
+        <div class="finding-main">
+          <div class="finding-check">
+            <span class="sev-pill sev-${sev}">${sev}</span>
+            ${esc(r.check||'—')}
+          </div>
+          <div class="finding-msg">${esc(r.message||'')}</div>
+          ${details ? `<pre class="finding-details">${esc(details)}</pre>` : ''}
+        </div>
+        ${details ? `<span class="finding-toggle">detalhes ▼</span>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleFinding(el) {
+  const det = el.querySelector('.finding-details');
+  const tog = el.querySelector('.finding-toggle');
+  if (!det) return;
+  det.classList.toggle('open');
+  el.classList.toggle('expanded');
+  if (tog) tog.textContent = det.classList.contains('open') ? 'fechar ▲' : 'detalhes ▼';
+}
+
+function filterFindings(status, btn) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = status === 'all' ? allFindings : allFindings.filter(r => r.status === status);
+  renderFindingsList(filtered);
+  document.getElementById('findingsCount').textContent = filtered.length;
+}
+
+/* ── Evidence ── */
+function renderEvidence() {
+  const ev = data.evidence || {};
+  const g = data.grade || {};
+  const ts = ev.timestamp ? new Date(ev.timestamp).toLocaleString('pt-BR') : '—';
+  const scoreColor = data.score >= 75 ? 'green' : data.score >= 50 ? '' : 'red';
+
+  document.getElementById('evidenceGrid').innerHTML = `
+    <div class="ev-item"><div class="ev-key">Audit ID</div><div class="ev-val">${esc(ev.auditId||'—')}</div></div>
+    <div class="ev-item"><div class="ev-key">Score Final</div><div class="ev-val ${scoreColor}">${data.score||0}/100 (${g.grade||'?'} — ${g.label||'—'})</div></div>
+    <div class="ev-item"><div class="ev-key">SHA-256</div><div class="ev-val" style="font-size:.72rem">${esc(ev.sha256||'—')}</div></div>
+    <div class="ev-item"><div class="ev-key">Data/Hora</div><div class="ev-val">${ts}</div></div>
+    <div class="ev-item"><div class="ev-key">URL Analisada</div><div class="ev-val">${esc(data.projectUrl||'—')}</div></div>
+    <div class="ev-item"><div class="ev-key">Duração / Verificações</div><div class="ev-val">${esc(data.duration||'—')} · ${data.totalChecks||0} checks</div></div>
+  `;
+}
+
+function esc(s) {
+  return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+load();
+</script>
+</body>
+</html>

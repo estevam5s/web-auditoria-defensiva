@@ -251,16 +251,10 @@ app.get('/api/audits', (req, res) => {
   res.json(list.reverse());
 });
 
-// ─── Audit Detail HTML Page ──────────────────────────────────────
+// ─── Audit Detail Dashboard (live page, fetches /api/audit/:id) ──
 app.get('/audit/:id', (req, res) => {
-  const data = auditStore.get(req.params.id);
-  if (!data) {
-    return res.send(`<html><body style="background:#0a0a0f;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh">
-      <div style="text-align:center"><h1 style="color:#ff0040">Audit Not Found</h1><p>ID: ${req.params.id}</p><a href="/" style="color:#00ff41">Voltar</a></div></body></html>`);
-  }
-  const html = generateHTMLReport(data);
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.send(html);
+  // Serve the interactive dashboard; data loaded client-side via /api/audit/:id
+  res.sendFile(path.join(__dirname, 'public', 'audit-detail.html'));
 });
 
 // Health check

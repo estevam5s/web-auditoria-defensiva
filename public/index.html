@@ -255,7 +255,7 @@
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                 <circle cx="12" cy="12" r="3"/>
               </svg>
-              Ver Relatório
+              Relatório Completo
             </button>
             <button class="btn-report btn-json" onclick="downloadReport()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
@@ -269,7 +269,7 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
               </svg>
-              Página da Auditoria
+              Dashboard da Auditoria
             </button>
             <button class="btn-report btn-scrape" id="btnScrape" onclick="downloadSourceCode()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
@@ -286,12 +286,18 @@
               </svg>
               🤖 Chat com IA
             </button>
-            <button class="btn-report btn-checklist" id="btnChecklist" onclick="openChecklist()">
+            <button class="btn-report btn-checklist" id="btnChecklist" onclick="openChecklist()" style="display:none">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                 <path d="M9 11l3 3L22 4"/>
                 <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
               </svg>
               📋 Checklist do Cliente
+            </button>
+            <button class="btn-report btn-checklist-export" id="btnChecklistExport" onclick="downloadChecklistHTML()" style="display:none">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Exportar Checklist
             </button>
           </div>
         </div>
