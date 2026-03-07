@@ -253,19 +253,24 @@ app.post('/api/report/catalog/html', (req, res) => {
 
 // ─── AI Chat Endpoint ───────────────────────────────────────────────
 app.post('/api/ai/chat', async (req, res) => {
-  const { auditId, question, history } = req.body;
+  const { auditId, question, history, auditData } = req.body;
   
   if (!question) {
     return res.status(400).json({ error: 'Question is required' });
   }
 
-  let auditData = null;
+  let auditDataToUse = null;
   
-  if (auditId) {
-    auditData = auditStore.get(auditId);
+  // First try: use auditData passed directly (for Vercel/production)
+  if (auditData) {
+    auditDataToUse = auditData;
+  }
+  // Second try: use auditId to look up in memory store (for local dev)
+  else if (auditId) {
+    auditDataToUse = auditStore.get(auditId);
   }
 
-  if (!auditData) {
+  if (!auditDataToUse) {
     return res.status(404).json({ error: 'Audit not found. Please run an audit first.' });
   }
 
@@ -274,7 +279,7 @@ app.post('/api/ai/chat', async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
 
   try {
-    await askGrokStream(auditData, question, (chunk) => {
+    await askGrokStream(auditDataToUse, question, (chunk) => {
       if (chunk.error) {
         res.write(`data: ${JSON.stringify({ type: 'error', message: chunk.error })}\n\n`);
       } else if (chunk.done) {
@@ -292,24 +297,26 @@ app.post('/api/ai/chat', async (req, res) => {
 
 // ─── AI Chat Non-Stream ─────────────────────────────────────────────
 app.post('/api/ai/chat/simple', async (req, res) => {
-  const { auditId, question } = req.body;
+  const { auditId, question, auditData } = req.body;
   
   if (!question) {
     return res.status(400).json({ error: 'Question is required' });
   }
 
-  let auditData = null;
+  let auditDataToUse = null;
   
-  if (auditId) {
-    auditData = auditStore.get(auditId);
+  if (auditData) {
+    auditDataToUse = auditData;
+  } else if (auditId) {
+    auditDataToUse = auditStore.get(auditId);
   }
 
-  if (!auditData) {
+  if (!auditDataToUse) {
     return res.status(404).json({ error: 'Audit not found. Please run an audit first.' });
   }
 
   try {
-    const result = await askGrok(auditData, question);
+    const result = await askGrok(auditDataToUse, question);
     res.json(result);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

@@ -644,13 +644,14 @@ async function sendAIQuestion(question) {
   // Show typing indicator
   showAITyping();
   
-  // Send to API
+  // Send to API - include audit data directly for production compatibility
   try {
     const response = await fetch('/api/ai/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         auditId: currentAuditId,
+        auditData: auditResults,  // Send full audit data directly
         question: questionText
       })
     });
