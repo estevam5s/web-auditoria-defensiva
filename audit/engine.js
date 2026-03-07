@@ -37,6 +37,14 @@ const { deepStorageCheck } = require('./checks/storage-deep');
 const { deepCredentialPIIDetector } = require('./checks/credential-pii');
 const { detectStack } = require('./checks/stack-detector');
 
+// ── New Advanced Modules ───────────────────────────────────────────────
+const { runAutoDetect } = require('./checks/auto-detect');
+const { openAPIIntrospection } = require('./checks/openapi-introspection');
+const { restScanDeep } = require('./checks/rest-scan-deep');
+const { relationshipRLSScan } = require('./checks/relationship-rls');
+const { graphqlScan } = require('./checks/graphql-scan');
+const { authSettingsScan } = require('./checks/auth-settings');
+
 // ── Evidence signing ─────────────────────────────────────────────
 function signEvidence(data) {
   const payload = JSON.stringify(data);
@@ -86,19 +94,26 @@ async function runFullAudit(config, emit) {
 
   const checks = [
     { name: 'DNS & Connectivity', fn: checkDNSInfo, enabled: true },
+    { name: '🔑 Auto-Detect Credentials', fn: runAutoDetect, enabled: config.options.checkAutoDetect !== false, usesEmit: true },
     { name: 'REST API Exposure', fn: checkRESTExposure, enabled: config.options.checkREST },
     { name: 'RPC Exposure', fn: checkRPCExposure, enabled: config.options.checkRPC },
     { name: 'GraphQL Exposure', fn: checkGraphQLExposure, enabled: config.options.checkGraphQL },
+    { name: '🔷 GraphQL Deep Scan', fn: graphqlScan, enabled: config.options.checkGraphQLDeep !== false, usesEmit: true },
     { name: 'Storage Buckets', fn: checkStorageExposure, enabled: config.options.checkStorage },
     { name: 'Edge Functions', fn: checkEdgeFunctions, enabled: config.options.checkEdgeFunctions },
     { name: 'Realtime Channels', fn: checkRealtimeExposure, enabled: config.options.checkRealtime },
     { name: 'Auth Endpoints', fn: checkAuthEndpoints, enabled: config.options.checkAuth },
+    { name: '🔐 Auth Settings Deep', fn: authSettingsScan, enabled: config.options.checkAuthDeep !== false, usesEmit: true },
     { name: '.env / Key Exposure', fn: checkEnvExposure, enabled: config.options.checkEnvExposure },
     { name: 'RLS Policy Check', fn: checkRLSStatus, enabled: config.options.checkRLS },
     { name: 'CORS Headers', fn: checkCORSConfig, enabled: config.options.checkCORS },
     { name: 'Service Key Leak', fn: checkServiceKeyLeak, enabled: true },
     { name: 'Open Signup', fn: checkOpenSignup, enabled: true },
     { name: 'JWT Configuration', fn: checkJWTConfig, enabled: true },
+    // ── Advanced Supabase Modules ──
+    { name: '📡 OpenAPI Introspection', fn: openAPIIntrospection, enabled: config.options.checkOpenAPI !== false, usesEmit: true },
+    { name: '🔍 REST Scan Deep', fn: restScanDeep, enabled: config.options.checkRESTDeep !== false, usesEmit: true },
+    { name: '🔗 Relationship RLS Scan', fn: relationshipRLSScan, enabled: config.options.checkRelationshipRLS !== false, usesEmit: true },
     // ── Deep Analysis Modules (emit-aware) ──
     { name: '🔬 Deep Source Code Analysis', fn: deepSourceCodeAnalysis, enabled: config.options.checkDeepSource !== false, usesEmit: true },
     { name: '🗺️ Hidden Route Discovery', fn: deepRouteDiscovery, enabled: config.options.checkDeepRoutes !== false, usesEmit: true },
@@ -137,7 +152,20 @@ async function runFullAudit(config, emit) {
       const result = check.usesEmit
         ? await check.fn(config, emit)
         : await check.fn(config);
-      const items = Array.isArray(result) ? result : [result];
+      
+      let items = [];
+      let catalogData = null;
+      
+      if (result && typeof result === 'object') {
+        if (Array.isArray(result)) {
+          items = result;
+        } else if (result.results) {
+          items = Array.isArray(result.results) ? result.results : [result.results];
+          catalogData = result;
+        }
+      } else {
+        items = [result];
+      }
       
       for (const item of items) {
         results.push(item);
@@ -145,6 +173,17 @@ async function runFullAudit(config, emit) {
           type: 'result',
           data: item
         });
+      }
+      
+      if (catalogData) {
+        if (catalogData.catalog) config._catalog = catalogData.catalog;
+        if (catalogData.tableTests) config._restScanResults = catalogData.tableTests;
+        if (catalogData.findings) config._relationshipResults = catalogData.findings;
+        if (catalogData.schema) config._graphqlResults = catalogData.schema;
+        if (catalogData.detected) {
+          if (catalogData.detected.supabaseUrl) config.projectUrl = catalogData.detected.supabaseUrl;
+          if (catalogData.detected.anonKey) config.anonKey = catalogData.detected.anonKey;
+        }
       }
     } catch (err) {
       const errorResult = {
@@ -178,7 +217,15 @@ async function runFullAudit(config, emit) {
     errors: results.filter(r => r.status === 'ERROR').length,
     info: results.filter(r => r.status === 'INFO').length,
     duration: `${duration}s`,
-    results
+    results,
+    catalogData: {
+      openapi: config._catalog,
+      restScan: config._restScanResults,
+      relationship: config._relationshipResults,
+      graphql: config._graphqlResults,
+      edgeFunctions: config._edgeFunctionsResults,
+      allResults: results
+    }
   };
 
   return signEvidence(summary);

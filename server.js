@@ -15,6 +15,8 @@ const { generatePDFReport } = require('./audit/report-pdf');
 const { generateHTMLReport } = require('./audit/report-html');
 const { lightScrape } = require('./audit/scraper');
 
+const { generateSupabaseCatalog, generateCatalogHTML } = require('./audit/report-supabase-catalog');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -204,10 +206,48 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     engine: 'supabase-guard',
-    version: '2.0.0',
-    features: ['pdf-report', 'html-report', 'site-scraper', 'stack-detection', 'deep-analysis-v2'],
+    version: '3.0.0',
+    features: ['pdf-report', 'html-report', 'site-scraper', 'stack-detection', 'deep-analysis-v2', 'auto-detect', 'openapi-introspection', 'rest-scan-deep', 'relationship-rls', 'graphql-scan', 'auth-settings-deep', 'supabase-catalog'],
     storedAudits: auditStore.size,
   });
+});
+
+// ─── Supabase Catalog Report ─────────────────────────────────────
+app.post('/api/report/catalog', (req, res) => {
+  const { auditData } = req.body;
+  if (!auditData) return res.status(400).json({ error: 'auditData required' });
+
+  try {
+    const catalog = generateSupabaseCatalog(
+      { projectUrl: auditData.projectUrl, projectRef: auditData.projectRef },
+      auditData.catalogData || {}
+    );
+    res.json(catalog);
+  } catch (err) {
+    console.error('Catalog error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Supabase Catalog HTML Report ─────────────────────────────────
+app.post('/api/report/catalog/html', (req, res) => {
+  const { auditData } = req.body;
+  if (!auditData) return res.status(400).json({ error: 'auditData required' });
+
+  try {
+    const catalog = generateSupabaseCatalog(
+      { projectUrl: auditData.projectUrl, projectRef: auditData.projectRef },
+      auditData.catalogData || {}
+    );
+    const html = generateCatalogHTML(catalog);
+    const filename = `supabase-catalog-${auditData.evidence?.auditId || Date.now()}.html`;
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(html);
+  } catch (err) {
+    console.error('Catalog HTML error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // SPA fallback
