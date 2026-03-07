@@ -226,11 +226,20 @@ function handleComplete(results) {
   showResultsList(results.results);
   showEvidence(results);
 
-  // Reveal checklist buttons now that we have an auditId
+  // Reveal checklist and ISO buttons now that we have an auditId
   const btnChecklist = $('#btnChecklist');
   const btnExport = $('#btnChecklistExport');
+  const btnISO = $('#btnISO');
   if (btnChecklist) btnChecklist.style.display = '';
   if (btnExport) btnExport.style.display = '';
+  if (btnISO) btnISO.style.display = '';
+}
+
+// ── ISO Compliance Page ──────────────────────────────────────────
+function openISO() {
+  const id = currentAuditId || auditResults?.evidence?.auditId;
+  if (!id) { alert('Execute uma auditoria primeiro para gerar o relatório ISO.'); return; }
+  window.open(`/iso/${id}`, '_blank');
 }
 
 // ── Score Card ───────────────────────────────────────────────────

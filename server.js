@@ -623,6 +623,11 @@ app.get('/checklist/:id', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'checklist.html'));
 });
 
+// Serve ISO compliance page (fetches data client-side via /api/audit/:id)
+app.get('/iso/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'iso.html'));
+});
+
 // Export checklist as standalone HTML (no server dependency)
 app.get('/api/checklist/:id/export', (req, res) => {
   const { id } = req.params;

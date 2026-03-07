@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conformidade ISO 27001 — Supabase Guard</title>
+  <link rel="stylesheet" href="/iso.css" />
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     LOADING
+══════════════════════════════════════════════════════════ -->
+<div id="loadingState" class="iso-fullscreen">
+  <div class="iso-loading-box">
+    <div class="iso-spinner"></div>
+    <p class="iso-loading-text">Carregando análise ISO 27001…</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     ERROR
+══════════════════════════════════════════════════════════ -->
+<div id="errorState" class="iso-fullscreen" style="display:none">
+  <div class="iso-error-box">
+    <div class="iso-error-icon">⚠</div>
+    <h2 class="iso-error-title">Auditoria não encontrada</h2>
+    <p class="iso-error-msg" id="errorMsg">O ID de auditoria informado não existe ou expirou.</p>
+    <a href="/" class="iso-btn-back">← Voltar ao início</a>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MAIN CONTENT
+══════════════════════════════════════════════════════════ -->
+<div id="mainContent" style="display:none">
+
+  <!-- HEADER -->
+  <header class="iso-header">
+    <div class="iso-header-inner">
+      <div class="iso-header-brand">
+        <span class="iso-brand-icon">🛡</span>
+        <div>
+          <div class="iso-brand-name">Supabase Guard</div>
+          <div class="iso-brand-sub">Conformidade ISO 27000 Series</div>
+        </div>
+      </div>
+      <div class="iso-header-center">
+        <div class="iso-target-url" id="targetUrl">—</div>
+        <div class="iso-audit-date" id="auditDate">—</div>
+      </div>
+      <div class="iso-header-right">
+        <div class="iso-compliance-badge" id="complianceBadge">
+          <div class="iso-badge-pct" id="badgePct">—%</div>
+          <div class="iso-badge-lbl">Conformidade</div>
+        </div>
+        <button class="iso-btn-print" onclick="window.print()">🖨 Imprimir</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- STANDARD TABS -->
+  <div class="iso-tab-bar">
+    <button class="iso-tab-btn active" data-tab="27001" onclick="switchTab('27001', this)">
+      <span class="iso-tab-icon">📋</span> ISO 27001 &amp; 27002
+    </button>
+    <button class="iso-tab-btn" data-tab="27004" onclick="switchTab('27004', this)">
+      <span class="iso-tab-icon">📊</span> ISO 27004 — Métricas
+    </button>
+    <button class="iso-tab-btn" data-tab="27005" onclick="switchTab('27005', this)">
+      <span class="iso-tab-icon">⚠</span> ISO 27005 — Riscos
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════
+       TAB: 27001 / 27002
+  ══════════════════════════════════ -->
+  <div id="tab-27001" class="iso-tab-content active">
+
+    <!-- Summary cards -->
+    <div class="iso-summary-row">
+      <div class="iso-summary-card compliant">
+        <div class="iso-summary-val" id="cntCompliant">0</div>
+        <div class="iso-summary-lbl">✓ Conforme</div>
+      </div>
+      <div class="iso-summary-card partial">
+        <div class="iso-summary-val" id="cntPartial">0</div>
+        <div class="iso-summary-lbl">⚠ Parcial</div>
+      </div>
+      <div class="iso-summary-card non-compliant">
+        <div class="iso-summary-val" id="cntNonCompliant">0</div>
+        <div class="iso-summary-lbl">✗ Não Conforme</div>
+      </div>
+      <div class="iso-summary-card manual">
+        <div class="iso-summary-val" id="cntManual">0</div>
+        <div class="iso-summary-lbl">📋 Manual</div>
+      </div>
+      <div class="iso-summary-card na">
+        <div class="iso-summary-val" id="cntNA">0</div>
+        <div class="iso-summary-lbl">○ N/A</div>
+      </div>
+    </div>
+
+    <!-- Domain chips -->
+    <div class="iso-domain-bar">
+      <span class="iso-domain-label">Filtrar por domínio:</span>
+      <button class="domain-chip active" data-domain="all" onclick="filterDomain('all', this)">
+        Todos <span class="domain-cnt" id="domAll">93</span>
+      </button>
+      <button class="domain-chip" data-domain="org" onclick="filterDomain('org', this)">
+        A.5 Organizacional <span class="domain-cnt" id="domOrg">37</span>
+      </button>
+      <button class="domain-chip" data-domain="people" onclick="filterDomain('people', this)">
+        A.6 Pessoas <span class="domain-cnt" id="domPeople">8</span>
+      </button>
+      <button class="domain-chip" data-domain="physical" onclick="filterDomain('physical', this)">
+        A.7 Físico <span class="domain-cnt" id="domPhysical">14</span>
+      </button>
+      <button class="domain-chip" data-domain="tech" onclick="filterDomain('tech', this)">
+        A.8 Tecnológico <span class="domain-cnt" id="domTech">34</span>
+      </button>
+    </div>
+
+    <!-- Filter by status -->
+    <div class="iso-status-filter">
+      <span class="iso-domain-label">Status:</span>
+      <button class="iso-status-btn active" data-status="all" onclick="filterStatus('all', this)">Todos</button>
+      <button class="iso-status-btn" data-status="non-compliant" onclick="filterStatus('non-compliant', this)">✗ Não Conforme</button>
+      <button class="iso-status-btn" data-status="partial" onclick="filterStatus('partial', this)">⚠ Parcial</button>
+      <button class="iso-status-btn" data-status="compliant" onclick="filterStatus('compliant', this)">✓ Conforme</button>
+      <button class="iso-status-btn" data-status="manual" onclick="filterStatus('manual', this)">📋 Manual</button>
+    </div>
+
+    <!-- Controls table -->
+    <div class="iso-controls-wrap">
+      <table class="controls-table" id="controlsTable">
+        <thead>
+          <tr>
+            <th style="width:70px">ID</th>
+            <th>Controle</th>
+            <th style="width:140px">Status</th>
+            <th style="width:100px">Risco</th>
+            <th style="width:80px">Auto</th>
+            <th style="width:40px"></th>
+          </tr>
+        </thead>
+        <tbody id="controlsBody">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- end tab-27001 -->
+
+  <!-- ══════════════════════════════════
+       TAB: 27004 — MÉTRICAS
+  ══════════════════════════════════ -->
+  <div id="tab-27004" class="iso-tab-content" style="display:none">
+
+    <div class="iso-metrics-header">
+      <h2 class="iso-section-title">ISO 27004 — Medição e Avaliação</h2>
+      <p class="iso-section-sub">Métricas derivadas da análise automatizada de segurança, mapeadas para indicadores de conformidade ISO 27001:2022.</p>
+    </div>
+
+    <!-- Gauges / rings -->
+    <div class="iso-ring-row">
+      <div class="iso-ring-card">
+        <div class="metric-ring-wrap">
+          <svg viewBox="0 0 120 120" class="metric-ring-svg">
+            <circle cx="60" cy="60" r="50" class="ring-bg"/>
+            <circle cx="60" cy="60" r="50" class="ring-fill ring-fill-compliance" id="ringCompliance"
+              stroke-dasharray="0 314" stroke-dashoffset="78.5" />
+          </svg>
+          <div class="ring-center-text">
+            <div class="ring-pct" id="pctCompliance">—%</div>
+            <div class="ring-sub">Conformidade</div>
+          </div>
+        </div>
+        <div class="ring-label">Taxa de Conformidade</div>
+        <div class="ring-desc">% de controles avaliados automaticamente em status <em>conforme</em></div>
+      </div>
+      <div class="iso-ring-card">
+        <div class="metric-ring-wrap">
+          <svg viewBox="0 0 120 120" class="metric-ring-svg">
+            <circle cx="60" cy="60" r="50" class="ring-bg"/>
+            <circle cx="60" cy="60" r="50" class="ring-fill ring-fill-coverage" id="ringCoverage"
+              stroke-dasharray="0 314" stroke-dashoffset="78.5" />
+          </svg>
+          <div class="ring-center-text">
+            <div class="ring-pct" id="pctCoverage">—%</div>
+            <div class="ring-sub">Cobertura</div>
+          </div>
+        </div>
+        <div class="ring-label">Cobertura de Avaliação</div>
+        <div class="ring-desc">% de controles avaliados automaticamente vs total aplicável</div>
+      </div>
+    </div>
+
+    <!-- KPI cards -->
+    <div class="iso-kpi-row" id="kpiRow">
+      <!-- Populated by JS -->
+    </div>
+
+    <!-- Distribution bar chart -->
+    <div class="iso-chart-wrap">
+      <h3 class="iso-chart-title">Distribuição por Status de Conformidade</h3>
+      <div class="iso-bar-chart" id="barChart">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- Theme breakdown -->
+    <div class="iso-theme-wrap">
+      <h3 class="iso-chart-title">Cobertura por Domínio ISO</h3>
+      <div class="iso-theme-grid" id="themeGrid">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- Measurement indicators (ISO 27004 specific) -->
+    <div class="iso-indicators-wrap">
+      <h3 class="iso-chart-title">Indicadores de Medição (ISO 27004)</h3>
+      <table class="iso-indicators-table">
+        <thead>
+          <tr>
+            <th>Indicador</th>
+            <th>Fórmula</th>
+            <th>Valor</th>
+            <th>Meta</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="indicatorsBody">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- end tab-27004 -->
+
+  <!-- ══════════════════════════════════
+       TAB: 27005 — RISCOS
+  ══════════════════════════════════ -->
+  <div id="tab-27005" class="iso-tab-content" style="display:none">
+
+    <div class="iso-metrics-header">
+      <h2 class="iso-section-title">ISO 27005 — Gestão de Riscos</h2>
+      <p class="iso-section-sub">Registro de riscos derivado automaticamente dos achados da auditoria. Nível de risco = Probabilidade × Impacto (escala 1–5).</p>
+    </div>
+
+    <!-- Risk summary -->
+    <div class="iso-risk-summary" id="riskSummary">
+      <!-- Populated by JS -->
+    </div>
+
+    <!-- Risk Matrix 5×5 -->
+    <div class="iso-matrix-wrap">
+      <h3 class="iso-chart-title">Matriz de Risco 5×5</h3>
+      <div class="iso-matrix-container">
+        <div class="risk-matrix-y-label">Probabilidade ↑</div>
+        <div class="risk-matrix-grid-wrap">
+          <div class="risk-matrix" id="riskMatrix">
+            <!-- Populated by JS -->
+          </div>
+          <div class="risk-matrix-x-label">Impacto →</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Risk Register table -->
+    <div class="iso-risk-register-wrap">
+      <div class="iso-risk-register-header">
+        <h3 class="iso-chart-title">Registro de Riscos</h3>
+        <div class="iso-risk-filter">
+          <button class="iso-risk-btn active" data-level="all" onclick="filterRisk('all', this)">Todos</button>
+          <button class="iso-risk-btn critical" data-level="critical" onclick="filterRisk('critical', this)">Crítico</button>
+          <button class="iso-risk-btn high" data-level="high" onclick="filterRisk('high', this)">Alto</button>
+          <button class="iso-risk-btn medium" data-level="medium" onclick="filterRisk('medium', this)">Médio</button>
+          <button class="iso-risk-btn low" data-level="low" onclick="filterRisk('low', this)">Baixo</button>
+        </div>
+      </div>
+      <table class="risk-register-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Ameaça / Risco</th>
+            <th style="width:130px">Probabilidade</th>
+            <th style="width:100px">Impacto</th>
+            <th style="width:90px">Nível</th>
+            <th style="width:130px">Classificação</th>
+            <th>Tratamento</th>
+          </tr>
+        </thead>
+        <tbody id="riskBody">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+      <div class="iso-risk-empty" id="riskEmpty" style="display:none">
+        <span class="iso-risk-empty-icon">✅</span>
+        <p>Nenhum risco identificado — todos os checks aprovados!</p>
+      </div>
+    </div>
+
+    <!-- Treatment plan -->
+    <div class="iso-treatment-wrap" id="treatmentWrap">
+      <h3 class="iso-chart-title">Plano de Tratamento de Riscos</h3>
+      <div class="iso-treatment-grid" id="treatmentGrid">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+  </div><!-- end tab-27005 -->
+
+</div><!-- end mainContent -->
+
+<!-- SCRIPTS -->
+<script src="/iso.js"></script>
+<script>
+/* ============================================================
+ * iso-page.js — Lógica da página ISO
+ * ============================================================ */
+
+const AUDIT_ID = location.pathname.split('/').pop();
+
+// State
+let _assessed = [];
+let _metrics  = {};
+let _risks    = [];
+let _currentDomain = 'all';
+let _currentStatus = 'all';
+let _currentRisk   = 'all';
+
+/* ----------------------------------------------------------
+ * Boot
+ * ---------------------------------------------------------- */
+(async function init() {
+  try {
+    const res = await fetch(`/api/audit/${AUDIT_ID}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    const auditResults = data.results || [];
+    _assessed = ISOEngine.assessControls(auditResults);
+    _metrics  = ISOEngine.buildMetrics(_assessed);
+    _risks    = ISOEngine.buildRiskRegister(auditResults);
+
+    // Header
+    document.getElementById('targetUrl').textContent = data.projectUrl || data.url || '—';
+    const ts = data.completedAt || data.startedAt || data.createdAt;
+    document.getElementById('auditDate').textContent = ts
+      ? new Date(ts).toLocaleString('pt-BR') : '—';
+
+    // Badge
+    document.getElementById('badgePct').textContent = _metrics.complianceRate + '%';
+    const badge = document.getElementById('complianceBadge');
+    badge.classList.add(
+      _metrics.complianceRate >= 70 ? 'badge-good' :
+      _metrics.complianceRate >= 40 ? 'badge-warn' : 'badge-bad'
+    );
+
+    // Render tabs
+    renderControls();
+    renderMetrics();
+    renderRisks();
+
+    // Show
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('mainContent').style.display = '';
+
+  } catch (e) {
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('errorMsg').textContent = e.message;
+    document.getElementById('errorState').style.display = '';
+  }
+})();
+
+/* ----------------------------------------------------------
+ * Tab navigation
+ * ---------------------------------------------------------- */
+function switchTab(id, btn) {
+  document.querySelectorAll('.iso-tab-content').forEach(t => t.style.display = 'none');
+  document.querySelectorAll('.iso-tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).style.display = '';
+  btn.classList.add('active');
+}
+
+/* ----------------------------------------------------------
+ * RENDER: ISO 27001/27002 Controls
+ * ---------------------------------------------------------- */
+const STATUS_LABEL = {
+  'compliant':     '<span class="ctrl-status compliant">✓ Conforme</span>',
+  'partial':       '<span class="ctrl-status partial">⚠ Parcial</span>',
+  'non-compliant': '<span class="ctrl-status non-compliant">✗ Não Conforme</span>',
+  'manual':        '<span class="ctrl-status manual">📋 Manual</span>',
+  'na':            '<span class="ctrl-status na">○ N/A</span>',
+};
+
+const RISK_LABEL = {
+  critical: '<span class="ctrl-risk risk-critical">Crítico</span>',
+  high:     '<span class="ctrl-risk risk-high">Alto</span>',
+  medium:   '<span class="ctrl-risk risk-medium">Médio</span>',
+  low:      '<span class="ctrl-risk risk-low">Baixo</span>',
+};
+
+function renderControls() {
+  // Summary cards
+  document.getElementById('cntCompliant').textContent   = _metrics.compliant;
+  document.getElementById('cntPartial').textContent     = _metrics.partial;
+  document.getElementById('cntNonCompliant').textContent = _metrics.nonCompliant;
+  document.getElementById('cntManual').textContent      = _metrics.manual;
+  document.getElementById('cntNA').textContent          = _metrics.na;
+
+  buildControlRows();
+}
+
+function buildControlRows() {
+  const filtered = _assessed.filter(c => {
+    const domOk = _currentDomain === 'all' || c.theme === _currentDomain;
+    const stOk  = _currentStatus === 'all' || c._status === _currentStatus;
+    return domOk && stOk;
+  });
+
+  const tbody = document.getElementById('controlsBody');
+  tbody.innerHTML = filtered.map((c, i) => {
+    const rowId = 'ctrl-' + c.id.replace(/\./g, '-');
+    return `
+      <tr class="ctrl-row" data-domain="${c.theme}" data-status="${c._status}" onclick="toggleCtrl('${rowId}')">
+        <td class="ctrl-id">${c.id}</td>
+        <td class="ctrl-name">${c.name}</td>
+        <td>${STATUS_LABEL[c._status] || ''}</td>
+        <td>${RISK_LABEL[c.risk] || ''}</td>
+        <td class="ctrl-auto">${c.autoAssess ? '<span class="auto-badge">Auto</span>' : '<span class="manual-badge">Manual</span>'}</td>
+        <td class="ctrl-toggle">▼</td>
+      </tr>
+      <tr class="ctrl-detail-row" id="${rowId}" style="display:none">
+        <td colspan="6">
+          <div class="ctrl-detail-inner">
+            <div class="ctrl-detail-cols">
+              <div class="ctrl-col">
+                <h4 class="ctrl-detail-h">Descrição</h4>
+                <p>${c.description}</p>
+                <h4 class="ctrl-detail-h ctrl-detail-h-mt">Evidência da Auditoria</h4>
+                <p class="ctrl-evidence">${c._evidence}</p>
+              </div>
+              <div class="ctrl-col">
+                <h4 class="ctrl-detail-h">Remediação</h4>
+                <p>${c.remediation}</p>
+                <h4 class="ctrl-detail-h ctrl-detail-h-mt">ISO 27002 — Orientação</h4>
+                <p class="ctrl-iso27002">${c.iso27002}</p>
+              </div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="ctrl-empty">Nenhum controle corresponde ao filtro selecionado.</td></tr>';
+  }
+}
+
+function toggleCtrl(id) {
+  const row = document.getElementById(id);
+  if (!row) return;
+  const vis = row.style.display !== 'none';
+  row.style.display = vis ? 'none' : '';
+  const btn = row.previousElementSibling.querySelector('.ctrl-toggle');
+  if (btn) btn.textContent = vis ? '▼' : '▲';
+}
+
+function filterDomain(domain, btn) {
+  _currentDomain = domain;
+  document.querySelectorAll('.domain-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  buildControlRows();
+}
+
+function filterStatus(status, btn) {
+  _currentStatus = status;
+  document.querySelectorAll('.iso-status-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  buildControlRows();
+}
+
+/* ----------------------------------------------------------
+ * RENDER: ISO 27004 — Metrics
+ * ---------------------------------------------------------- */
+function renderMetrics() {
+  const m = _metrics;
+
+  // Rings
+  const circumference = 2 * Math.PI * 50; // r=50 → 314.16
+  function setRing(id, pct, color) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const dash = (pct / 100) * circumference;
+    el.style.strokeDasharray = `${dash} ${circumference}`;
+    el.style.stroke = color;
+  }
+
+  document.getElementById('pctCompliance').textContent = m.complianceRate + '%';
+  document.getElementById('pctCoverage').textContent   = m.coverageRate + '%';
+  setRing('ringCompliance', m.complianceRate,
+    m.complianceRate >= 70 ? '#00ff41' : m.complianceRate >= 40 ? '#ffff00' : '#ff0040');
+  setRing('ringCoverage', m.coverageRate, '#00bfff');
+
+  // KPIs
+  const kpis = [
+    { val: m.totalControls, label: 'Controles ISO', sub: 'Total ISO 27001:2022', icon: '📋' },
+    { val: m.autoAssessed,  label: 'Avaliados Auto', sub: 'Avaliados automaticamente', icon: '🤖' },
+    { val: m.nonCompliant,  label: 'Não Conformes', sub: 'Requerem ação imediata', icon: '✗', cls: 'kpi-danger' },
+    { val: m.partial,       label: 'Parcialmente', sub: 'Conformidade parcial', icon: '⚠', cls: 'kpi-warn' },
+    { val: m.compliant,     label: 'Conformes', sub: 'Totalmente conformes', icon: '✓', cls: 'kpi-good' },
+    { val: m.manual,        label: 'Revisão Manual', sub: 'Requerem verificação manual', icon: '📝', cls: 'kpi-neutral' },
+  ];
+  document.getElementById('kpiRow').innerHTML = kpis.map(k => `
+    <div class="kpi-card ${k.cls||''}">
+      <div class="kpi-icon">${k.icon}</div>
+      <div class="kpi-val">${k.val}</div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>
+  `).join('');
+
+  // Bar chart
+  const chartData = [
+    { label: '✓ Conforme', val: m.compliant, cls: 'bar-compliant', max: m.totalControls },
+    { label: '⚠ Parcial', val: m.partial, cls: 'bar-partial', max: m.totalControls },
+    { label: '✗ Não Conforme', val: m.nonCompliant, cls: 'bar-non', max: m.totalControls },
+    { label: '📋 Manual', val: m.manual, cls: 'bar-manual', max: m.totalControls },
+    { label: '○ N/A', val: m.na, cls: 'bar-na', max: m.totalControls },
+  ];
+  document.getElementById('barChart').innerHTML = chartData.map(d => {
+    const pct = d.max > 0 ? Math.round((d.val / d.max) * 100) : 0;
+    return `
+      <div class="bar-item">
+        <div class="bar-label">${d.label}</div>
+        <div class="bar-track">
+          <div class="bar-fill ${d.cls}" style="width:${pct}%"></div>
+        </div>
+        <div class="bar-val">${d.val} <span class="bar-pct">(${pct}%)</span></div>
+      </div>
+    `;
+  }).join('');
+
+  // Theme grid
+  const themes = [
+    { key: 'org',      name: 'A.5 Organizacional', total: 37, icon: '🏢', auto: m.byTheme.org.assessed },
+    { key: 'people',   name: 'A.6 Pessoas',        total: 8,  icon: '👥', auto: m.byTheme.people.assessed },
+    { key: 'physical', name: 'A.7 Físico',         total: 14, icon: '🏭', auto: 0, note: '(N/A — nuvem)' },
+    { key: 'tech',     name: 'A.8 Tecnológico',    total: 34, icon: '💻', auto: m.byTheme.tech.assessed },
+  ];
+  document.getElementById('themeGrid').innerHTML = themes.map(t => {
+    const pct = Math.round((t.auto / t.total) * 100);
+    return `
+      <div class="theme-card">
+        <div class="theme-icon">${t.icon}</div>
+        <div class="theme-name">${t.name}</div>
+        <div class="theme-bar-track">
+          <div class="theme-bar-fill" style="width:${pct}%"></div>
+        </div>
+        <div class="theme-stats">${t.auto} de ${t.total} controles avaliados ${t.note||''}</div>
+      </div>
+    `;
+  }).join('');
+
+  // ISO 27004 Indicators
+  const assessed = m.compliant + m.partial + m.nonCompliant;
+  const indicators = [
+    {
+      name: 'ISM-01 — Taxa de Conformidade',
+      formula: 'Controles Conformes / (Conformes + Parciais + Não Conformes) × 100',
+      value: m.complianceRate + '%',
+      target: '≥ 70%',
+      ok: m.complianceRate >= 70
+    },
+    {
+      name: 'ISM-02 — Cobertura de Avaliação',
+      formula: 'Controles Avaliados Automaticamente / Total Aplicável × 100',
+      value: m.coverageRate + '%',
+      target: '≥ 25%',
+      ok: m.coverageRate >= 25
+    },
+    {
+      name: 'ISM-03 — Não Conformidades Críticas',
+      formula: 'Número de controles com status Não Conforme',
+      value: m.nonCompliant,
+      target: '= 0',
+      ok: m.nonCompliant === 0
+    },
+    {
+      name: 'ISM-04 — Controles Auto-Avaliáveis',
+      formula: 'Controles com avaliação automatizada / Total',
+      value: m.autoAssessed + ' de ' + m.totalControls,
+      target: 'Informativo',
+      ok: true
+    },
+    {
+      name: 'ISM-05 — Controles Avaliados',
+      formula: 'Soma de: Conformes + Parciais + Não Conformes',
+      value: assessed,
+      target: 'Informativo',
+      ok: true
+    },
+  ];
+  document.getElementById('indicatorsBody').innerHTML = indicators.map(ind => `
+    <tr>
+      <td>${ind.name}</td>
+      <td class="ind-formula">${ind.formula}</td>
+      <td class="ind-val">${ind.value}</td>
+      <td>${ind.target}</td>
+      <td>${ind.ok ? '<span class="ind-ok">✓ Atingido</span>' : '<span class="ind-nok">✗ Abaixo</span>'}</td>
+    </tr>
+  `).join('');
+}
+
+/* ----------------------------------------------------------
+ * RENDER: ISO 27005 — Risks
+ * ---------------------------------------------------------- */
+function renderRisks() {
+  const risks = _risks;
+
+  // Summary
+  const critical = risks.filter(r => r.riskCls === 'critical').length;
+  const high     = risks.filter(r => r.riskCls === 'high').length;
+  const medium   = risks.filter(r => r.riskCls === 'medium').length;
+  const low      = risks.filter(r => r.riskCls === 'low').length;
+  document.getElementById('riskSummary').innerHTML = `
+    <div class="risk-sum-card risk-sum-critical"><div class="risk-sum-val">${critical}</div><div>Crítico</div></div>
+    <div class="risk-sum-card risk-sum-high"><div class="risk-sum-val">${high}</div><div>Alto</div></div>
+    <div class="risk-sum-card risk-sum-medium"><div class="risk-sum-val">${medium}</div><div>Médio</div></div>
+    <div class="risk-sum-card risk-sum-low"><div class="risk-sum-val">${low}</div><div>Baixo</div></div>
+  `;
+
+  // Risk Matrix 5×5
+  const matrix = ISOEngine.buildRiskMatrix(risks);
+  const matrixEl = document.getElementById('riskMatrix');
+  // Level cell coloring: impact 1..5, likelihood 5..1
+  function levelCls(like, imp) {
+    const l = like * imp;
+    if (l >= 20) return 'risk-cell-critical';
+    if (l >= 12) return 'risk-cell-high';
+    if (l >= 6)  return 'risk-cell-medium';
+    return 'risk-cell-low';
+  }
+  let matrixHtml = '<div class="risk-matrix-labels-y">';
+  for (let y = 5; y >= 1; y--) {
+    matrixHtml += `<div class="risk-matrix-y-tick">${y}</div>`;
+  }
+  matrixHtml += '</div><div class="risk-matrix-cells">';
+  for (let row = 0; row < 5; row++) {
+    const likelihood = 5 - row;
+    for (let col = 0; col < 5; col++) {
+      const impact = col + 1;
+      const count  = matrix[row][col];
+      const cls    = levelCls(likelihood, impact);
+      matrixHtml += `<div class="risk-cell ${cls}" title="P=${likelihood}, I=${impact}">${count > 0 ? count : ''}</div>`;
+    }
+  }
+  matrixHtml += '</div><div class="risk-matrix-labels-x">';
+  for (let x = 1; x <= 5; x++) {
+    matrixHtml += `<div class="risk-matrix-x-tick">${x}</div>`;
+  }
+  matrixHtml += '</div>';
+  matrixEl.innerHTML = matrixHtml;
+
+  // Risk register table
+  buildRiskRows();
+
+  // Treatment plan
+  renderTreatment(risks);
+}
+
+function buildRiskRows() {
+  const filtered = _risks.filter(r => _currentRisk === 'all' || r.riskCls === _currentRisk);
+  const tbody = document.getElementById('riskBody');
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    document.getElementById('riskEmpty').style.display = '';
+    return;
+  }
+  document.getElementById('riskEmpty').style.display = 'none';
+
+  const bars = { 5: '█████', 4: '████░', 3: '███░░', 2: '██░░░', 1: '█░░░░' };
+  tbody.innerHTML = filtered.map((r, i) => `
+    <tr class="risk-row risk-row-${r.riskCls}">
+      <td class="risk-num">${i + 1}</td>
+      <td>
+        <div class="risk-threat">${r.threat}</div>
+        <div class="risk-desc">${r.description.length > 120 ? r.description.slice(0,117)+'…' : r.description}</div>
+      </td>
+      <td class="risk-bar-cell">
+        <span class="risk-bar">${bars[r.likelihood]||''}</span> ${r.likelihood}/5
+      </td>
+      <td class="risk-bar-cell">
+        <span class="risk-bar">${bars[r.impact]||''}</span> ${r.impact}/5
+      </td>
+      <td class="risk-level-cell"><strong>${r.level}</strong></td>
+      <td><span class="risk-badge risk-badge-${r.riskCls}">${r.riskLabel}</span></td>
+      <td class="risk-treatment">${r.treatment}</td>
+    </tr>
+  `).join('');
+}
+
+function filterRisk(level, btn) {
+  _currentRisk = level;
+  document.querySelectorAll('.iso-risk-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  buildRiskRows();
+}
+
+function renderTreatment(risks) {
+  const groups = {
+    immediate: { label: '🚨 Mitigar Imediatamente', cls: 'treatment-critical', items: [] },
+    week:      { label: '⚡ Mitigar em 7 Dias',     cls: 'treatment-high',     items: [] },
+    month:     { label: '📅 Mitigar em 30 Dias',    cls: 'treatment-medium',   items: [] },
+    monitor:   { label: '👁 Monitorar / Aceitar',    cls: 'treatment-low',      items: [] },
+  };
+  risks.forEach(r => {
+    if (r.treatment.includes('imediatamente')) groups.immediate.items.push(r);
+    else if (r.treatment.includes('7 dias'))   groups.week.items.push(r);
+    else if (r.treatment.includes('30 dias'))  groups.month.items.push(r);
+    else                                        groups.monitor.items.push(r);
+  });
+
+  document.getElementById('treatmentGrid').innerHTML = Object.values(groups).map(g => {
+    if (g.items.length === 0) return '';
+    return `
+      <div class="treatment-card ${g.cls}">
+        <h4 class="treatment-title">${g.label} <span class="treatment-cnt">${g.items.length}</span></h4>
+        <ul class="treatment-list">
+          ${g.items.map(r => `
+            <li class="treatment-item">
+              <strong>${r.threat}</strong>
+              ${r.remediation ? `<div class="treatment-rem">${r.remediation}</div>` : ''}
+            </li>
+          `).join('')}
+        </ul>
+      </div>
+    `;
+  }).join('');
+}
+</script>
+</body>
+</html>

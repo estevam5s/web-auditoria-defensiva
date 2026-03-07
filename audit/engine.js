@@ -61,57 +61,101 @@ function signEvidence(data) {
 }
 
 // ── Severity scoring ─────────────────────────────────────────────
-// Scoring logic:
-//  - FAIL: full penalty per severity
-//  - WARN: 1/3 of FAIL penalty (warnings are advisory, not failures)
-//  - Dedup by category prefix to prevent double-penalization from basic + deep checks
-//  - Floor of 10 so no site shows literally 0 (which looks like a bug)
+// Scoring logic v2:
+//  - Semantic grouping: combines related checks (RLS Policy + Deep RLS + Relationship RLS → group 'rls')
+//  - Weighted penalties: security-critical categories (RLS, Service Key) penalize more
+//  - Bonus: +1/+2 for key controls that pass
+//  - Stack Detection never penalizes (informational only)
+//  - Floor 5, Cap 98
 function calculateScore(results) {
-  const failPenalties  = { critical: 25, high: 15, medium: 8, low: 3, info: 0 };
-  const warnPenalties  = { critical:  8, high:  5, medium: 2, low: 1, info: 0 };
+  // Semantic groups map related checks to one domain, keeping only the worst result
+  const SEMANTIC_GROUPS = [
+    { group: 'rls',         pattern: /RLS|Row Level/i,           weight: 1.6, keyControl: true },
+    { group: 'service-key', pattern: /Service Key/i,             weight: 1.8, keyControl: true },
+    { group: 'auth',        pattern: /Auth(?!or)|Open Signup/i,  weight: 1.3, keyControl: true },
+    { group: 'jwt',         pattern: /JWT/i,                     weight: 1.2, keyControl: true },
+    { group: 'bundle-keys', pattern: /Bundle Key/i,              weight: 1.4, keyControl: true },
+    { group: 'credential',  pattern: /Credential|PII/i,          weight: 1.3, keyControl: true },
+    { group: 'env',         pattern: /\.env|Key Exposure/i,      weight: 1.3, keyControl: true },
+    { group: 'rest',        pattern: /REST|RPC/i,                weight: 1.1 },
+    { group: 'cors',        pattern: /CORS/i,                    weight: 1.1, keyControl: true },
+    { group: 'storage',     pattern: /Storage/i,                 weight: 1.0 },
+    { group: 'graphql',     pattern: /GraphQL/i,                 weight: 0.9 },
+    { group: 'edge',        pattern: /Edge/i,                    weight: 1.0 },
+    { group: 'vuln',        pattern: /Vulnerability/i,           weight: 1.0 },
+    { group: 'routes',      pattern: /Route|Hidden/i,            weight: 0.7 },
+    { group: 'source',      pattern: /Source Code/i,             weight: 0.9 },
+    { group: 'sensitive',   pattern: /Sensitive Data/i,          weight: 1.0 },
+    { group: 'hardening',   pattern: /Hardening|Rate Limit/i,    weight: 0.8 },
+    { group: 'stack',       pattern: /Stack/i,                   weight: 0.0 }, // never penalizes
+    { group: 'dns',         pattern: /DNS/i,                     weight: 0.5 },
+    { group: 'realtime',    pattern: /Realtime/i,                weight: 0.8 },
+  ];
 
-  // Dedup by category (prefix before first " — "), keep worst finding per category
-  const severityRank = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
-  const statusRank   = { FAIL: 2, WARN: 1 };
-  const categories   = {};
+  const failPenalties = { critical: 25, high: 14, medium: 7, low: 2, info: 0 };
+  const warnPenalties = { critical:  8, high:  4, medium: 2, low: 1, info: 0 };
+  const severityRank  = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
+  const statusRank    = { FAIL: 2, WARN: 1 };
 
+  function getGroup(check) {
+    if (!check) return 'other';
+    for (const { group, pattern } of SEMANTIC_GROUPS) {
+      if (pattern.test(check)) return group;
+    }
+    // Fallback: strip emoji and use prefix before " — "
+    const raw = check.replace(/^[^\w]*/u, '');
+    return raw.split(' — ')[0].trim() || 'other';
+  }
+
+  // Aggregate: keep worst result per semantic group
+  const groupedResults = {};
   for (const result of results) {
     const s = result.status;
     if (s !== 'FAIL' && s !== 'WARN') continue;
 
-    // Normalize category: strip leading emoji chars, take prefix before " — "
-    const raw      = result.check.replace(/^[^\w🔑🔒🔓⚡📦🕵️🔬🗺️🛡️🔍🐛📡⚙️🔷🔐🔗]*/u, '');
-    const category = raw.split(' — ')[0].trim() || raw;
-
-    const current = categories[category];
-    if (!current) {
-      categories[category] = result;
-      continue;
+    const group = getGroup(result.check);
+    const rank = (statusRank[s] || 0) * 10 + (severityRank[result.severity] || 0);
+    if (!groupedResults[group] || rank > groupedResults[group].rank) {
+      groupedResults[group] = { result, rank, group };
     }
-    // Replace if this result is worse (higher status rank, then higher severity)
-    const newScore = (statusRank[s] || 0) * 10 + (severityRank[result.severity] || 0);
-    const curScore = (statusRank[current.status] || 0) * 10 + (severityRank[current.severity] || 0);
-    if (newScore > curScore) categories[category] = result;
   }
 
+  // Apply weighted penalties
   let score = 100;
-  for (const result of Object.values(categories)) {
-    if (result.status === 'FAIL') {
-      score -= failPenalties[result.severity] ?? 5;
-    } else if (result.status === 'WARN') {
-      score -= warnPenalties[result.severity] ?? 2;
-    }
+  for (const [group, { result }] of Object.entries(groupedResults)) {
+    const basePenalty = result.status === 'FAIL'
+      ? (failPenalties[result.severity] ?? 5)
+      : (warnPenalties[result.severity] ?? 1);
+
+    const groupDef = SEMANTIC_GROUPS.find(g => g.group === group);
+    const weight = groupDef?.weight ?? 1.0;
+    if (weight === 0) continue; // e.g. stack detection
+
+    score -= Math.round(basePenalty * weight);
   }
 
-  return Math.max(10, Math.min(100, score));
+  // Bonus for key controls that pass
+  const KEY_PASS_BONUSES = [
+    { pattern: /RLS Policy/i, bonus: 2 },
+    { pattern: /Service Key/i, bonus: 2 },
+    { pattern: /JWT/i, bonus: 1 },
+    { pattern: /CORS/i, bonus: 1 },
+    { pattern: /Auth Endpoints/i, bonus: 1 },
+  ];
+  for (const { pattern, bonus } of KEY_PASS_BONUSES) {
+    const passing = results.filter(r => pattern.test(r.check || '') && r.status === 'PASS');
+    if (passing.length > 0) score += bonus;
+  }
+
+  return Math.max(5, Math.min(98, Math.round(score)));
 }
 
 function getScoreGrade(score) {
-  if (score >= 90) return { grade: 'A', color: '#00ff41', label: 'Excelente' };
-  if (score >= 75) return { grade: 'B', color: '#7fff00', label: 'Bom' };
+  if (score >= 92) return { grade: 'A', color: '#00ff41', label: 'Excelente' };
+  if (score >= 78) return { grade: 'B', color: '#7fff00', label: 'Bom' };
   if (score >= 60) return { grade: 'C', color: '#ffff00', label: 'Atenção' };
-  if (score >= 40) return { grade: 'D', color: '#ff8c00', label: 'Risco' };
-  return { grade: 'F', color: '#ff0040', label: 'Crítico' };
+  if (score >= 40) return { grade: 'D', color: '#ff8c00', label: 'Risco Elevado' };
+  return { grade: 'F', color: '#ff0040', label: 'Crítico — Ação Imediata' };
 }
 
 // ── Main audit runner ────────────────────────────────────────────
