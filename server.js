@@ -257,13 +257,14 @@ app.get('*', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`\n  ╔══════════════════════════════════════════╗`);
-  console.log(`  ║   SUPABASE GUARD — Audit Console v2.0    ║`);
+  console.log(`  ║   SUPABASE GUARD — Audit Console v3.0    ║`);
   console.log(`  ║   Running on http://localhost:${PORT}        ║`);
   console.log(`  ║                                          ║`);
   console.log(`  ║   Routes:                                ║`);
   console.log(`  ║   POST /api/audit        — Run audit     ║`);
   console.log(`  ║   POST /api/report/pdf   — PDF report    ║`);
   console.log(`  ║   POST /api/report/html  — HTML report   ║`);
+  console.log(`  ║   POST /api/report/catalog — JSON catalog║`);
   console.log(`  ║   POST /api/scrape       — Site ZIP      ║`);
   console.log(`  ║   GET  /api/audits       — List audits   ║`);
   console.log(`  ║   GET  /audit/:id        — View report   ║`);

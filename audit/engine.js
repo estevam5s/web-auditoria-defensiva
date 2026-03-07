@@ -93,8 +93,8 @@ async function runFullAudit(config, emit) {
   const results = [];
 
   const checks = [
-    { name: 'DNS & Connectivity', fn: checkDNSInfo, enabled: true },
     { name: '🔑 Auto-Detect Credentials', fn: runAutoDetect, enabled: config.options.checkAutoDetect !== false, usesEmit: true },
+    { name: 'DNS & Connectivity', fn: checkDNSInfo, enabled: true },
     { name: 'REST API Exposure', fn: checkRESTExposure, enabled: config.options.checkREST },
     { name: 'RPC Exposure', fn: checkRPCExposure, enabled: config.options.checkRPC },
     { name: 'GraphQL Exposure', fn: checkGraphQLExposure, enabled: config.options.checkGraphQL },
@@ -110,7 +110,7 @@ async function runFullAudit(config, emit) {
     { name: 'Service Key Leak', fn: checkServiceKeyLeak, enabled: true },
     { name: 'Open Signup', fn: checkOpenSignup, enabled: true },
     { name: 'JWT Configuration', fn: checkJWTConfig, enabled: true },
-    // ── Advanced Supabase Modules ──
+    // ── Advanced Supabase Modules (dependem de credenciais) ──
     { name: '📡 OpenAPI Introspection', fn: openAPIIntrospection, enabled: config.options.checkOpenAPI !== false, usesEmit: true },
     { name: '🔍 REST Scan Deep', fn: restScanDeep, enabled: config.options.checkRESTDeep !== false, usesEmit: true },
     { name: '🔗 Relationship RLS Scan', fn: relationshipRLSScan, enabled: config.options.checkRelationshipRLS !== false, usesEmit: true },
@@ -161,6 +161,9 @@ async function runFullAudit(config, emit) {
           items = result;
         } else if (result.results) {
           items = Array.isArray(result.results) ? result.results : [result.results];
+          catalogData = result;
+        } else if (result.detected) {
+          items = Array.isArray(result.results) ? result.results : [result];
           catalogData = result;
         }
       } else {
