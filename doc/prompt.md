@@ -10,3 +10,4 @@
 
 Priorize integração automática, cobertura máxima e relatórios detalhados com score, hash e audit ID."
 
+Monte um plano de acao e faca
