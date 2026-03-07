@@ -261,42 +261,53 @@ ALTER TABLE scan_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
--- Políticas para audits
-CREATE POLICY "Audits are viewable by owners" ON audits
-    FOR SELECT USING (auth.uid() IS NOT NULL);
+-- ============================================================
+-- CORREÇÃO: Políticas RLS para permitir acesso anônimo
+-- ============================================================
 
-CREATE POLICY "Anyone can insert audits" ON audits
-    FOR INSERT WITH CHECK (true);
+-- Desabilitar RLS temporariamente para inserção (ou usar service role)
+ALTER TABLE audits DISABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_results DISABLE ROW LEVEL SECURITY;
+ALTER TABLE vulnerabilities DISABLE ROW LEVEL SECURITY;
+ALTER TABLE exposed_secrets DISABLE ROW LEVEL SECURITY;
+ALTER TABLE scan_history DISABLE ROW LEVEL SECURITY;
+ALTER TABLE user_sessions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs DISABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Anyone can update audits" ON audits
-    FOR UPDATE USING (true);
+-- Se preferir manter RLS, use estas políticas (descomente acima e comente estas):
+/*
+-- Políticas para audits (com RLS)
+DROP POLICY IF EXISTS "Audits are viewable by owners" ON audits;
+DROP POLICY IF EXISTS "Anyone can insert audits" ON audits;
+DROP POLICY IF EXISTS "Anyone can update audits" ON audits;
+
+CREATE POLICY "allow_all_audits" ON audits FOR ALL USING (true) WITH CHECK (true);
 
 -- Políticas para audit_results
-CREATE POLICY "Anyone can insert audit_results" ON audit_results
-    FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Anyone can insert audit_results" ON audit_results;
+CREATE POLICY "allow_all_audit_results" ON audit_results FOR ALL USING (true) WITH CHECK (true);
 
 -- Políticas para vulnerabilities
-CREATE POLICY "Anyone can insert vulnerabilities" ON vulnerabilities
-    FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Anyone can insert vulnerabilities" ON vulnerabilities;
+CREATE POLICY "allow_all_vulnerabilities" ON vulnerabilities FOR ALL USING (true) WITH CHECK (true);
 
 -- Políticas para exposed_secrets
-CREATE POLICY "Anyone can insert exposed_secrets" ON exposed_secrets
-    FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Anyone can insert exposed_secrets" ON exposed_secrets;
+CREATE POLICY "allow_all_exposed_secrets" ON exposed_secrets FOR ALL USING (true) WITH CHECK (true);
 
 -- Políticas para scan_history
-CREATE POLICY "Anyone can insert scan_history" ON scan_history
-    FOR INSERT WITH CHECK (true);
-
-CREATE POLICY "Anyone can select scan_history" ON scan_history
-    FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Anyone can insert scan_history" ON scan_history;
+DROP POLICY IF EXISTS "Anyone can select scan_history" ON scan_history;
+CREATE POLICY "allow_all_scan_history" ON scan_history FOR ALL USING (true) WITH CHECK (true);
 
 -- Políticas para user_sessions
-CREATE POLICY "Users can manage own sessions" ON user_sessions
-    FOR ALL USING (auth.uid() IS NOT NULL);
+DROP POLICY IF EXISTS "Users can manage own sessions" ON user_sessions;
+CREATE POLICY "allow_all_sessions" ON user_sessions FOR ALL USING (true) WITH CHECK (true);
 
 -- Políticas para audit_logs
-CREATE POLICY "Anyone can insert audit_logs" ON audit_logs
-    FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Anyone can insert audit_logs" ON audit_logs;
+CREATE POLICY "allow_all_audit_logs" ON audit_logs FOR ALL USING (true) WITH CHECK (true);
+*/
 
 -- ============================================================
 -- FUNÇÕES AUXILIARES

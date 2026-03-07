@@ -5,18 +5,24 @@
 
 const fetch = require('node-fetch');
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://qmrceufksvlfdwnwftst.supabase.co';
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtcmNldWZrc3ZsZmR3bndmdHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NzQ0ODEsImV4cCI6MjA4ODQ1MDQ4MX0.NXX4jvBXumkAp2L8z56q5pLXoXJaVUNPnjBwn4XUPPE';
+const getSupabaseConfig = () => ({
+  url: process.env.SUPABASE_URL || 'https://qmrceufksvlfdwnwftst.supabase.co',
+  key: process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtcmNldWZrc3ZsZmR3bndmdHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NzQ0ODEsImV4cCI6MjA4ODQ1MDQ4MX0.NXX4jvBXumkAp2L8z56q5pLXoXJaVUNPnjBwn4XUPPE'
+});
 
 const supabaseFetch = async (endpoint, options = {}) => {
-  const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+  const config = getSupabaseConfig();
+  const url = `${config.url}/rest/v1/${endpoint}`;
   const headers = {
     'Content-Type': 'application/json',
-    'apikey': SUPABASE_ANON_KEY,
-    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+    'apikey': config.key,
+    'Authorization': `Bearer ${config.key}`,
     'Prefer': options.prefer || 'return=representation',
     ...options.headers
   };
+
+  console.log('Supabase fetch to:', url);
+  console.log('Has key:', !!config.key);
 
   try {
     const response = await fetch(url, {
@@ -25,6 +31,9 @@ const supabaseFetch = async (endpoint, options = {}) => {
     });
 
     const data = await response.json();
+    
+    console.log('Response status:', response.status);
+    console.log('Response data:', JSON.stringify(data).substring(0, 200));
     
     if (!response.ok) {
       throw new Error(data.message || `HTTP ${response.status}`);

@@ -1,10 +1,13 @@
-/*  ═══════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════
     SUPABASE GUARD — Defensive Audit Server
     Engine: Express + Node.js
     Evidence: SHA-256
     Checks: 25+ hardening controls
     Reports: PDF, HTML, JSON, ZIP
     ═══════════════════════════════════════════════════════════════════ */
+
+// Load environment variables FIRST
+require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
@@ -27,9 +30,6 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Load environment variables
-require('dotenv').config();
-
 // ─── In-memory audit store (latest per URL hash) ─────────────────
 const auditStore = new Map();
 
@@ -42,18 +42,32 @@ function storeAudit(data, userIp = null, userAgent = null) {
     auditStore.delete(oldest);
   }
   
-  // Save to Supabase database (async, don't wait)
-  if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
-    saveAuditToSupabase(data, userIp, userAgent)
-      .then(result => {
-        if (result.success) {
-          console.log(`[Supabase] Audit saved: ${result.auditId}`);
-        } else {
-          console.error('[Supabase] Error saving audit:', result.error);
-        }
-      })
-      .catch(err => console.error('[Supabase] Exception:', err.message));
-  }
+  // Debug log
+  console.log('=== STORING AUDIT ===');
+  console.log('Audit ID:', data.evidence.auditId);
+  console.log('Project URL:', data.projectUrl);
+  console.log('Score:', data.score);
+  console.log('SUPABASE_URL set:', !!process.env.SUPABASE_URL);
+  console.log('SUPABASE_ANON_KEY set:', !!process.env.SUPABASE_ANON_KEY);
+  
+  // Try to save to Supabase
+  const supabaseUrl = process.env.SUPABASE_URL || 'https://qmrceufksvlfdwnwftst.supabase.co';
+  const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtcmNldWZrc3ZsZmR3bndmdHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NzQ0ODEsImV4cCI6MjA4ODQ1MDQ4MX0.NXX4jvBXumkAp2L8z56q5pLXoXJaVUNPnjBwn4XUPPE';
+  
+  console.log('Using Supabase URL:', supabaseUrl);
+  
+  saveAuditToSupabase(data, userIp, userAgent)
+    .then(result => {
+      console.log('Save result:', result);
+      if (result.success) {
+        console.log(`✅ AUDIT SAVED TO SUPABASE: ${result.auditId}`);
+      } else {
+        console.error('❌ Failed to save:', result.error);
+      }
+    })
+    .catch(err => {
+      console.error('❌ Exception saving:', err.message);
+    });
 }
 
 // ─── API Routes ───────────────────────────────────────────────────
