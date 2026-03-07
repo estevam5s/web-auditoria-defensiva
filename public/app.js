@@ -377,6 +377,132 @@ function animateNumber(el, from, to, duration) {
   requestAnimationFrame(update);
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// AI FIX PROMPT GENERATOR
+// ═══════════════════════════════════════════════════════════════════
+
+async function generateAIFixPrompt() {
+  if (!auditResults) {
+    appendLog('error', 'ERROR', 'Execute uma auditoria primeiro.');
+    return;
+  }
+
+  const btn = $('#btnFixPrompt');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Gerando...`;
+  }
+
+  addAIMessage('user', 'Gere um prompt de correção completo para este site atingir pontuação 100/100.');
+  showAITyping();
+
+  try {
+    const response = await fetch('/api/ai/fix-prompt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ auditId: currentAuditId, auditData: auditResults })
+    });
+
+    removeAITyping();
+
+    if (!response.ok) {
+      const error = await response.json();
+      addAIMessage('bot', `Erro ao gerar prompt: ${error.error}`);
+      return;
+    }
+
+    const data = await response.json();
+
+    if (data.success && data.prompt) {
+      addAIMessage('bot', data.prompt);
+      showFixPromptModal(data.prompt, auditResults.score, data.criticalCount);
+    } else {
+      addAIMessage('bot', `Erro: ${data.error || 'Falha ao gerar prompt de correção.'}`);
+    }
+  } catch (error) {
+    removeAITyping();
+    addAIMessage('bot', `Erro de conexão: ${error.message}`);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg> Gerar Prompt de Correção`;
+    }
+  }
+}
+
+function showFixPromptModal(prompt, currentScore, criticalCount) {
+  const existing = document.getElementById('fixPromptOverlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'fixPromptOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);backdrop-filter:blur(8px);z-index:10000;display:flex;align-items:center;justify-content:center;padding:1rem;';
+
+  const promptText = (prompt || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  overlay.innerHTML = `
+    <div style="background:#0d0d14;border:1px solid #1a1a2e;border-radius:12px;width:100%;max-width:860px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(0,255,65,0.15);">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid #1a1a2e;">
+        <div>
+          <div style="font-size:1.05rem;font-weight:700;color:#00ff41;letter-spacing:1px;">PROMPT DE CORREÇÃO GERADO PELA IA</div>
+          <div style="font-size:0.75rem;color:#8888aa;margin-top:0.2rem;">
+            Score atual: <strong style="color:#ff4444">${currentScore || '?'}/100</strong>
+            &nbsp;•&nbsp; ${criticalCount || 0} falha(s) crítica(s)
+            &nbsp;•&nbsp; Meta: <strong style="color:#00ff41">100/100</strong>
+          </div>
+        </div>
+        <button onclick="document.getElementById('fixPromptOverlay').remove()" style="background:none;border:none;color:#8888aa;cursor:pointer;font-size:1.4rem;line-height:1;padding:0.25rem;">✕</button>
+      </div>
+      <div style="padding:0.75rem 1.5rem;background:#0a0a0f;border-bottom:1px solid #1a1a2e;display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
+        <button onclick="copyFixPrompt()" style="background:#00ff41;color:#000;border:none;border-radius:6px;padding:0.45rem 1rem;font-size:0.8rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:0.4rem;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copiar Prompt Completo
+        </button>
+        <button onclick="downloadFixPrompt()" style="background:transparent;color:#00ff41;border:1px solid #00ff41;border-radius:6px;padding:0.45rem 1rem;font-size:0.8rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:0.4rem;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Baixar .md
+        </button>
+        <div style="margin-left:auto;font-size:0.72rem;color:#555570;">Cole em qualquer IA para corrigir automaticamente</div>
+      </div>
+      <div style="overflow-y:auto;padding:1.25rem 1.5rem;flex:1;">
+        <pre id="fixPromptContent" style="background:#080810;border:1px solid #1a1a2e;border-radius:8px;padding:1.25rem;font-family:monospace;font-size:0.77rem;line-height:1.65;color:#c8c8d8;white-space:pre-wrap;word-break:break-word;overflow-y:auto;max-height:52vh;">${promptText}</pre>
+      </div>
+      <div style="padding:0.65rem 1.5rem;border-top:1px solid #1a1a2e;background:#0a0a0f;border-radius:0 0 12px 12px;text-align:center;">
+        <span style="font-size:0.71rem;color:#555570;">Gerado por Supabase Guard AI &nbsp;•&nbsp; Llama 3.3 70B &nbsp;•&nbsp; Cole em Claude, ChatGPT ou Gemini</span>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+  window._lastFixPrompt = prompt;
+}
+
+function copyFixPrompt() {
+  const text = window._lastFixPrompt || document.getElementById('fixPromptContent')?.innerText || '';
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('#fixPromptOverlay button[onclick="copyFixPrompt()"]');
+    if (btn) {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '&#10003; Copiado!';
+      btn.style.background = '#00cc33';
+      setTimeout(() => { btn.innerHTML = orig; btn.style.background = '#00ff41'; }, 2000);
+    }
+  });
+}
+
+function downloadFixPrompt() {
+  const text = window._lastFixPrompt || '';
+  const url = auditResults?.projectUrl || 'site';
+  const filename = `fix-prompt-${url.replace(/https?:\/\//, '').replace(/[^a-z0-9]/gi, '-')}.md`;
+  const blob = new Blob([text], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 // ── Copy Logs ────────────────────────────────────────────────────
 function copyLogs() {
   const text = logLines.join('\n');
@@ -806,6 +932,12 @@ function showResults(results, score, grade, duration, evidence) {
           <li>📊 <strong>Detalhes técnicos</strong> da exposição</li>
         </ul>
         <p><em>Exemplo: "Quais são as chaves de API expostas?"</em></p>
+        <div style="margin-top:12px;">
+          <button id="btnFixPrompt" onclick="generateAIFixPrompt()" style="background:linear-gradient(135deg,#ff0040,#c0001e);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;letter-spacing:.5px;box-shadow:0 0 12px rgba(255,0,64,.35);transition:opacity .2s;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Gerar Prompt de Correção (Score 100/100)
+          </button>
+        </div>
       </div>
     </div>
   `;

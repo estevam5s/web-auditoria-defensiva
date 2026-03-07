@@ -19,7 +19,7 @@ const { generateHTMLReport } = require('./audit/report-html');
 const { lightScrape } = require('./audit/scraper');
 
 const { generateSupabaseCatalog, generateCatalogHTML } = require('./audit/report-supabase-catalog');
-const { askGrok, askGrokStream } = require('./audit/grok-ai');
+const { askGrok, askGrokStream, generateFixPrompt } = require('./audit/grok-ai');
 const { saveAuditToSupabase, getAuditHistory, getAuditById } = require('./audit/supabase-db');
 const { analyzeGitHistory, checkForExposedSecrets } = require('./audit/git-analyzer');
 
@@ -566,6 +566,24 @@ app.post('/api/ai/chat/simple', async (req, res) => {
 
   try {
     const result = await askGrok(auditDataToUse, question);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─── AI Fix Prompt Generator ────────────────────────────────────────
+app.post('/api/ai/fix-prompt', async (req, res) => {
+  const { auditId, auditData } = req.body;
+
+  let auditDataToUse = auditData || auditStore.get(auditId);
+
+  if (!auditDataToUse) {
+    return res.status(404).json({ error: 'Audit not found. Run an audit first.' });
+  }
+
+  try {
+    const result = await generateFixPrompt(auditDataToUse);
     res.json(result);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

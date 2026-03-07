@@ -1,128 +1,385 @@
-[INIT] Iniciando auditoria em: https://www.estevamsouza.com.br
+[INIT] Iniciando auditoria em: https://estevamsouza.com.br
 [MODE] Role: GUEST (anon key)
 [START] Iniciando auditoria defensiva...
-[INFO] Executando 32 verificações de segurança...
-[SCAN] [1/32] Verificando: 🔑 Auto-Detect Credentials...
+[INFO] Executando 33 verificações de segurança...
+[SCAN] [1/33] Verificando: 🔑 Auto-Detect Credentials...
 [LOG] [Auto-Detect] Iniciando detecção automática de credenciais...
-[WARN] [Auto-Detect — Credenciais] Nenhuma credencial Supabase detectada automaticamente.
-[SCAN] [2/32] Verificando: DNS & Connectivity...
-[PASS] [DNS — Connectivity] Projeto acessível. Status: 200
+[LOG] [Auto-Detect] Analisando HTML para descobrir scripts dinâmicos...
+[LOG] [Auto-Detect] 10 scripts descobertos no HTML
+[LOG] [Auto-Detect] SUPABASE_URL detectada em /admin/js/env.js: https://aczm...abase.co
+[LOG] [Auto-Detect] ANON_KEY detectada em /admin/js/env.js
+[LOG] [Auto-Detect] Confiança: 100%
+[PASS] [Auto-Detect — Credenciais] Credenciais Supabase detectadas automaticamente (confiança: 100%)
+[SCAN] [2/33] Verificando: DNS & Connectivity...
+[PASS] [DNS — Connectivity] Projeto acessível. Status: 404
 [PASS] [DNS — HTTPS] Projeto usa HTTPS. ✓
-[SCAN] [3/32] Verificando: REST API Exposure...
+[SCAN] [3/33] Verificando: REST API Exposure...
+[WARN] [REST API — Schema Exposure] O schema REST/OpenAPI está acessível publicamente. Tabelas e colunas podem ser enumeradas.
 [PASS] [REST API — Table Exposure] Nenhuma tabela comum encontrada exposta via REST API (GUEST).
-[WARN] [REST API — No Auth Access] REST API responde sem apikey/Authorization header.
-[SCAN] [4/32] Verificando: RPC Exposure...
-[FAIL] [RPC — Function Exposure] 24 função(ões) RPC descoberta(s). 0 retornam dados.
-[SCAN] [5/32] Verificando: GraphQL Exposure...
-[SCAN] [6/32] Verificando: 🔷 GraphQL Deep Scan...
+[PASS] [REST API — Auth Required] REST API requer autenticação (apikey/Authorization).
+[SCAN] [4/33] Verificando: RPC Exposure...
+[PASS] [RPC — Function Exposure] Nenhuma função RPC comum encontrada exposta ao role anon.
+[SCAN] [5/33] Verificando: GraphQL Exposure...
+[FAIL] [GraphQL — Introspection] Introspection GraphQL habilitada! 528 tipos de dados expostos.
+[FAIL] [GraphQL — Data Access] Dados podem ser consultados via GraphQL sem autenticação adicional.
+[SCAN] [6/33] Verificando: 🔷 GraphQL Deep Scan...
 [LOG] [GraphQL] Iniciando introspection completa...
-[WARN] [GraphQL — Endpoint] GraphQL endpoint retornou status 405
-[SCAN] [7/32] Verificando: Storage Buckets...
-[WARN] [Storage — Public Path "avatars"] Caminho público de storage acessível: /storage/v1/object/public/avatars/
-[WARN] [Storage — Public Path "uploads"] Caminho público de storage acessível: /storage/v1/object/public/uploads/
-[WARN] [Storage — Public Path "images"] Caminho público de storage acessível: /storage/v1/object/public/images/
-[WARN] [Storage — Public Path "documents"] Caminho público de storage acessível: /storage/v1/object/public/documents/
-[WARN] [Storage — Public Path "public"] Caminho público de storage acessível: /storage/v1/object/public/public/
-[WARN] [Storage — Public Path "files"] Caminho público de storage acessível: /storage/v1/object/public/files/
-[WARN] [Storage — Public Path "backups"] Caminho público de storage acessível: /storage/v1/object/public/backups/
-[WARN] [Storage — Public Path "exports"] Caminho público de storage acessível: /storage/v1/object/public/exports/
-[WARN] [Storage — Public Path "media"] Caminho público de storage acessível: /storage/v1/object/public/media/
-[WARN] [Storage — Public Path "assets"] Caminho público de storage acessível: /storage/v1/object/public/assets/
-[SCAN] [8/32] Verificando: Edge Functions...
-[WARN] [Edge Functions — Discovery] 35 Edge Function(s) descoberta(s). 35 acessível(is).
-[WARN] [Edge Function — "hello" No Auth] Edge Function "hello" acessível sem Authorization header.
-[WARN] [Edge Function — "test" No Auth] Edge Function "test" acessível sem Authorization header.
-[WARN] [Edge Function — "ping" No Auth] Edge Function "ping" acessível sem Authorization header.
-[WARN] [Edge Function — "health" No Auth] Edge Function "health" acessível sem Authorization header.
-[WARN] [Edge Function — "status" No Auth] Edge Function "status" acessível sem Authorization header.
-[WARN] [Edge Function — "webhook" No Auth] Edge Function "webhook" acessível sem Authorization header.
-[WARN] [Edge Function — "stripe-webhook" No Auth] Edge Function "stripe-webhook" acessível sem Authorization header.
-[WARN] [Edge Function — "payment" No Auth] Edge Function "payment" acessível sem Authorization header.
-[WARN] [Edge Function — "checkout" No Auth] Edge Function "checkout" acessível sem Authorization header.
-[WARN] [Edge Function — "send-email" No Auth] Edge Function "send-email" acessível sem Authorization header.
-[WARN] [Edge Function — "notify" No Auth] Edge Function "notify" acessível sem Authorization header.
-[WARN] [Edge Function — "notification" No Auth] Edge Function "notification" acessível sem Authorization header.
-[WARN] [Edge Function — "admin" No Auth] Edge Function "admin" acessível sem Authorization header.
-[WARN] [Edge Function — "auth" No Auth] Edge Function "auth" acessível sem Authorization header.
-[WARN] [Edge Function — "login" No Auth] Edge Function "login" acessível sem Authorization header.
-[WARN] [Edge Function — "register" No Auth] Edge Function "register" acessível sem Authorization header.
-[WARN] [Edge Function — "signup" No Auth] Edge Function "signup" acessível sem Authorization header.
-[WARN] [Edge Function — "api" No Auth] Edge Function "api" acessível sem Authorization header.
-[WARN] [Edge Function — "proxy" No Auth] Edge Function "proxy" acessível sem Authorization header.
-[WARN] [Edge Function — "cors-proxy" No Auth] Edge Function "cors-proxy" acessível sem Authorization header.
-[WARN] [Edge Function — "generate" No Auth] Edge Function "generate" acessível sem Authorization header.
-[WARN] [Edge Function — "process" No Auth] Edge Function "process" acessível sem Authorization header.
-[WARN] [Edge Function — "upload" No Auth] Edge Function "upload" acessível sem Authorization header.
-[WARN] [Edge Function — "cron" No Auth] Edge Function "cron" acessível sem Authorization header.
-[WARN] [Edge Function — "scheduler" No Auth] Edge Function "scheduler" acessível sem Authorization header.
-[WARN] [Edge Function — "sync" No Auth] Edge Function "sync" acessível sem Authorization header.
-[WARN] [Edge Function — "export" No Auth] Edge Function "export" acessível sem Authorization header.
-[WARN] [Edge Function — "import" No Auth] Edge Function "import" acessível sem Authorization header.
-[WARN] [Edge Function — "backup" No Auth] Edge Function "backup" acessível sem Authorization header.
-[WARN] [Edge Function — "search" No Auth] Edge Function "search" acessível sem Authorization header.
-[WARN] [Edge Function — "AI" No Auth] Edge Function "AI" acessível sem Authorization header.
-[WARN] [Edge Function — "openai" No Auth] Edge Function "openai" acessível sem Authorization header.
-[WARN] [Edge Function — "chat" No Auth] Edge Function "chat" acessível sem Authorization header.
-[WARN] [Edge Function — "resend" No Auth] Edge Function "resend" acessível sem Authorization header.
-[WARN] [Edge Function — "send-sms" No Auth] Edge Function "send-sms" acessível sem Authorization header.
-[SCAN] [9/32] Verificando: Realtime Channels...
-[WARN] [Realtime — WebSocket] Endpoint WebSocket Realtime está ativo e acessível.
-[INFO] [Realtime — Health Endpoint] Endpoint de health do Realtime está acessível.
-[WARN] [Realtime — No Auth Access] Realtime responde sem apikey.
-[SCAN] [10/32] Verificando: Auth Endpoints...
+[LOG] [GraphQL] 529 tipos de dados, 89 queries, 267 mutations
+[LOG] [GraphQL] Testando acesso a dados sem autenticação...
+[LOG] [GraphQL] Testando 40 collections...
+[LOG] [GraphQL PROBE] field=pageInfoCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=about_photosCollection -> 200 callable=yes data=yes
+[LOG] [GraphQL PROBE] field=about_photosConnectionCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=about_photosDeleteResponseCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=about_photosEdgeCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=about_photosInsertResponseCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=about_photosUpdateResponseCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=about_sectionCollection -> 200 callable=yes data=yes
+[LOG] [GraphQL PROBE] field=about_sectionConnectionCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=about_sectionDeleteResponseCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=about_sectionEdgeCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=about_sectionInsertResponseCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=about_sectionUpdateResponseCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=about_skillsCollection -> 200 callable=yes data=yes
+[LOG] [GraphQL PROBE] field=about_skillsConnectionCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=about_skillsDeleteResponseCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=about_skillsEdgeCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=about_skillsInsertResponseCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=about_skillsUpdateResponseCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=academic_coursesCollection -> 200 callable=yes data=yes
+[LOG] [GraphQL PROBE] field=academic_coursesConnectionCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=academic_coursesDeleteResponseCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=academic_coursesEdgeCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=academic_coursesInsertResponseCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=academic_coursesUpdateResponseCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=admin_availabilityCollection -> 200 callable=yes data=yes
+[LOG] [GraphQL PROBE] field=admin_availabilityConnectionCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=admin_availabilityDeleteResponseCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=admin_availabilityEdgeCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=admin_availabilityInsertResponseCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=admin_availabilityUpdateResponseCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=api_configsCollection -> 200 callable=yes data=yes
+[LOG] [GraphQL PROBE] field=api_configsConnectionCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=api_configsDeleteResponseCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=api_configsEdgeCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=api_configsInsertResponseCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=api_configsUpdateResponseCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=automation_logsCollection -> 200 callable=yes data=no
+[LOG] [GraphQL PROBE] field=automation_logsConnectionCollection -> 200 callable=no data=no
+[LOG] [GraphQL PROBE] field=automation_logsDeleteResponseCollection -> 200 callable=no data=no
+[FAIL] [GraphQL — Schema Exposure] 529 tipo(s) de dados exposto(s) via GraphQL introspection.
+[FAIL] [GraphQL — Data Access] Dados acessíveis via GraphQL: about_photos (1 registros)
+[FAIL] [GraphQL — Data Access] Dados acessíveis via GraphQL: about_section (1 registros)
+[FAIL] [GraphQL — Data Access] Dados acessíveis via GraphQL: about_skills (3 registros)
+[FAIL] [GraphQL — Data Access] Dados acessíveis via GraphQL: academic_courses (3 registros)
+[FAIL] [GraphQL — Data Access] Dados acessíveis via GraphQL: admin_availability (1 registros)
+[FAIL] [GraphQL — Data Access] Dados acessíveis via GraphQL: api_configs (3 registros)
+[WARN] [GraphQL — Campos Queryable] 7 collection(s) queryable para GUEST via GraphQL.
+[WARN] [GraphQL — Mutations Available] 267 mutation(s) disponível(s). Verifique permissões.
+[SCAN] [7/33] Verificando: Storage Buckets...
+[PASS] [Storage — Buckets] Nenhum bucket de storage encontrado.
+[SCAN] [8/33] Verificando: Edge Functions...
+[PASS] [Edge Functions — Discovery] Nenhuma Edge Function comum descoberta via enumeração.
+[SCAN] [9/33] Verificando: Realtime Channels...
+[WARN] [Realtime — Channel Join Anônimo] Realtime permite join de canal com anon key. Dados em tempo real podem ser acessíveis.
+[SCAN] [10/33] Verificando: Auth Endpoints...
+[WARN] [Auth — Settings Exposure] Configurações de autenticação estão acessíveis publicamente.
+[WARN] [Auth — Open Signup] Signup está habilitado. Qualquer pessoa pode criar conta no projeto.
+[WARN] [Auth — Auto Confirm Email] Auto-confirmação de email está ativa. Contas são ativadas instantaneamente.
+[INFO] [Auth — Providers] 1 provider(s) de auth habilitado(s): email
 [PASS] [Auth — Admin Users Endpoint] Endpoint admin de users não acessível com anon key. ✓
-[SCAN] [11/32] Verificando: 🔐 Auth Settings Deep...
+[WARN] [Auth — Signup Active] Endpoint de signup está ativo e aceita registros.
+[SCAN] [11/33] Verificando: 🔐 Auth Settings Deep...
 [LOG] [Auth Settings] Verificando configurações de autenticação...
-[WARN] [Auth Settings] Não foi possível obter configurações
+[LOG] [Auth Settings] /auth/v1/settings -> 200 (signupOpen=true, emailConfirmDisabled=true)
 [LOG] [Auth Settings] Testando endpoints de autenticação...
 [LOG] [Auth Settings] Verificando segurança adicional...
-[WARN] [Auth Settings — User Endpoint] Endpoint /auth/v1/user acessível com anon key!
-[WARN] [Auth Settings — Anonymous Access] Endpoint anónimo do auth está acessível.
-[FAIL] [Auth Settings — Summary] 1 vulnerabilidade(s) de autenticação encontrada(s).
-[SCAN] [12/32] Verificando: .env / Key Exposure...
-[FAIL] [Env/Key Exposure — File Discovery] 30 arquivo(s) sensível(is) acessível(is)! 
-[SCAN] [13/32] Verificando: RLS Policy Check...
+[INFO] [Auth Settings — Configuration] Configurações de autenticação obtidas com sucesso.
+[FAIL] [Auth Settings — Open Signup] Auth hardening fraco: signup aberto — qualquer pessoa pode criar conta.
+[FAIL] [Auth Settings — Email Confirmation Disabled] Auth hardening fraco: confirmação de email desabilitada — contas ativadas instantaneamente sem verificação.
+[WARN] [Auth Settings — No Email Confirmation] Auto-confirmação de EMAIL ativada. Contas ativadas instantaneamente.
+[INFO] [Auth Settings — Providers] 1 provider(s) de auth: email
+[WARN] [Auth Settings — Signup Endpoint] Signup endpoint aceita requisições.
+[WARN] [Auth Settings — Summary] 4 vulnerabilidade(s) de autenticação encontrada(s).
+[SCAN] [12/33] Verificando: .env / Key Exposure...
+[PASS] [Env/Key Exposure — File Discovery] Nenhum arquivo .env ou configuração sensível encontrado exposto.
+[PASS] [Key Exposure — Key Type] Chave identificada como role "anon". ✓
+[SCAN] [13/33] Verificando: RLS Policy Check...
 [INFO] [RLS — Table Detection] Nenhuma tabela comum detectada. Considere verificar manualmente.
-[SCAN] [14/32] Verificando: CORS Headers...
+[SCAN] [14/33] Verificando: CORS Headers...
+[WARN] [CORS — /rest/v1/] CORS wildcard (*) em /rest/v1/. Qualquer domínio pode fazer requests.
+[WARN] [CORS — /auth/v1/settings] CORS wildcard (*) em /auth/v1/settings. Qualquer domínio pode fazer requests.
+[WARN] [CORS — /storage/v1/bucket] CORS wildcard (*) em /storage/v1/bucket. Qualquer domínio pode fazer requests.
+[WARN] [CORS — /graphql/v1] CORS wildcard (*) em /graphql/v1. Qualquer domínio pode fazer requests.
 [WARN] [Security Headers] 6 header(s) de segurança ausente(s).
-[SCAN] [15/32] Verificando: Service Key Leak...
+[SCAN] [15/33] Verificando: Service Key Leak...
 [PASS] [Service Key — Leak Check] Nenhum vazamento de service_role key detectado em recursos públicos. ✓
-[SCAN] [16/32] Verificando: Open Signup...
-[INFO] [Open Signup — Settings] Não foi possível verificar configuração de signup.
-[SCAN] [17/32] Verificando: JWT Configuration...
-[INFO] [JWT — Analysis] Nenhuma anon key fornecida para análise JWT.
-[SCAN] [18/32] Verificando: 📡 OpenAPI Introspection...
+[SCAN] [16/33] Verificando: Open Signup...
+[WARN] [Open Signup — Status] Registros públicos estão habilitados neste projeto.
+[WARN] [Open Signup — Email Verification] Auto-confirm de email está ativo. Contas são criadas sem verificação.
+[SCAN] [17/33] Verificando: JWT Configuration...
+[INFO] [JWT — Algorithm] JWT usa algoritmo HS256 (padrão Supabase).
+[PASS] [JWT — Role] JWT role: "anon" ✓
+[WARN] [JWT — Long Expiry] JWT tem expiração muito longa (10 anos).
+[INFO] [JWT — Issuer] JWT issuer: supabase
+[SCAN] [18/33] Verificando: 📡 OpenAPI Introspection...
 [LOG] [OpenAPI] Iniciando introspection do schema...
-[LOG] [OpenAPI] Testando tabela por tabela para descobrir mais...
-[LOG] [OpenAPI] 0 tabelas descobertas...
-[LOG] [OpenAPI] 0 tabelas descobertas...
-[LOG] [OpenAPI] 0 tabelas descobertas...
-[LOG] [OpenAPI] Verificando funções RPC...
-[SCAN] [19/32] Verificando: 🔍 REST Scan Deep...
-[LOG] [REST Deep] Testando 27 tabelas...
-[LOG] [REST Deep] 0 tabelas expostas, 0 graváveis
-[PASS] [REST Deep — Table Exposure] Nenhuma tabela exposta com a anon key.
-[SCAN] [20/32] Verificando: 🔗 Relationship RLS Scan...
+[LOG] [OpenAPI] /rest/v1/ -> 200 (tables=89, rpcs=3, total_routes=93)
+[FAIL] [OpenAPI — Schema Exposure] OpenAPI expõe catálogo público: 89 tabelas, 3 RPCs (93 rotas totais).
+[INFO] [OpenAPI — Complete Catalog] Catálogo gerado: 89 tabelas, 3 funções RPC.
+[SCAN] [19/33] Verificando: 🔍 REST Scan Deep...
+[LOG] [REST Deep] Escaneando 89 tabelas REST...
+[LOG] [REST Deep] GUEST /rest/v1/linkedin_posts?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/study_resources?select=*&limit=500&offset=0 -> 200 rows=63
+[WARN] [REST Deep] Tabela exposta: 'study_resources' retornou 63 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/doc_articles?select=*&limit=500&offset=0 -> 200 rows=24
+[WARN] [REST Deep] Tabela exposta: 'doc_articles' retornou 24 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/study_checkins?select=*&limit=500&offset=0 -> 200 rows=1
+[WARN] [REST Deep] Tabela exposta: 'study_checkins' retornou 1 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/python_scripts?select=*&limit=500&offset=0 -> 200 rows=10
+[WARN] [REST Deep] Tabela exposta: 'python_scripts' retornou 10 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/study_daily_summary?select=*&limit=500&offset=0 -> 200 rows=1
+[WARN] [REST Deep] Tabela exposta: 'study_daily_summary' retornou 1 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/de_tools?select=*&limit=500&offset=0 -> 200 rows=20
+[WARN] [REST Deep] Tabela exposta: 'de_tools' retornou 20 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/study_topics?select=*&limit=500&offset=0 -> 200 rows=17
+[WARN] [REST Deep] Tabela exposta: 'study_topics' retornou 17 registro(s) para GUEST.
+[LOG] [REST Deep] GUEST /rest/v1/bd_ativo?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/study_schedule?select=*&limit=500&offset=0 -> 200 rows=112
+[WARN] [REST Deep] Tabela exposta: 'study_schedule' retornou 112 registro(s) para GUEST.
+[LOG] [REST Deep] GUEST /rest/v1/study_sessions?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/counters?select=*&limit=500&offset=0 -> 200 rows=3
+[WARN] [REST Deep] Tabela exposta: 'counters' retornou 3 registro(s) para GUEST.
+[LOG] [REST Deep] GUEST /rest/v1/career_goals?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/study_achievements?select=*&limit=500&offset=0 -> 200 rows=21
+[WARN] [REST Deep] Tabela exposta: 'study_achievements' retornou 21 registro(s) para GUEST.
+[LOG] [REST Deep] GUEST /rest/v1/study_pomodoro_sessions?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/linkedin_profile?select=*&limit=500&offset=0 -> 200 rows=1
+[WARN] [REST Deep] Tabela exposta: 'linkedin_profile' retornou 1 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/study_streaks?select=*&limit=500&offset=0 -> 200 rows=1
+[WARN] [REST Deep] Tabela exposta: 'study_streaks' retornou 1 registro(s) para GUEST.
+[LOG] [REST Deep] GUEST /rest/v1/report_daily_snapshots?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/chat_users?select=*&limit=500&offset=0 -> 200 rows=1
+[WARN] [REST Deep] Tabela exposta: 'chat_users' retornou 1 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/roadmap_items?select=*&limit=500&offset=0 -> 200 rows=78
+[WARN] [REST Deep] Tabela exposta: 'roadmap_items' retornou 78 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/chat_messages?select=*&limit=500&offset=0 -> 200 rows=51
+[WARN] [REST Deep] Tabela exposta: 'chat_messages' retornou 51 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/study_categories?select=*&limit=500&offset=0 -> 200 rows=8
+[WARN] [REST Deep] Tabela exposta: 'study_categories' retornou 8 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/admin_availability?select=*&limit=500&offset=0 -> 200 rows=1
+[WARN] [REST Deep] Tabela exposta: 'admin_availability' retornou 1 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/study_levels?select=*&limit=500&offset=0 -> 200 rows=7
+[WARN] [REST Deep] Tabela exposta: 'study_levels' retornou 7 registro(s) para GUEST.
+[LOG] [REST Deep] GUEST /rest/v1/career_milestones?select=*&limit=500&offset=0 -> 200 rows=0
+[LOG] [REST Deep] GUEST /rest/v1/contact_messages?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/social_links?select=*&limit=500&offset=0 -> 200 rows=3
+[WARN] [REST Deep] Tabela exposta: 'social_links' retornou 3 registro(s) para GUEST.
+[LOG] [REST Deep] GUEST /rest/v1/page_views?select=*&limit=500&offset=0 -> 200 rows=0
+[LOG] [REST Deep] GUEST /rest/v1/automation_logs?select=*&limit=500&offset=0 -> 200 rows=0
+[LOG] [REST Deep] GUEST /rest/v1/linkedin_network?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/roadmap_phases?select=*&limit=500&offset=0 -> 200 rows=24
+[WARN] [REST Deep] Tabela exposta: 'roadmap_phases' retornou 24 registro(s) para GUEST.
+[LOG] [REST Deep] GUEST /rest/v1/study_weekly_summary?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/study_projects?select=*&limit=500&offset=0 -> 200 rows=8
+[WARN] [REST Deep] Tabela exposta: 'study_projects' retornou 8 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/report_templates?select=*&limit=500&offset=0 -> 200 rows=3
+[WARN] [REST Deep] Tabela exposta: 'report_templates' retornou 3 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/blog_posts?select=*&limit=500&offset=0 -> 200 rows=4
+[WARN] [REST Deep] Tabela exposta: 'blog_posts' retornou 4 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/services?select=*&limit=500&offset=0 -> 200 rows=3
+[WARN] [REST Deep] Tabela exposta: 'services' retornou 3 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/study_materials?select=*&limit=500&offset=0 -> 200 rows=16
+[WARN] [REST Deep] Tabela exposta: 'study_materials' retornou 16 registro(s) para GUEST.
+[LOG] [REST Deep] GUEST /rest/v1/report_logs?select=*&limit=500&offset=0 -> 200 rows=0
+[LOG] [REST Deep] GUEST /rest/v1/v_report_summary?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/service_pricing?select=*&limit=500&offset=0 -> 200 rows=10
+[WARN] [REST Deep] Tabela exposta: 'service_pricing' retornou 10 registro(s) para GUEST.
+[LOG] [REST Deep] 40/89 tabelas...
+[LOG] [REST Deep] GUEST /rest/v1/study_notes?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/report_configs?select=*&limit=500&offset=0 -> 200 rows=4
+[WARN] [REST Deep] Tabela exposta: 'report_configs' retornou 4 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/pricing_plans?select=*&limit=500&offset=0 -> 200 rows=3
+[WARN] [REST Deep] Tabela exposta: 'pricing_plans' retornou 3 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/blog_comments?select=*&limit=500&offset=0 -> 200 rows=2
+[WARN] [REST Deep] Tabela exposta: 'blog_comments' retornou 2 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/projects?select=*&limit=500&offset=0 -> 200 rows=18
+[WARN] [REST Deep] Tabela exposta: 'projects' retornou 18 registro(s) para GUEST.
+[LOG] [REST Deep] GUEST /rest/v1/study_ai_conversations?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/bigtech_projects?select=*&limit=500&offset=0 -> 200 rows=46
+[WARN] [REST Deep] Tabela exposta: 'bigtech_projects' retornou 46 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/skills?select=*&limit=500&offset=0 -> 200 rows=8
+[WARN] [REST Deep] Tabela exposta: 'skills' retornou 8 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/supabase_usage?select=*&limit=500&offset=0 -> 200 rows=1
+[WARN] [REST Deep] Tabela exposta: 'supabase_usage' retornou 1 registro(s) para GUEST.
+[LOG] [REST Deep] GUEST /rest/v1/linkedin_ai_tips?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/testimonials?select=*&limit=500&offset=0 -> 200 rows=3
+[WARN] [REST Deep] Tabela exposta: 'testimonials' retornou 3 registro(s) para GUEST.
+[LOG] [REST Deep] GUEST /rest/v1/linkedin_experiences?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/about_skills?select=*&limit=500&offset=0 -> 200 rows=6
+[WARN] [REST Deep] Tabela exposta: 'about_skills' retornou 6 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/about_photos?select=*&limit=500&offset=0 -> 200 rows=1
+[WARN] [REST Deep] Tabela exposta: 'about_photos' retornou 1 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/api_configs?select=*&limit=500&offset=0 -> 200 rows=16
+[WARN] [REST Deep] Tabela exposta: 'api_configs' retornou 16 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/resumes?select=*&limit=500&offset=0 -> 200 rows=14
+[WARN] [REST Deep] Tabela exposta: 'resumes' retornou 14 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/career_consultations?select=*&limit=500&offset=0 -> 200 rows=5
+[WARN] [REST Deep] Tabela exposta: 'career_consultations' retornou 5 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/experience?select=*&limit=500&offset=0 -> 200 rows=3
+[WARN] [REST Deep] Tabela exposta: 'experience' retornou 3 registro(s) para GUEST.
+[LOG] [REST Deep] GUEST /rest/v1/github_repos_cache?select=*&limit=500&offset=0 -> 200 rows=0
+[LOG] [REST Deep] GUEST /rest/v1/linkedin_jobs?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/music_tracks?select=*&limit=500&offset=0 -> 200 rows=76
+[WARN] [REST Deep] Tabela exposta: 'music_tracks' retornou 76 registro(s) para GUEST.
+[LOG] [REST Deep] GUEST /rest/v1/study_bookmarks?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/notes?select=*&limit=500&offset=0 -> 200 rows=5
+[WARN] [REST Deep] Tabela exposta: 'notes' retornou 5 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/site_settings?select=*&limit=500&offset=0 -> 200 rows=13
+[WARN] [REST Deep] Tabela exposta: 'site_settings' retornou 13 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/online_courses?select=*&limit=500&offset=0 -> 200 rows=12
+[WARN] [REST Deep] Tabela exposta: 'online_courses' retornou 12 registro(s) para GUEST.
+[LOG] [REST Deep] GUEST /rest/v1/visitor_events?select=*&limit=500&offset=0 -> 200 rows=0
+[LOG] [REST Deep] GUEST /rest/v1/automations?select=*&limit=500&offset=0 -> 200 rows=0
+[LOG] [REST Deep] GUEST /rest/v1/service_quotes?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/chat_conversations?select=*&limit=500&offset=0 -> 200 rows=2
+[WARN] [REST Deep] Tabela exposta: 'chat_conversations' retornou 2 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/chat_notifications?select=*&limit=500&offset=0 -> 200 rows=20
+[WARN] [REST Deep] Tabela exposta: 'chat_notifications' retornou 20 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/contact_info?select=*&limit=500&offset=0 -> 200 rows=1
+[WARN] [REST Deep] Tabela exposta: 'contact_info' retornou 1 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/study_level_sections?select=*&limit=500&offset=0 -> 200 rows=204
+[WARN] [REST Deep] Tabela exposta: 'study_level_sections' retornou 204 registro(s) para GUEST.
+[LOG] [REST Deep] GUEST /rest/v1/linkedin_applications?select=*&limit=500&offset=0 -> 200 rows=0
+[LOG] [REST Deep] GUEST /rest/v1/doc_bookmarks?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/hero_section?select=*&limit=500&offset=0 -> 200 rows=1
+[WARN] [REST Deep] Tabela exposta: 'hero_section' retornou 1 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/about_section?select=*&limit=500&offset=0 -> 200 rows=1
+[WARN] [REST Deep] Tabela exposta: 'about_section' retornou 1 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/saas_products?select=*&limit=500&offset=0 -> 200 rows=6
+[WARN] [REST Deep] Tabela exposta: 'saas_products' retornou 6 registro(s) para GUEST.
+[LOG] [REST Deep] GUEST /rest/v1/study_flashcards?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/education?select=*&limit=500&offset=0 -> 200 rows=4
+[WARN] [REST Deep] Tabela exposta: 'education' retornou 4 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/roadmap_tracks?select=*&limit=500&offset=0 -> 200 rows=6
+[WARN] [REST Deep] Tabela exposta: 'roadmap_tracks' retornou 6 registro(s) para GUEST.
+[LOG] [REST Deep] 80/89 tabelas...
+[LOG] [REST Deep] GUEST /rest/v1/visitor_sessions?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/study_technologies?select=*&limit=500&offset=0 -> 200 rows=24
+[WARN] [REST Deep] Tabela exposta: 'study_technologies' retornou 24 registro(s) para GUEST.
+[LOG] [REST Deep] GUEST /rest/v1/career_categories?select=*&limit=500&offset=0 -> 200 rows=0
+[WARN] [REST Deep] GUEST /rest/v1/study_level_days?select=*&limit=500&offset=0 -> 200 rows=43
+[WARN] [REST Deep] Tabela exposta: 'study_level_days' retornou 43 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/study_section_content?select=*&limit=500&offset=0 -> 200 rows=79
+[WARN] [REST Deep] Tabela exposta: 'study_section_content' retornou 79 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/academic_courses?select=*&limit=500&offset=0 -> 200 rows=10
+[WARN] [REST Deep] Tabela exposta: 'academic_courses' retornou 10 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/study_goals?select=*&limit=500&offset=0 -> 200 rows=8
+[WARN] [REST Deep] Tabela exposta: 'study_goals' retornou 8 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/doc_categories?select=*&limit=500&offset=0 -> 200 rows=19
+[WARN] [REST Deep] Tabela exposta: 'doc_categories' retornou 19 registro(s) para GUEST.
+[WARN] [REST Deep] GUEST /rest/v1/job_listings?select=*&limit=500&offset=0 -> 200 rows=8
+[WARN] [REST Deep] Tabela exposta: 'job_listings' retornou 8 registro(s) para GUEST.
+[LOG] [REST Deep] 89 tabelas expostas, 0 graváveis
+[FAIL] [REST Deep — Table Exposure] 89 tabela(s) exposta(s) via REST API. 0 permite(m) gravação!
+[FAIL] [REST Deep — Sensitive Columns Exposed] 29 tabela(s) expõe(m) colunas sensíveis!
+[SCAN] [20/33] Verificando: 🔗 Relationship RLS Scan...
 [LOG] [Relationship RLS] Iniciando verificação de vazamentos via joins...
-[LOG] [Relationship RLS] 0 joins acessíveis encontrados
-[PASS] [Relationship RLS — Indirect Access] Nenhum vazamento indireto via relacionamentos detectado.
-[SCAN] [21/32] Verificando: 🔬 Deep Source Code Analysis...
-[LOG] [Source Analyzer] Buscando página principal: https://www.estevamsouza.com.br
+[LOG] [Relationship RLS] 89 tabelas para analisar relações
+[LOG] [Relationship RLS] 12 relações testadas...
+[LOG] [Relationship RLS] 24 relações testadas...
+[LOG] [Relationship RLS] 36 relações testadas...
+[LOG] [Relationship RLS] 48 relações testadas...
+[LOG] [Relationship RLS] 60 relações testadas...
+[LOG] [Relationship RLS] 72 relações testadas...
+[LOG] [Relationship RLS] 84 relações testadas...
+[LOG] [Relationship RLS] 96 relações testadas...
+[LOG] [Relationship RLS] 108 relações testadas...
+[LOG] [Relationship RLS] 120 relações testadas...
+[LOG] [Relationship RLS] 132 relações testadas...
+[LOG] [Relationship RLS] 144 relações testadas...
+[LOG] [Relationship RLS] 156 relações testadas...
+[LOG] [Relationship RLS] 168 relações testadas...
+[LOG] [Relationship RLS] 180 relações testadas...
+[LOG] [Relationship RLS] 192 relações testadas...
+[LOG] [Relationship RLS] 204 relações testadas...
+[LOG] [Relationship RLS] 216 relações testadas...
+[LOG] [Relationship RLS] 228 relações testadas...
+[LOG] [Relationship RLS] 240 relações testadas...
+[LOG] [Relationship RLS] 252 relações testadas...
+[LOG] [Relationship RLS] 264 relações testadas...
+[LOG] [Relationship RLS] 276 relações testadas...
+[LOG] [Relationship RLS] 288 relações testadas...
+[LOG] [Relationship RLS] 300 relações testadas...
+[LOG] [Relationship RLS] 312 relações testadas...
+[LOG] [Relationship RLS] 324 relações testadas...
+[LOG] [Relationship RLS] 336 relações testadas...
+[LOG] [Relationship RLS] 348 relações testadas...
+[LOG] [Relationship RLS] 360 relações testadas...
+[LOG] [Relationship RLS] 372 relações testadas...
+[LOG] [Relationship RLS] 384 relações testadas...
+[LOG] [Relationship RLS] 396 relações testadas...
+[LOG] [Relationship RLS] 408 relações testadas...
+[LOG] [Relationship RLS] 420 relações testadas...
+[LOG] [Relationship RLS] 432 relações testadas...
+[LOG] [Relationship RLS] 444 relações testadas...
+[LOG] [Relationship RLS] 456 relações testadas...
+[LOG] [Relationship RLS] 468 relações testadas...
+[LOG] [Relationship RLS] 480 relações testadas...
+[LOG] [Relationship RLS] 492 relações testadas...
+[LOG] [Relationship RLS] 504 relações testadas...
+[LOG] [Relationship RLS] 516 relações testadas...
+[LOG] [Relationship RLS] 528 relações testadas...
+[LOG] [Relationship RLS] 540 relações testadas...
+[LOG] [Relationship RLS] 552 relações testadas...
+[LOG] [Relationship RLS] 564 relações testadas...
+[LOG] [Relationship RLS] 576 relações testadas...
+[LOG] [Relationship RLS] 588 relações testadas...
+[LOG] [Relationship RLS] 600 relações testadas...
+[LOG] [Relationship RLS] 612 relações testadas...
+[LOG] [Relationship RLS] 624 relações testadas...
+[LOG] [Relationship RLS] 636 relações testadas...
+[LOG] [Relationship RLS] 648 relações testadas...
+[LOG] [Relationship RLS] 660 relações testadas...
+[LOG] [Relationship RLS] 672 relações testadas...
+[LOG] [Relationship RLS] 684 relações testadas...
+[LOG] [Relationship RLS] 696 relações testadas...
+[LOG] [Relationship RLS] 708 relações testadas...
+[LOG] [Relationship RLS] 720 relações testadas...
+[LOG] [Relationship RLS] 732 relações testadas...
+[LOG] [Relationship RLS] 744 relações testadas...
+[LOG] [Relationship RLS] 756 relações testadas...
+[LOG] [Relationship RLS] 768 relações testadas...
+[LOG] [Relationship RLS] 780 relações testadas...
+[LOG] [Relationship RLS] 792 relações testadas...
+[LOG] [Relationship RLS] 804 relações testadas...
+[LOG] [Relationship RLS] 816 relações testadas...
+[LOG] [Relationship RLS] 828 relações testadas...
+[LOG] [Relationship RLS] 840 relações testadas...
+[LOG] [Relationship RLS] 852 relações testadas...
+[LOG] [Relationship RLS] 864 relações testadas...
+[LOG] [Relationship RLS] 12 joins acessíveis encontrados
+[WARN] [Relationship RLS — Indirect Data Leak] 12 relação(ões) permite(m) acesso a dados de outras tabelas via joins!
+[SCAN] [21/33] Verificando: ⚙️ Hardening & Rate Limiting...
+[LOG] [Hardening] Analisando rate limiting e cache nos endpoints...
+[LOG] [Hardening] 59 endpoints verificados
+[PASS] [Hardening — Rate Limiting] Rate limiting detectado em todos os 59 endpoints verificados.
+[SCAN] [22/33] Verificando: 🔬 Deep Source Code Analysis...
+[LOG] [Source Analyzer] Buscando página principal: https://estevamsouza.com.br
 [LOG] [Source Analyzer] Página principal: 9266 bytes analisados
 [LOG] [Source Analyzer] 51 assets descobertos para análise
 [LOG] [Source Analyzer] 10/54 assets analisados...
 [LOG] [Source Analyzer] 20/62 assets analisados...
 [LOG] [Source Analyzer] 50/200 assets analisados...
 [LOG] [Source Analyzer] 50/200 assets analisados...
-[LOG] [Source Analyzer] 50/200 assets analisados...
 [LOG] [Source Analyzer] 60/200 assets analisados...
 [LOG] [Source Analyzer] 60/200 assets analisados...
-[LOG] [Source Analyzer] Análise completa: 68 assets processados
+[LOG] [Source Analyzer] Análise completa: 66 assets processados
 [FAIL] [Source Code — Secrets Detected] 142 secret(s)/dado(s) sensível(is) encontrado(s) no código fonte! 1 crítico(s).
 [WARN] [Source Code — Insecure Patterns] 70 padrão(ões) inseguro(s) encontrado(s) no código fonte.
 [WARN] [Source Code — Source Maps Exposed] 1 source map(s) exposto(s). Código original pode ser reconstruído.
 [WARN] [Source Code — Errors Detected] 6 erro(s) detectado(s) em respostas/código.
-[SCAN] [22/32] Verificando: 🗺️ Hidden Route Discovery...
+[SCAN] [23/33] Verificando: 🗺️ Hidden Route Discovery...
 [LOG] [Route Scanner] Iniciando varredura de 326 rotas...
 [WARN] [Route Scanner] robots.txt encontrado com 2 caminho(s) Disallow
 [LOG] [Route Scanner] Baseline 404: status=200, length=9266
@@ -141,7 +398,7 @@
 [INFO] [Routes — Sitemap] sitemap.xml encontrado com 10 URL(s).
 [FAIL] [Routes — Hidden/Exposed Endpoints] 6 rota(s) descoberta(s). 4 crítica(s), 0 alta(s).
 [INFO] [Routes — Extracted from Source] 1 rota(s) extraída(s) do código fonte da página.
-[SCAN] [23/32] Verificando: 🛡️ Vulnerability Scanner...
+[SCAN] [24/33] Verificando: 🛡️ Vulnerability Scanner...
 [LOG] [Vuln Scanner] Iniciando análise avançada de vulnerabilidades...
 [LOG] [Vuln Scanner] Testando XSS refletido...
 [LOG] [Vuln Scanner] Testando open redirect...
@@ -158,97 +415,76 @@
 [FAIL] [Vulnerability — Security Headers] 1/10 headers de segurança presentes. 2 crítico(s) ausente(s).
 [WARN] [Vulnerability — Rate Limiting] Rate limiting não detectado — endpoints podem ser vulneráveis a brute force.
 [INFO] [Vulnerability — Technology Fingerprint] 2 tecnologia(s) identificada(s): Vercel, Supabase
-[SCAN] [24/32] Verificando: 🔍 Sensitive Data Detector...
+[SCAN] [25/33] Verificando: 🔍 Sensitive Data Detector...
 [LOG] [Sensitive Data] Iniciando detecção de dados sensíveis...
 [LOG] [Sensitive Data] Escaneando página principal e bundles JS...
 [LOG] [Sensitive Data] 12 scripts encontrados para análise...
 [LOG] [Sensitive Data] 10/12 assets escaneados...
+[LOG] [Sensitive Data] Escaneando respostas da API Supabase...
+[LOG] [Sensitive Data] Verificando endpoints de autenticação...
 [LOG] [Sensitive Data] Verificando storage buckets...
 [LOG] [Sensitive Data] Analisando robots.txt...
-[LOG] [Sensitive Data] Análise concluída. 25 achado(s).
-[FAIL] [Sensitive Data — Critical Exposures] 6 exposição(ões) CRÍTICA(S) de dados sensíveis!
+[LOG] [Sensitive Data] Análise concluída. 27 achado(s).
+[FAIL] [Sensitive Data — Critical Exposures] 8 exposição(ões) CRÍTICA(S) de dados sensíveis!
 [FAIL] [Sensitive Data — High Risk Exposures] 4 exposição(ões) de alto risco.
 [WARN] [Sensitive Data — Medium Risk] 8 achado(s) de risco médio.
-[INFO] [Sensitive Data — Summary] Total: 25 achado(s) — 6 críticos, 4 altos, 8 médios, 7 baixos.
-[SCAN] [25/32] Verificando: 🐛 Error Detector...
+[INFO] [Sensitive Data — Summary] Total: 27 achado(s) — 8 críticos, 4 altos, 8 médios, 7 baixos.
+[SCAN] [26/33] Verificando: 🐛 Error Detector...
 [LOG] [Error Detector] Iniciando detecção de erros...
 [LOG] [Error Detector] Verificando status HTTP de endpoints...
 [LOG] [Error Detector] Detectando recursos quebrados (links, scripts, imagens)...
 [LOG] [Error Detector] 12 recursos encontrados para verificação...
 [LOG] [Error Detector] Detectando erros em código JavaScript...
 [LOG] [Error Detector] Verificando configuração SSL/TLS...
+[LOG] [Error Detector] Testando padrões de erro da API...
 [LOG] [Error Detector] Verificando problemas de performance...
-[LOG] [Error Detector] Detecção concluída. 4 categorias de resultado.
+[LOG] [Error Detector] Detecção concluída. 5 categorias de resultado.
 [PASS] [Errors — Broken Resources] Nenhum recurso quebrado detectado.
 [FAIL] [Errors — JavaScript Code Issues] 22 problema(s) em código JavaScript: 6 erros, 7 avisos.
 [WARN] [Errors — SSL/TLS Configuration] 1 problema(s) na configuração SSL/TLS.
+[WARN] [Errors — API Error Handling] 4 resposta(s) de erro revelam informações internas.
 [WARN] [Errors — Performance Issues] 1 problema(s) de performance detectado(s).
-[SCAN] [26/32] Verificando: 🔒 Deep RLS Misconfiguration...
+[SCAN] [27/33] Verificando: 🔒 Deep RLS Misconfiguration...
 [LOG] [RLS Deep] Iniciando análise profunda de RLS...
 [LOG] [RLS Deep] Tentando introspection de schema...
 [LOG] [RLS Deep] Enumerando 98 tabelas potenciais...
+[WARN] [RLS Deep] ✗ EXPOSTA: chat_messages (7 colunas, 0 críticas, 0 PII)
 [LOG] [RLS Deep] 24/98 tabelas verificadas...
 [LOG] [RLS Deep] 48/98 tabelas verificadas...
 [LOG] [RLS Deep] 72/98 tabelas verificadas...
 [LOG] [RLS Deep] 96/98 tabelas verificadas...
-[LOG] [RLS Deep] Testando operações de escrita em 0 tabelas acessíveis...
+[LOG] [RLS Deep] Testando operações de escrita em 1 tabelas acessíveis...
 [LOG] [RLS Deep] Testando bypass de RLS via RPC...
 [LOG] [RLS Deep] Testando escalação horizontal de privilégios...
 [LOG] [RLS Deep] Compilando resultados...
-[PASS] [RLS Deep — Proteção Geral] ✓ RLS parece bem configurado. 0 tabela(s) bloqueada(s), 98 testadas.
-[INFO] [RLS Deep — Resumo] Análise RLS: 0 expostas, 0 gravação, 0 RPC bypass, 0 bloqueadas, 0 vazias.
-[SCAN] [27/32] Verificando: 🔓 REST/RPC Data Leak (GUEST/USER)...
+[FAIL] [RLS Deep — Tabelas Sem Proteção] 1 tabela(s) retornam dados para GUEST sem autenticação.
+[INFO] [RLS Deep — Resumo] Análise RLS: 1 expostas, 0 gravação, 0 RPC bypass, 0 bloqueadas, 0 vazias.
+[SCAN] [28/33] Verificando: 🔓 REST/RPC Data Leak (GUEST/USER)...
 [LOG] [REST/RPC Leak] Iniciando análise profunda de vazamento de dados...
 [LOG] [REST/RPC Leak] Escaneando 75 tabelas REST...
+[WARN] [REST/RPC Leak] ✗ chat_messages: 5 registros, 7 colunas (Email, Phone BR, Credit Card, UUID)
 [LOG] [REST/RPC Leak] 32/75 tabelas...
 [LOG] [REST/RPC Leak] 56/75 tabelas...
 [LOG] [REST/RPC Leak] 75/75 tabelas...
 [LOG] [REST/RPC Leak] Testando 49 funções RPC...
 [LOG] [REST/RPC Leak] Testando acesso sem qualquer autenticação...
 [LOG] [REST/RPC Leak] Estimando volume de dados expostos...
-[LOG] [REST/RPC Leak] Compilando 0 leaks REST + 0 leaks RPC...
-[PASS] [REST/RPC — Leak Check] ✓ Nenhum vazamento de dados detectado. 75 tabelas e 49 RPCs testados.
-[SCAN] [28/32] Verificando: ⚡ Edge Function Role Control...
+[LOG] [REST/RPC Leak] Compilando 1 leaks REST + 0 leaks RPC...
+[FAIL] [REST/RPC — Credenciais & Tokens Expostos] 🚨 1 tabela(s) expõem credenciais, tokens ou dados financeiros via REST!
+[FAIL] [REST/RPC — Dados Financeiros Expostos] 💰 1 tabela(s) expõem dados financeiros (cartões, pagamentos) via REST!
+[SCAN] [29/33] Verificando: ⚡ Edge Function Role Control...
 [LOG] [Edge Functions] Iniciando análise profunda de controle de role...
 [LOG] [Edge Functions] Escaneando 114 funções potenciais...
 [LOG] [Edge Functions] 30/114 testadas...
 [LOG] [Edge Functions] 54/114 testadas...
 [LOG] [Edge Functions] 78/114 testadas...
 [LOG] [Edge Functions] 102/114 testadas...
-[LOG] [Edge Functions] 114 funções descobertas.
+[LOG] [Edge Functions] 0 funções descobertas.
 [LOG] [Edge Functions] Testando controle de role em cada função...
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: reset-password (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: webhook (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: stripe-webhook (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: stripe (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: payment (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: checkout (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: create-payment (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: process-payment (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: refund (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: mercadopago (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: mercadopago-webhook (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: pix (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: create-checkout (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: billing (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: invoice (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: send-email (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: send-sms (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: whatsapp (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: send-whatsapp (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: admin (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: manage (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: ban-user (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: delete-user (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: update-role (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: export (200)
-[WARN] [Edge Functions] 🚨 SENSÍVEL sem auth: backup (200)
 [LOG] [Edge Functions] Testando webhooks sem assinatura...
 [LOG] [Edge Functions] Compilando resultados...
-[INFO] [Edge Functions — Descoberta] 114 Edge Function(s) descoberta(s): hello, test, ping, health, status, version, auth, login, register, signup, signin, logout, verify, verify-email, confirm, reset-password, forgot-password, refresh-token, validate-token, magic-link, otp, webhook, stripe-webhook, stripe, payment, checkout, create-payment, process-payment, refund, subscription, mercadopago, mercadopago-webhook, pix, boleto, pagseguro, paypal, asaas, iugu, pagar-me, pagarme, create-checkout, billing, invoice, charge, send-email, email, notify, notification, push, send-sms, sms, whatsapp, send-whatsapp, resend, admin, dashboard, analytics, metrics, report, manage, moderate, ban-user, delete-user, update-role, api, proxy, cors-proxy, fetch, scrape, crawl, search, global-search, autocomplete, export, import, backup, restore, sync, migrate, ai, openai, chat, generate, embed, transcribe, gpt, claude, gemini, llm, completion, upload, download, process, resize, convert, pdf, generate-pdf, generate-report, cron, scheduler, worker, queue, job, process-queue, run-job, cleanup, github, slack, discord, telegram, zapier, n8n, make, integromat
-[FAIL] [Edge Functions — Sensíveis Sem Auth] 🚨 26 função(ões) SENSÍVEL(IS) acessível(is) sem autenticação: reset-password, webhook, stripe-webhook, stripe, payment, checkout, create-payment, process-payment, refund, mercadopago, mercadopago-webhook, pix, create-checkout, billing, invoice, send-email, send-sms, whatsapp, send-whatsapp, admin, manage, ban-user, delete-user, update-role, export, backup
-[WARN] [Edge Functions — Sem Auth (Geral)] 88 função(ões) acessível(is) sem autenticação.
-[SCAN] [29/32] Verificando: 🔑 Bundle Key Scanner...
+[PASS] [Edge Functions — Descoberta] ✓ Nenhuma Edge Function descoberta. 114 nomes testados.
+[SCAN] [30/33] Verificando: 🔑 Bundle Key Scanner...
 [LOG] [Bundle Scanner] Iniciando varredura profunda de tokens e chaves em bundles...
 [LOG] [Bundle Scanner] Escaneando 63 paths conhecidos...
 [LOG] [Bundle Scanner] 24/63 paths escaneados... (0 achados)
@@ -259,9 +495,10 @@
 [LOG] [Bundle Scanner] Compilando 1 achados...
 [WARN] [Bundle — Outras Chaves/Tokens] 1 chave(s)/token(s) adicional(is) encontrado(s) em bundles.
 [INFO] [Bundle — Resumo Geral] Total: 1 chave(s)/token(s) em 63 bundles. Por categoria: Generic:1
-[SCAN] [30/32] Verificando: 📦 Deep Storage Abuse...
+[SCAN] [31/33] Verificando: 📦 Deep Storage Abuse...
 [LOG] [Storage Deep] Iniciando análise profunda de Storage...
 [LOG] [Storage Deep] Testando listagem de buckets...
+[WARN] [Storage Deep] 0 bucket(s) listáveis com anon key
 [LOG] [Storage Deep] Analisando cada bucket em profundidade...
 [LOG] [Storage Deep] Procurando 49 buckets ocultos...
 [WARN] [Storage Deep] Bucket oculto encontrado: avatars (0 arquivos)
@@ -314,311 +551,10 @@
 [WARN] [Storage Deep] Bucket oculto encontrado: profile-pictures (0 arquivos)
 [WARN] [Storage Deep] Bucket oculto encontrado: profile-images (0 arquivos)
 [LOG] [Storage Deep] Procurando arquivos críticos em buckets...
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: avatars/.env
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: avatars/config.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: avatars/secrets.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: avatars/credentials.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: avatars/database.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: avatars/backup.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: avatars/dump.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: avatars/export.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: avatars/users.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: avatars/customers.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: avatars/orders.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: avatars/payments.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: avatars/README.md
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: avatars/index.html
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: avatars/.gitignore
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: avatars/.htaccess
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: avatars/key.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: avatars/cert.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: avatars/server.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: avatars/private.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: uploads/.env
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: uploads/config.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: uploads/secrets.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: uploads/credentials.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: uploads/database.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: uploads/backup.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: uploads/dump.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: uploads/export.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: uploads/users.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: uploads/customers.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: uploads/orders.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: uploads/payments.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: uploads/README.md
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: uploads/index.html
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: uploads/.gitignore
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: uploads/.htaccess
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: uploads/key.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: uploads/cert.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: uploads/server.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: uploads/private.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: images/.env
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: images/config.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: images/secrets.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: images/credentials.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: images/database.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: images/backup.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: images/dump.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: images/export.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: images/users.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: images/customers.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: images/orders.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: images/payments.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: images/README.md
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: images/index.html
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: images/.gitignore
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: images/.htaccess
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: images/key.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: images/cert.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: images/server.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: images/private.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: photos/.env
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: photos/config.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: photos/secrets.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: photos/credentials.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: photos/database.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: photos/backup.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: photos/dump.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: photos/export.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: photos/users.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: photos/customers.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: photos/orders.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: photos/payments.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: photos/README.md
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: photos/index.html
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: photos/.gitignore
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: photos/.htaccess
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: photos/key.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: photos/cert.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: photos/server.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: photos/private.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: pictures/.env
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: pictures/config.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: pictures/secrets.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: pictures/credentials.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: pictures/database.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: pictures/backup.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: pictures/dump.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: pictures/export.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: pictures/users.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: pictures/customers.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: pictures/orders.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: pictures/payments.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: pictures/README.md
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: pictures/index.html
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: pictures/.gitignore
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: pictures/.htaccess
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: pictures/key.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: pictures/cert.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: pictures/server.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: pictures/private.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: media/.env
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: media/config.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: media/secrets.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: media/credentials.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: media/database.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: media/backup.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: media/dump.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: media/export.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: media/users.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: media/customers.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: media/orders.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: media/payments.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: media/README.md
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: media/index.html
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: media/.gitignore
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: media/.htaccess
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: media/key.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: media/cert.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: media/server.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: media/private.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: documents/.env
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: documents/config.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: documents/secrets.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: documents/credentials.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: documents/database.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: documents/backup.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: documents/dump.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: documents/export.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: documents/users.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: documents/customers.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: documents/orders.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: documents/payments.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: documents/README.md
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: documents/index.html
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: documents/.gitignore
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: documents/.htaccess
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: documents/key.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: documents/cert.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: documents/server.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: documents/private.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: docs/.env
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: docs/config.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: docs/secrets.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: docs/credentials.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: docs/database.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: docs/backup.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: docs/dump.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: docs/export.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: docs/users.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: docs/customers.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: docs/orders.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: docs/payments.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: docs/README.md
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: docs/index.html
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: docs/.gitignore
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: docs/.htaccess
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: docs/key.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: docs/cert.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: docs/server.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: docs/private.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: files/.env
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: files/config.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: files/secrets.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: files/credentials.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: files/database.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: files/backup.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: files/dump.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: files/export.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: files/users.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: files/customers.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: files/orders.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: files/payments.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: files/README.md
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: files/index.html
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: files/.gitignore
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: files/.htaccess
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: files/key.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: files/cert.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: files/server.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: files/private.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: attachments/.env
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: attachments/config.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: attachments/secrets.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: attachments/credentials.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: attachments/database.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: attachments/backup.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: attachments/dump.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: attachments/export.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: attachments/users.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: attachments/customers.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: attachments/orders.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: attachments/payments.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: attachments/README.md
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: attachments/index.html
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: attachments/.gitignore
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: attachments/.htaccess
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: attachments/key.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: attachments/cert.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: attachments/server.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: attachments/private.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: resources/.env
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: resources/config.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: resources/secrets.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: resources/credentials.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: resources/database.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: resources/backup.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: resources/dump.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: resources/export.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: resources/users.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: resources/customers.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: resources/orders.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: resources/payments.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: resources/README.md
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: resources/index.html
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: resources/.gitignore
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: resources/.htaccess
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: resources/key.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: resources/cert.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: resources/server.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: resources/private.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: public/.env
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: public/config.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: public/secrets.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: public/credentials.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: public/database.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: public/backup.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: public/dump.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: public/export.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: public/users.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: public/customers.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: public/orders.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: public/payments.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: public/README.md
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: public/index.html
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: public/.gitignore
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: public/.htaccess
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: public/key.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: public/cert.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: public/server.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: public/private.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: assets/.env
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: assets/config.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: assets/secrets.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: assets/credentials.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: assets/database.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: assets/backup.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: assets/dump.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: assets/export.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: assets/users.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: assets/customers.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: assets/orders.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: assets/payments.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: assets/README.md
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: assets/index.html
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: assets/.gitignore
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: assets/.htaccess
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: assets/key.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: assets/cert.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: assets/server.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: assets/private.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: static/.env
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: static/config.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: static/secrets.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: static/credentials.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: static/database.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: static/backup.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: static/dump.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: static/export.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: static/users.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: static/customers.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: static/orders.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: static/payments.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: static/README.md
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: static/index.html
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: static/.gitignore
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: static/.htaccess
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: static/key.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: static/cert.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: static/server.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: static/private.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: content/.env
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: content/config.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: content/secrets.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: content/credentials.json
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: content/database.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: content/backup.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: content/dump.sql
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: content/export.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: content/users.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: content/customers.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: content/orders.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: content/payments.csv
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: content/README.md
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: content/index.html
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: content/.gitignore
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: content/.htaccess
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: content/key.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: content/cert.pem
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: content/server.key
-[WARN] [Storage Deep] 🚨 Arquivo crítico público: content/private.key
 [LOG] [Storage Deep] Testando permissão de upload...
 [LOG] [Storage Deep] Compilando resultados...
-[FAIL] [Storage — Arquivos Críticos Acessíveis] 🚨 300 arquivo(s) de configuração/credencial acessível(is) publicamente!
 [WARN] [Storage — Buckets Ocultos Descobertos] 49 bucket(s) não listado(s) mas acessível(is) por nome.
-[SCAN] [31/32] Verificando: 🕵️ Credential & PII Detector...
+[SCAN] [32/33] Verificando: 🕵️ Credential & PII Detector...
 [LOG] [Credential/PII] Iniciando detecção profunda de credenciais e dados pessoais...
 [LOG] [Credential/PII] Escaneando 45 tabelas REST...
 [LOG] [Credential/PII] 32/45 tabelas...
@@ -626,12 +562,13 @@
 [LOG] [Credential/PII] 9 scripts para análise...
 [WARN] [Credential/PII] 🚨 GitHub Token em Bundle: /admin/js/env.js
 [LOG] [Credential/PII] Verificando endpoints de auth...
+[LOG] [Credential/PII] Verificando arquivos de storage...
 [LOG] [Credential/PII] Testando RPCs sensíveis...
 [LOG] [Credential/PII] Total: 6 achados. Compilando...
 [FAIL] [Dados — PII (Email, Telefone, Endereço)] 5 tipo(s) de dado pessoal exposto(s) (emails, telefones, CEPs).
 [FAIL] [Credenciais — API Keys Expostas] 1 API key(s) de terceiros encontrada(s) (AWS, OpenAI, SendGrid, GitHub, etc.)
 [INFO] [Credential/PII — Resumo] Total: 6 achados. PII: 5 | API Key: 1
-[SCAN] [32/32] Verificando: 🔧 Stack Detection...
+[SCAN] [33/33] Verificando: 🔧 Stack Detection...
 [LOG] [Stack] Detectando tecnologias...
 [LOG] [Stack] ✓ Detectado: React
 [LOG] [Stack] ✓ Detectado: Next.js
@@ -642,7 +579,7 @@
 [LOG] [Stack] ✓ Detectado: Supabase
 [INFO] [Stack Detection] 8 tecnologia(s) detectada(s): React, Next.js, jQuery, Vercel, Cloudflare, Firebase, Supabase, HTTPS
 [─────] ─────────────────────────────────────
-[DONE] Auditoria concluída em 30.6s
+[DONE] Auditoria concluída em 257.0s
 [SCORE] 0/100 (F — Crítico)
-[HASH] SHA-256: 5aaf82ce150d550ffa80d3e523b6f34a6f16a72effca009da52c610f3979c665
-[ID] Audit ID: c5d19434-165f-4c8c-a9c8-5bb2524d3aaa
+[HASH] SHA-256: a2b8b7b5c55b1496fcc8f706a7064ef121595ac252230d47bb1bc78bf56d3fe5
+[ID] Audit ID: 86d53fdc-6589-4d2c-9aad-266ea410bb76
