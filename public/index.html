@@ -40,7 +40,7 @@
         <span class="badge">v3.0.0</span>
         <span class="badge">Engine: Node.js</span>
         <span class="badge">Evidence: SHA-256</span>
-        <span class="badge">AI: Grok</span>
+        <span class="badge badge-ai" onclick="showAIChat()" style="cursor:pointer;">🤖 AI: Grok</span>
       </div>
     </header>
 
@@ -261,6 +261,14 @@
               </svg>
               📥 Download Código-Fonte (ZIP)
             </button>
+            <button class="btn-report btn-ai" id="btnAIChat" onclick="showAIChat()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <path d="M12 2a10 10 0 1 0 10 10H12V2z"/>
+                <path d="M12 2a10 10 0 0 1 10 10"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              🤖 Chat com IA
+            </button>
           </div>
         </div>
       </div>
@@ -359,6 +367,15 @@
       <div id="modalBody"></div>
     </div>
   </div>
+
+  <!-- Floating AI Button -->
+  <button class="floating-ai-btn" id="floatingAIBtn" onclick="showAIChat()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 2a10 10 0 1 0 10 10H12V2z"/>
+      <path d="M12 2a10 10 0 0 1 10 10"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+  </button>
 
   <script src="app.js"></script>
 </body>

@@ -621,6 +621,9 @@ let currentAuditId = null;
 function showAIChat() {
   $('#aiChatSection').style.display = 'block';
   $('#aiChatSection').scrollIntoView({ behavior: 'smooth' });
+  
+  // Also show floating button
+  $('#floatingAIBtn').classList.add('show');
 }
 
 async function sendAIQuestion(question) {

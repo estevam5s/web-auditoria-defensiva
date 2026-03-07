@@ -163,6 +163,18 @@ body {
   white-space: nowrap;
 }
 
+.badge-ai {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+  border-color: #667eea;
+  color: #a78bfa;
+  transition: all 0.2s;
+}
+
+.badge-ai:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+  box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+}
+
 /* ── Hero ────────────────────────────────────────────────────────── */
 .hero {
   text-align: center;
@@ -1345,4 +1357,61 @@ input[type="text"]::placeholder {
   background: #252530;
   border-color: #667eea;
   color: #e5e7eb;
+}
+
+/* AI Chat Button — purple gradient */
+.btn-ai {
+  border-color: #667eea;
+  color: #667eea;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+}
+.btn-ai:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+  border-color: #a78bfa;
+  color: #a78bfa;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+/* Floating AI Button */
+.floating-ai-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+  z-index: 1000;
+  transition: all 0.3s;
+  animation: pulse-glow 2s infinite;
+}
+
+.floating-ai-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 30px rgba(102, 126, 234, 0.7);
+}
+
+.floating-ai-btn svg {
+  width: 28px;
+  height: 28px;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+  }
+  50% {
+    box-shadow: 0 4px 30px rgba(102, 126, 234, 0.8);
+  }
+}
+
+.floating-ai-btn.show {
+  display: flex;
 }
