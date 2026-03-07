@@ -17,6 +17,8 @@ const { lightScrape } = require('./audit/scraper');
 
 const { generateSupabaseCatalog, generateCatalogHTML } = require('./audit/report-supabase-catalog');
 const { askGrok, askGrokStream } = require('./audit/grok-ai');
+const { saveAuditToSupabase, getAuditHistory, getAuditById } = require('./audit/supabase-db');
+const { analyzeGitHistory, checkForExposedSecrets } = require('./audit/git-analyzer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,16 +27,32 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Load environment variables
+require('dotenv').config();
+
 // ─── In-memory audit store (latest per URL hash) ─────────────────
 const auditStore = new Map();
 
-function storeAudit(data) {
+function storeAudit(data, userIp = null, userAgent = null) {
   if (!data || !data.evidence?.auditId) return;
   auditStore.set(data.evidence.auditId, data);
   // Keep only last 20
   if (auditStore.size > 20) {
     const oldest = auditStore.keys().next().value;
     auditStore.delete(oldest);
+  }
+  
+  // Save to Supabase database (async, don't wait)
+  if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+    saveAuditToSupabase(data, userIp, userAgent)
+      .then(result => {
+        if (result.success) {
+          console.log(`[Supabase] Audit saved: ${result.auditId}`);
+        } else {
+          console.error('[Supabase] Error saving audit:', result.error);
+        }
+      })
+      .catch(err => console.error('[Supabase] Exception:', err.message));
   }
 }
 
@@ -82,8 +100,10 @@ app.post('/api/audit', async (req, res) => {
 
     const results = await runFullAudit(auditConfig, sendEvent);
 
-    // Store the audit
-    storeAudit(results);
+    // Store the audit (with user info)
+    const userIp = req.ip || req.connection?.remoteAddress || req.headers['x-forwarded-for'];
+    const userAgent = req.headers['user-agent'];
+    storeAudit(results, userIp, userAgent);
 
     sendEvent({ type: 'complete', results });
     res.end();
@@ -208,9 +228,58 @@ app.get('/api/health', (req, res) => {
     status: 'ok',
     engine: 'supabase-guard',
     version: '3.0.0',
-    features: ['pdf-report', 'html-report', 'site-scraper', 'stack-detection', 'deep-analysis-v2', 'auto-detect', 'openapi-introspection', 'rest-scan-deep', 'relationship-rls', 'graphql-scan', 'auth-settings-deep', 'supabase-catalog'],
+    features: ['pdf-report', 'html-report', 'site-scraper', 'stack-detection', 'deep-analysis-v2', 'auto-detect', 'openapi-introspection', 'rest-scan-deep', 'relationship-rls', 'graphql-scan', 'auth-settings-deep', 'supabase-catalog', 'supabase-db-save', 'git-history-analysis'],
     storedAudits: auditStore.size,
+    supabaseConfigured: !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY),
   });
+});
+
+// ─── Supabase Database Routes ─────────────────────────────────────
+
+// Get audit history from Supabase
+app.get('/api/db/audits', async (req, res) => {
+  const result = await getAuditHistory(50);
+  res.json(result);
+});
+
+// Get specific audit from Supabase
+app.get('/api/db/audit/:id', async (req, res) => {
+  const result = await getAuditById(req.params.id);
+  res.json(result);
+});
+
+// ─── Git Analysis Routes ───────────────────────────────────────
+
+// Analyze local git repository
+app.post('/api/analyze/git', async (req, res) => {
+  const { projectPath } = req.body;
+  
+  if (!projectPath) {
+    return res.status(400).json({ error: 'projectPath is required' });
+  }
+  
+  try {
+    const results = await analyzeGitHistory(projectPath);
+    res.json({ success: true, data: results });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Check for exposed secrets
+app.post('/api/analyze/secrets', async (req, res) => {
+  const { projectPath } = req.body;
+  
+  if (!projectPath) {
+    return res.status(400).json({ error: 'projectPath is required' });
+  }
+  
+  try {
+    const results = await checkForExposedSecrets(projectPath);
+    res.json({ success: true, data: results });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // ─── Supabase Catalog Report ─────────────────────────────────────
