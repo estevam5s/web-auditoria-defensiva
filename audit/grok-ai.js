@@ -124,7 +124,7 @@ async function askGrokStream(auditData, userQuestion, onChunk) {
     messages,
     temperature: 0.7,
     max_tokens: 2048,
-    stream: true
+    stream: false
   };
 
   try {
@@ -142,38 +142,22 @@ async function askGrokStream(auditData, userQuestion, onChunk) {
       throw new Error(`Groq API error: ${response.status} - ${errorText}`);
     }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          if (data === '[DONE]') {
-            onChunk({ done: true });
-            return;
-          }
-          try {
-            const parsed = JSON.parse(data);
-            if (parsed.choices?.[0]?.delta?.content) {
-              onChunk({ 
-                content: parsed.choices[0].delta.content,
-                done: false 
-              });
-            }
-          } catch {}
-        }
+    const data = await response.json();
+    
+    if (data.choices && data.choices[0]) {
+      const content = data.choices[0].message.content;
+      // Send content in chunks to simulate streaming
+      const words = content.split(' ');
+      for (const word of words) {
+        onChunk({ content: word + ' ', done: false });
+        await new Promise(r => setTimeout(r, 10));
       }
+      onChunk({ done: true });
+    } else {
+      throw new Error('Invalid response from Groq API');
     }
   } catch (error) {
+    console.error('Groq API Error:', error.message);
     onChunk({ error: error.message, done: true });
   }
 }
