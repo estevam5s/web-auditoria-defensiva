@@ -1,12 +1,13 @@
 /*  ═══════════════════════════════════════════════════════════════════
-    GROK AI INTEGRATION
-    Uses xAI Grok API to analyze audit results and provide security insights
+    GROQ AI INTEGRATION
+    Uses Groq API (like salary-funcionarios) to analyze audit results
     ═══════════════════════════════════════════════════════════════════ */
 
 const fetch = require('node-fetch');
 
-const GROK_API_KEY = process.env.GROK_API_KEY || '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';
-const GROK_API_URL = 'https://api.x.ai/v1/chat/completions';
+const GROQ_API_KEY = process.env.GROQ_API_KEY || process.env.GROK_API_KEY || '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';
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
 
 const SYSTEM_PROMPT = `Você é o SUPABASE GUARD AI Assistant, um especialista em segurança de aplicações Supabase e web.
 
@@ -152,18 +153,18 @@ async function askGrok(auditData, userQuestion) {
   };
 
   try {
-    const response = await fetch(GROK_API_URL, {
+    const response = await fetch(GROQ_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROK_API_KEY}`
+        'Authorization': `Bearer ${GROQ_API_KEY}`
       },
       body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Grok API error: ${response.status} - ${errorText}`);
+      throw new Error(`Groq API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
@@ -176,10 +177,10 @@ async function askGrok(auditData, userQuestion) {
         usage: data.usage
       };
     } else {
-      throw new Error('Invalid response from Grok API');
+      throw new Error('Invalid response from Groq API');
     }
   } catch (error) {
-    console.error('Grok API Error:', error.message);
+    console.error('Groq API Error:', error.message);
     return {
       success: false,
       error: error.message
@@ -194,7 +195,7 @@ async function askGrokStream(auditData, userQuestion, onChunk) {
   ];
 
   const requestBody = {
-    model: 'grok-2',
+    model: DEFAULT_MODEL,
     messages,
     temperature: 0.7,
     max_tokens: 8192,
@@ -202,18 +203,18 @@ async function askGrokStream(auditData, userQuestion, onChunk) {
   };
 
   try {
-    const response = await fetch(GROK_API_URL, {
+    const response = await fetch(GROQ_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROK_API_KEY}`
+        'Authorization': `Bearer ${GROQ_API_KEY}`
       },
       body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Grok API error: ${response.status} - ${errorText}`);
+      throw new Error(`Groq API error: ${response.status} - ${errorText}`);
     }
 
     const reader = response.body.getReader();
