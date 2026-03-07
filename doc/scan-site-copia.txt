@@ -1,0 +1,8 @@
+Real scan on a public environment, no blind vibecoding.
+
+Scan target:8b70142155ed completed in FULL mode.
+Risk: CRITICAL | Score: 1650 | Alerts: 42.
+Top findings: REST_PUBLIC(40), RLS_RELATION_LEAK(1), REALTIME_ANON_CHANNEL_JOIN(1).
+
+Evidence signature (SHA-256): 3321eaa2debb6d4d07...
+Tool: Supabase Exposure Scanner (real-time defensive audit).
