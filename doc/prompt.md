@@ -1,4 +1,4 @@
-"Melhore meu sistema de auditoria Supabase defensiva para sites, implementando as seguintes funcionalidades avançadas:
+Deve verificar se esta implementado no sistema:
 
 1. Auto-detecção de SUPABASE_URL e ANON_KEY a partir dos bundles JavaScript públicos, permitindo auditoria completa mesmo sem fornecimento manual das credenciais.
 2. OpenAPI introspection: escaneie o endpoint /rest/v1/ para identificar todas as tabelas e funções RPC disponíveis, gerando um catálogo dinâmico de rotas.
