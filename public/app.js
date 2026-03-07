@@ -410,16 +410,16 @@ async function generateFixPromptDirect() {
     btn.innerHTML = `<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Gerando plano de correção...`;
   }
 
-  // Show overlay spinner
-  const overlay = document.createElement('div');
-  overlay.id = 'fixPromptOverlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9000;';
-  overlay.innerHTML = `
+  // Show loading spinner (separate id to avoid conflict with modal overlay)
+  const loadingOverlay = document.createElement('div');
+  loadingOverlay.id = 'fixPromptLoadingOverlay';
+  loadingOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9000;';
+  loadingOverlay.innerHTML = `
     <svg class="spin" viewBox="0 0 24 24" fill="none" stroke="#ff0040" stroke-width="2" width="48" height="48"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
     <p style="color:#fff;margin-top:16px;font-size:16px;font-weight:600;">A IA está gerando seu plano de correção...</p>
     <p style="color:#888;margin-top:6px;font-size:13px;">Analisando vulnerabilidades e gerando SQL, configs e passos detalhados</p>
   `;
-  document.body.appendChild(overlay);
+  document.body.appendChild(loadingOverlay);
 
   try {
     const response = await fetch('/api/ai/fix-prompt', {
@@ -438,7 +438,7 @@ async function generateFixPromptDirect() {
   } catch (error) {
     alert(`Erro de conexão: ${error.message}`);
   } finally {
-    const ov = $('#fixPromptOverlay');
+    const ov = $('#fixPromptLoadingOverlay');
     if (ov) ov.remove();
     if (btn) {
       btn.disabled = false;
