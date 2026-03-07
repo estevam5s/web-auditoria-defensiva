@@ -611,3 +611,214 @@ style.textContent = `
   .spin { animation: spin 1s linear infinite; }
 `;
 document.head.appendChild(style);
+
+// ═══════════════════════════════════════════════════════════════════
+// AI Chat Functions
+// ═══════════════════════════════════════════════════════════════════
+
+let currentAuditId = null;
+
+function showAIChat() {
+  $('#aiChatSection').style.display = 'block';
+  $('#aiChatSection').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function sendAIQuestion(question) {
+  const input = $('#aiQuestion');
+  const questionText = question || input.value.trim();
+  
+  if (!questionText) return;
+  
+  if (!currentAuditId && !auditResults) {
+    appendLog('error', 'ERROR', 'Execute uma auditoria primeiro.');
+    return;
+  }
+  
+  // Add user message to chat
+  addAIMessage('user', questionText);
+  input.value = '';
+  
+  // Show typing indicator
+  showAITyping();
+  
+  // Send to API
+  try {
+    const response = await fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        auditId: currentAuditId,
+        question: questionText
+      })
+    });
+    
+    removeAITyping();
+    
+    if (!response.ok) {
+      const error = await response.json();
+      addAIMessage('bot', `Erro: ${error.error || 'Falha ao conectar com a IA'}`);
+      return;
+    }
+    
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let botResponse = '';
+    
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+      
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.type === 'chunk' && data.content) {
+              botResponse += data.content;
+              updateBotMessage(botResponse);
+            } else if (data.type === 'error') {
+              addAIMessage('bot', `Erro: ${data.message}`);
+              return;
+            }
+          } catch {}
+        }
+      }
+    }
+    
+    if (botResponse) {
+      updateBotMessage(botResponse);
+    } else {
+      addAIMessage('bot', 'Desculpe, não consegui gerar uma resposta. Tente novamente.');
+    }
+  } catch (error) {
+    removeAITyping();
+    addAIMessage('bot', `Erro de conexão: ${error.message}`);
+  }
+}
+
+function addAIMessage(role, content) {
+  const messages = $('#aiMessages');
+  const div = document.createElement('div');
+  div.className = `ai-message ai-message-${role}`;
+  div.innerHTML = `
+    <div class="ai-avatar">
+      ${role === 'bot' 
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><circle cx="12" cy="12" r="3"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
+      }
+    </div>
+    <div class="ai-message-content">
+      ${formatAIMessage(content)}
+    </div>
+  `;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+let botMessageElement = null;
+
+function showAITyping() {
+  const messages = $('#aiMessages');
+  botMessageElement = document.createElement('div');
+  botMessageElement.className = 'ai-message ai-message-bot';
+  botMessageElement.id = 'botTyping';
+  botMessageElement.innerHTML = `
+    <div class="ai-avatar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><circle cx="12" cy="12" r="3"/></svg>
+    </div>
+    <div class="ai-typing">
+      <span></span><span></span><span></span>
+    </div>
+  `;
+  messages.appendChild(botMessageElement);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function removeAITyping() {
+  const typing = $('#botTyping');
+  if (typing) typing.remove();
+}
+
+function updateBotMessage(content) {
+  if (botMessageElement) {
+    botMessageElement.innerHTML = `
+      <div class="ai-avatar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><circle cx="12" cy="12" r="3"/></svg>
+      </div>
+      <div class="ai-message-content">
+        ${formatAIMessage(content)}
+      </div>
+    `;
+    $('#aiMessages').scrollTop = $('#aiMessages').scrollHeight;
+  }
+}
+
+function formatAIMessage(text) {
+  if (!text) return '';
+  
+  // Escape HTML
+  text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  
+  // Format code blocks
+  text = text.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+  
+  // Format inline code
+  text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+  
+  // Format bold
+  text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  
+  // Format line breaks
+  text = text.replace(/\n\n/g, '</p><p>');
+  text = text.replace(/\n/g, '<br>');
+  
+  // Format lists
+  text = text.replace(/^- (.+)$/gm, '<li>$1</li>');
+  text = text.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+  
+  return `<p>${text}</p>`;
+}
+
+// Override showResults to set audit ID
+const originalShowResults = typeof showResults === 'function' ? showResults : null;
+
+function showResults(results, score, grade, duration, evidence) {
+  if (originalShowResults) {
+    originalShowResults(results, score, grade, duration, evidence);
+  }
+  
+  // Store audit ID for AI chat
+  if (evidence && evidence.auditId) {
+    currentAuditId = evidence.auditId;
+    console.log('AI Chat enabled with Audit ID:', currentAuditId);
+  }
+  
+  // Show AI Chat section
+  showAIChat();
+  
+  // Clear previous chat
+  const messages = $('#aiMessages');
+  messages.innerHTML = `
+    <div class="ai-message ai-message-bot">
+      <div class="ai-avatar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+          <path d="M12 2a10 10 0 1 0 10 10H12V2z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      </div>
+      <div class="ai-message-content">
+        <p>Auditoria concluída! Agora você pode conversar comigo sobre os resultados.</p>
+        <p>Posso analisar:</p>
+        <ul>
+          <li>🔴 <strong>Vulnerabilidades críticas</strong> encontradas</li>
+          <li>🔑 <strong>Chaves e tokens</strong> expostos no site</li>
+          <li>🛠️ <strong>Como corrigir</strong> cada problema</li>
+          <li>📊 <strong>Detalhes técnicos</strong> da exposição</li>
+        </ul>
+        <p><em>Exemplo: "Quais são as chaves de API expostas?"</em></p>
+      </div>
+    </div>
+  `;
+}

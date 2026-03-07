@@ -16,6 +16,7 @@ const { generateHTMLReport } = require('./audit/report-html');
 const { lightScrape } = require('./audit/scraper');
 
 const { generateSupabaseCatalog, generateCatalogHTML } = require('./audit/report-supabase-catalog');
+const { askGrok, askGrokStream } = require('./audit/grok-ai');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -250,6 +251,89 @@ app.post('/api/report/catalog/html', (req, res) => {
   }
 });
 
+// ─── AI Chat Endpoint ───────────────────────────────────────────────
+app.post('/api/ai/chat', async (req, res) => {
+  const { auditId, question, history } = req.body;
+  
+  if (!question) {
+    return res.status(400).json({ error: 'Question is required' });
+  }
+
+  let auditData = null;
+  
+  if (auditId) {
+    auditData = auditStore.get(auditId);
+  }
+
+  if (!auditData) {
+    return res.status(404).json({ error: 'Audit not found. Please run an audit first.' });
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  try {
+    await askGrokStream(auditData, question, (chunk) => {
+      if (chunk.error) {
+        res.write(`data: ${JSON.stringify({ type: 'error', message: chunk.error })}\n\n`);
+      } else if (chunk.done) {
+        res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+        res.end();
+      } else {
+        res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk.content })}\n\n`);
+      }
+    });
+  } catch (err) {
+    res.write(`data: ${JSON.stringify({ type: 'error', message: err.message })}\n\n`);
+    res.end();
+  }
+});
+
+// ─── AI Chat Non-Stream ─────────────────────────────────────────────
+app.post('/api/ai/chat/simple', async (req, res) => {
+  const { auditId, question } = req.body;
+  
+  if (!question) {
+    return res.status(400).json({ error: 'Question is required' });
+  }
+
+  let auditData = null;
+  
+  if (auditId) {
+    auditData = auditStore.get(auditId);
+  }
+
+  if (!auditData) {
+    return res.status(404).json({ error: 'Audit not found. Please run an audit first.' });
+  }
+
+  try {
+    const result = await askGrok(auditData, question);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─── Get Audit Full Data for AI ─────────────────────────────────────
+app.get('/api/ai/audit/:id', (req, res) => {
+  const data = auditStore.get(req.params.id);
+  if (!data) {
+    return res.status(404).json({ error: 'Audit not found' });
+  }
+  res.json({
+    auditId: data.evidence?.auditId,
+    projectUrl: data.projectUrl,
+    score: data.score,
+    grade: data.grade,
+    results: data.results,
+    catalogData: data.catalogData,
+    evidence: data.evidence,
+    duration: data.duration
+  });
+});
+
 // SPA fallback
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -262,11 +346,13 @@ app.listen(PORT, () => {
   console.log(`  ║                                          ║`);
   console.log(`  ║   Routes:                                ║`);
   console.log(`  ║   POST /api/audit        — Run audit     ║`);
+  console.log(`  ║   POST /api/ai/chat     — AI Chat        ║`);
   console.log(`  ║   POST /api/report/pdf   — PDF report    ║`);
   console.log(`  ║   POST /api/report/html  — HTML report   ║`);
   console.log(`  ║   POST /api/report/catalog — JSON catalog║`);
   console.log(`  ║   POST /api/scrape       — Site ZIP      ║`);
   console.log(`  ║   GET  /api/audits       — List audits   ║`);
+  console.log(`  ║   GET  /api/ai/audit/:id — AI Audit Data ║`);
   console.log(`  ║   GET  /audit/:id        — View report   ║`);
   console.log(`  ╚══════════════════════════════════════════╝\n`);
 });

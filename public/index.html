@@ -260,6 +260,82 @@
       </div>
     </section>
 
+    <!-- AI Chat Section -->
+    <section class="ai-chat-section" id="aiChatSection" style="display: none;">
+      <div class="ai-chat-container">
+        <div class="ai-chat-header">
+          <div class="ai-chat-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+              <path d="M12 2a10 10 0 1 0 10 10H12V2z"/>
+              <path d="M12 2a10 10 0 0 1 10 10"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <h3>🤖 AI Security Assistant</h3>
+            <span class="ai-badge">Grok AI</span>
+          </div>
+          <p class="ai-chat-desc">Converse com a IA sobre os resultados da auditoria. Pergunte sobre vulnerabilidades, chaves expostas, como corrigir problemas, etc.</p>
+        </div>
+        
+        <div class="ai-messages" id="aiMessages">
+          <div class="ai-message ai-message-bot">
+            <div class="ai-avatar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                <path d="M12 2a10 10 0 1 0 10 10H12V2z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </div>
+            <div class="ai-message-content">
+              <p>Olá! Sou o assistente de segurança do Supabase Guard. Posso analisar os resultados da sua auditoria e fornecer:</p>
+              <ul>
+                <li>🔴 <strong>Vulnerabilidades críticas</strong> encontradas</li>
+                <li>🔑 <strong>Chaves e tokens</strong> expostos</li>
+                <li>🛠️ <strong>Como corrigir</strong> cada problema</li>
+                <li>📊 <strong>Análise técnica</strong> detalhada</li>
+              </ul>
+              <p><em>Exemplos de perguntas:</em></p>
+              <ul>
+                <li>"Quais são as vulnerabilidades críticas?"</li>
+                <li>"Quais chaves de API estão expostas?"</li>
+                <li>"Como corrigir os problemas de RLS?"</li>
+                <li>"O que afeta minha nota de segurança?"</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        
+        <div class="ai-input-container">
+          <input 
+            type="text" 
+            id="aiQuestion" 
+            class="ai-input" 
+            placeholder="Faça uma pergunta sobre a auditoria..."
+            onkeypress="if(event.key==='Enter')sendAIQuestion()"
+          >
+          <button class="ai-send-btn" onclick="sendAIQuestion()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="ai-quick-questions">
+          <button class="quick-btn" onclick="sendAIQuestion('Quais são as vulnerabilidades críticas encontradas?')">
+            🔴 Vulnerabilidades críticas
+          </button>
+          <button class="quick-btn" onclick="sendAIQuestion('Quais chaves de API ou tokens estão expostos?')">
+            🔑 Chaves expostas
+          </button>
+          <button class="quick-btn" onclick="sendAIQuestion('Como corrigir os problemas de segurança?')">
+            🛠️ Como corrigir
+          </button>
+          <button class="quick-btn" onclick="sendAIQuestion('Liste todos os dados sensíveis encontrados na auditoria')">
+            📋 Dados sensíveis
+          </button>
+        </div>
+      </div>
+    </section>
+
     <!-- Footer -->
     <footer class="footer">
       <div class="footer-links">
