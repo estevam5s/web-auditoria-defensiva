@@ -637,6 +637,10 @@ async function sendAIQuestion(question) {
     return;
   }
   
+  console.log('Sending question:', questionText);
+  console.log('Audit ID:', currentAuditId);
+  console.log('Has auditData:', !!auditResults);
+  
   // Add user message to chat
   addAIMessage('user', questionText);
   input.value = '';
@@ -644,17 +648,19 @@ async function sendAIQuestion(question) {
   // Show typing indicator
   showAITyping();
   
-  // Send to API - include audit data directly for production compatibility
+  // Send to API - use simple endpoint (non-streaming)
   try {
-    const response = await fetch('/api/ai/chat', {
+    const response = await fetch('/api/ai/chat/simple', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         auditId: currentAuditId,
-        auditData: auditResults,  // Send full audit data directly
+        auditData: auditResults,
         question: questionText
       })
     });
+    
+    console.log('Response status:', response.status);
     
     removeAITyping();
     
@@ -664,37 +670,15 @@ async function sendAIQuestion(question) {
       return;
     }
     
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let botResponse = '';
+    const data = await response.json();
+    console.log('Response data:', data);
     
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n');
-      
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          try {
-            const data = JSON.parse(line.slice(6));
-            if (data.type === 'chunk' && data.content) {
-              botResponse += data.content;
-              updateBotMessage(botResponse);
-            } else if (data.type === 'error') {
-              addAIMessage('bot', `Erro: ${data.message}`);
-              return;
-            }
-          } catch {}
-        }
-      }
-    }
-    
-    if (botResponse) {
-      updateBotMessage(botResponse);
+    if (data.success && data.response) {
+      addAIMessage('bot', data.response);
+    } else if (data.error) {
+      addAIMessage('bot', `Erro: ${data.error}`);
     } else {
-      addAIMessage('bot', 'Desculpe, não consegui gerar uma resposta. Tente novamente.');
+      addAIMessage('bot', 'Desculpe, não consegui gerar uma resposta.');
     }
   } catch (error) {
     removeAITyping();
