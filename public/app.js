@@ -97,6 +97,9 @@ async function startAudit() {
     bearerToken: $('#bearerToken')?.value?.trim() || '',
     customHeaders,
     customWordlist,
+    checkDDoS: $('#chkDDoS')?.checked ?? true,
+    checkBruteForce: $('#chkBruteForce')?.checked ?? true,
+    checkSecurityHeaders: $('#chkSecurityHeaders')?.checked ?? true,
     checkSSL: $('#chkSSL')?.checked ?? true,
     checkGitExposure: $('#chkGitExposure')?.checked ?? true,
     checkOpenRedirect: $('#chkOpenRedirect')?.checked ?? true,
@@ -817,6 +820,19 @@ function showHowItWorks() {
       <li><strong>REST API:</strong> Testa se PostgREST está exposto e se tabelas são acessíveis via <code>anon</code> key.</li>
       <li><strong>RPC Functions:</strong> Enumera funções RPC comuns que podem estar expostas.</li>
       <li><strong>GraphQL:</strong> Testa se pg_graphql permite introspection e acesso a dados.</li>
+      <li><strong>Storage:</strong> Verifica buckets públicos e permissões de upload.</li>
+      <li><strong>Edge Functions:</strong> Testa autenticação e permissões de funções serverless.</li>
+      <li><strong>Realtime:</strong> Verifica canais WebSocket públicos.</li>
+      <li><strong>Auth:</strong> Analisa endpoints de autenticação e configurações.</li>
+    </ul>
+
+    <h3 style="color: var(--text-secondary); margin-top: 1rem;">Verificações Avançadas v3</h3>
+    <ul>
+      <li><strong>DDoS/DoS Resilience:</strong> Testa rate limiting, CDN/WAF, latência e detecção de ataques em tempo real.</li>
+      <li><strong>Brute Force Check:</strong> Testa vulnerabilidade a ataques de força bruta em login e signup.</li>
+      <li><strong>SSL/TLS Analysis:</strong> Analisa certificados, versões TLS e cipher suites.</li>
+      <li><strong>Security Headers:</strong> Verifica HSTS, CSP, X-Frame-Options e outros headers de segurança.</li>
+    </ul>
       <li><strong>Storage:</strong> Verifica buckets públicos, arquivos sensíveis e listagem sem auth.</li>
       <li><strong>Edge Functions:</strong> Descobre Edge Functions e testa se requerem autenticação.</li>
       <li><strong>Realtime:</strong> Verifica se WebSocket Realtime está acessível publicamente.</li>
@@ -845,6 +861,64 @@ function showHowItWorks() {
 
 function closeModal() {
   $('#modalOverlay').style.display = 'none';
+}
+
+function showPrivacy() {
+  $('#modalBody').innerHTML = `
+    <h2>Política de Privacidade</h2>
+    <p>O Supabase Guard está comprometido em proteger sua privacidade.</p>
+    
+    <h3 style="color: var(--text-secondary); margin-top: 1rem;">Dados que Coletamos</h3>
+    <ul>
+      <li><strong>URL do Projeto:</strong> Necessária para realizar a auditoria de segurança.</li>
+      <li><strong>Chave Anônima (opcional):</strong> Para testes de acesso autenticado.</li>
+      <li><strong>Resultados da Auditoria:</strong> Armazenados localmente e opcionalmente no Supabase para histórico.</li>
+    </ul>
+
+    <h3 style="color: var(--text-secondary); margin-top: 1rem;">O que NÃO Fazemos</h3>
+    <ul>
+      <li>Não armazenamos senhas ou tokens de autenticação.</li>
+      <li>Não compartilhamos seus dados com terceiros.</li>
+      <li>Não usamos cookies de rastreamento.</li>
+      <li>Não enviamos seus dados para serviços externos (exceto Supabase configurado pelo usuário).</li>
+    </ul>
+
+    <h3 style="color: var(--text-secondary); margin-top: 1rem;">Armazenamento</h3>
+    <ul>
+      <li>Resultados podem ser salvos no seu próprio banco Supabase (se configurado).</li>
+      <li>Histórico local é armazenado no navegador (localStorage).</li>
+      <li>Você pode solicitar exclusão dos dados a qualquer momento.</li>
+    </ul>
+
+    <p style="margin-top: 1rem;"><strong>Última atualização:</strong> Março 2026</p>
+  `;
+  $('#modalOverlay').style.display = 'flex';
+}
+
+function showContact() {
+  $('#modalBody').innerHTML = `
+    <h2>Fale Conosco</h2>
+    <p>Temos prazer em ajudar! Entre em contato para:</p>
+    
+    <ul>
+      <li><strong>Dúvidas:</strong> Questões sobre como usar a ferramenta.</li>
+      <li><strong>Sugestões:</strong> Funcionalidades que você gostaria de ver.</li>
+      <li><strong>Relatórios de Bugs:</strong> Problemas encontrados durante o uso.</li>
+      <li><strong>Parcerias:</strong> Oportunidades de colaboração.</li>
+    </ul>
+
+    <h3 style="color: var(--text-secondary); margin-top: 1rem;">Informações de Contato</h3>
+    <ul>
+      <li><strong>Email:</strong> suporte@supabaseguard.local</li>
+      <li><strong>GitHub:</strong> github.com/supabaseguard</li>
+      <li><strong>Versão:</strong> 3.1.0</li>
+      <li><strong>Engine:</strong> Node.js + Express</li>
+    </ul>
+
+    <p style="margin-top: 1rem;">Obrigado por usar o Supabase Guard!</p>
+    <p style="color: var(--accent); font-weight: bold;">🛡️ Mantemos seus projetos seguros!</p>
+  `;
+  $('#modalOverlay').style.display = 'flex';
 }
 
 // ── Utilities ────────────────────────────────────────────────────

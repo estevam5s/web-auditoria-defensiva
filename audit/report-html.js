@@ -114,12 +114,21 @@ function generateHTMLReport(auditData, networkInfo = {}) {
     .stat-card .label { font-size: 0.75rem; color: var(--gray); margin-top: 0.3rem; }
     
     /* Section */
-    section { margin-bottom: 3rem; }
+    section { 
+      margin-bottom: 3rem; 
+      padding: 1.5rem;
+      background: var(--bg3);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
     section > h2 {
       font-size: 1.3rem; color: var(--accent); margin-bottom: 1rem;
-      padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem; border-bottom: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
-    section > h3 { font-size: 1rem; color: var(--white); margin: 1rem 0 0.5rem; }
+    section > h3 { font-size: 1rem; color: var(--white); margin: 1.5rem 0 0.5rem; }
     
     /* Charts */
     .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
@@ -131,14 +140,20 @@ function generateHTMLReport(auditData, networkInfo = {}) {
     .chart-card canvas { max-height: 300px; }
     
     /* Tables */
-    .data-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .data-table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      font-size: 0.8rem;
+      margin-top: 1rem;
+    }
     .data-table thead th {
-      background: var(--accent); color: #000; padding: 0.6rem 0.8rem;
+      background: var(--accent); color: #000; padding: 0.8rem 1rem;
       text-align: left; font-weight: 600; position: sticky; top: 50px;
+      border-bottom: 2px solid var(--border);
     }
     .data-table tbody tr { border-bottom: 1px solid var(--border); transition: 0.2s; }
-    .data-table tbody tr:hover { background: rgba(0,255,65,0.05); }
-    .data-table td { padding: 0.5rem 0.8rem; vertical-align: top; }
+    .data-table tbody tr:hover { background: rgba(0,255,65,0.08); }
+    .data-table td { padding: 0.75rem 1rem; vertical-align: top; }
     .data-table .badge {
       display: inline-block; padding: 0.15rem 0.5rem; border-radius: 3px;
       font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
@@ -404,7 +419,8 @@ function generateHTMLReport(auditData, networkInfo = {}) {
     <!-- Vulnerabilities Table -->
     <section id="vulnerabilities">
       <h2>⚠️ Vulnerabilidades Detalhadas</h2>
-      <div style="overflow-x:auto;">
+      <p style="color:var(--gray);font-size:0.85rem;margin-bottom:1rem">Todas as vulnerabilidades encontradas durante a auditoria, ordenadas por severidade.</p>
+      <div style="overflow-x:auto;max-height:500px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
         <table class="data-table">
           <thead>
             <tr>
@@ -422,9 +438,9 @@ function generateHTMLReport(auditData, networkInfo = {}) {
               <tr class="result-row" onclick="this.querySelector('.result-details')?.classList.toggle('open')">
                 <td><span class="badge badge-${(r.status||'info').toLowerCase()}">${esc(r.status)}</span></td>
                 <td><span class="badge badge-${r.severity}">${esc(r.severity)}</span></td>
-                <td>${esc(r.check)}</td>
+                <td style="font-weight:600">${esc(r.check)}</td>
                 <td>
-                  ${esc(r.message?.substring(0, 120))}
+                  ${esc(r.message?.substring(0, 150))}
                   ${r.details ? `<div class="result-details"><pre>${esc(JSON.stringify(r.details, null, 2))}</pre></div>` : ''}
                 </td>
               </tr>
@@ -437,6 +453,7 @@ function generateHTMLReport(auditData, networkInfo = {}) {
     <!-- All Routes Discovered -->
     <section id="routes">
       <h2>🗺️ Rotas Descobertas</h2>
+      <p style="color:var(--gray);font-size:0.85rem;margin-bottom:1rem">Todas as rotas descobertas durante o scan, incluindo rotas administrativas, API e páginas ocultas.</p>
       ${(() => {
         // Get full route data from route-discovery results
         const routeResult = results.find(r => r.check?.includes('Routes — Hidden') || r.check?.includes('Route'));
@@ -564,16 +581,17 @@ RedirectMatch 404 /\\.git</pre>
     <!-- Sensitive Files -->
     <section id="files">
       <h2>📄 Arquivos Sensíveis</h2>
+      <p style="color:var(--gray);font-size:0.85rem;margin-bottom:1rem">Arquivos potencialmente sensíveis expostos publicamente que podem conter informações confidenciais.</p>
       ${sensitiveFiles.length > 0 ? `
-        <div style="overflow-x:auto;">
+        <div style="overflow-x:auto;max-height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
           <table class="data-table">
             <thead><tr><th>Arquivo/Tipo</th><th>Risco</th><th>Fonte</th></tr></thead>
             <tbody>
               ${sensitiveFiles.map(f => `
                 <tr>
-                  <td>${esc(f.name)}</td>
+                  <td style="font-family:var(--mono);font-size:0.75rem;color:var(--red)">${esc(f.name)}</td>
                   <td><span class="badge badge-${f.risk}">${esc((f.risk||'').toUpperCase())}</span></td>
-                  <td>${esc(f.source)}</td>
+                  <td style="font-size:0.75rem">${esc(f.source)}</td>
                 </tr>
               `).join('')}
             </tbody>

@@ -46,6 +46,11 @@ const { graphqlScan } = require('./checks/graphql-scan');
 const { authSettingsScan } = require('./checks/auth-settings');
 const { hardeningCheck } = require('./checks/hardening-check');
 
+// ── DDoS, Brute Force & Security Modules ──────────────────────────────
+const { checkDDoSResilience } = require('./checks/ddos-check');
+const { checkBruteForce } = require('./checks/brute-force');
+const { checkSecurityHeaders } = require('./checks/headers-security');
+
 // ── Evidence signing ─────────────────────────────────────────────
 function signEvidence(data) {
   const payload = JSON.stringify(data);
@@ -61,12 +66,12 @@ function signEvidence(data) {
 }
 
 // ── Severity scoring ─────────────────────────────────────────────
-// Scoring logic v2:
+// Scoring logic v3 (enhanced):
 //  - Semantic grouping: combines related checks (RLS Policy + Deep RLS + Relationship RLS → group 'rls')
-//  - Weighted penalties: security-critical categories (RLS, Service Key) penalize more
-//  - Bonus: +1/+2 for key controls that pass
-//  - Stack Detection never penalizes (informational only)
-//  - Floor 5, Cap 98
+//  - Weighted penalties: security-critical categories (RLS, Service Key, DDoS, Brute Force) penalize more
+//  - Bonus: +1/+2/+3 for key controls that pass
+//  - DDoS/Brute Force/SSL/Security Headers now included
+//  - Floor 0, Cap 100
 function calculateScore(results) {
   // Semantic groups map related checks to one domain, keeping only the worst result
   const SEMANTIC_GROUPS = [
@@ -87,13 +92,20 @@ function calculateScore(results) {
     { group: 'source',      pattern: /Source Code/i,             weight: 0.9 },
     { group: 'sensitive',   pattern: /Sensitive Data/i,          weight: 1.0 },
     { group: 'hardening',   pattern: /Hardening|Rate Limit/i,    weight: 0.8 },
-    { group: 'stack',       pattern: /Stack/i,                   weight: 0.0 }, // never penalizes
+    { group: 'stack',       pattern: /Stack/i,                  weight: 0.0 }, // never penalizes
     { group: 'dns',         pattern: /DNS/i,                     weight: 0.5 },
-    { group: 'realtime',    pattern: /Realtime/i,                weight: 0.8 },
+    { group: 'realtime',    pattern: /Realtime/i,               weight: 0.8 },
+    // NEW GROUPS v3
+    { group: 'ddos',        pattern: /DDoS|ATTACK/i,             weight: 1.5, keyControl: true },
+    { group: 'brute-force', pattern: /Brute Force|Lockout/i,    weight: 1.4, keyControl: true },
+    { group: 'ssl',         pattern: /SSL|TLS/i,                weight: 1.2, keyControl: true },
+    { group: 'security-headers', pattern: /Security Headers/i,   weight: 0.8 },
   ];
 
   const failPenalties = { critical: 25, high: 14, medium: 7, low: 2, info: 0 };
   const warnPenalties = { critical:  8, high:  4, medium: 2, low: 1, info: 0 };
+  // Enhanced penalties for DDoS/Brute Force
+  const enhancedFailPenalties = { critical: 28, high: 16, medium: 8, low: 3, info: 0 };
   const severityRank  = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
   const statusRank    = { FAIL: 2, WARN: 1 };
 
@@ -134,20 +146,49 @@ function calculateScore(results) {
     score -= Math.round(basePenalty * weight);
   }
 
-  // Bonus for key controls that pass
+  // Enhanced penalty application for DDoS/Brute Force/SSL
+  for (const [group, { result }] of Object.entries(groupedResults)) {
+    let basePenalty;
+    // Use enhanced penalties for critical security areas
+    if (group === 'ddos' || group === 'brute-force') {
+      basePenalty = result.status === 'FAIL'
+        ? (enhancedFailPenalties[result.severity] ?? 6)
+        : (warnPenalties[result.severity] ?? 1);
+    } else {
+      basePenalty = result.status === 'FAIL'
+        ? (failPenalties[result.severity] ?? 5)
+        : (warnPenalties[result.severity] ?? 1);
+    }
+
+    const groupDef = SEMANTIC_GROUPS.find(g => g.group === group);
+    const weight = groupDef?.weight ?? 1.0;
+    if (weight === 0) continue; // e.g. stack detection
+
+    score -= Math.round(basePenalty * weight);
+  }
+
+  // Bonus for key controls that pass (enhanced)
   const KEY_PASS_BONUSES = [
     { pattern: /RLS Policy/i, bonus: 2 },
     { pattern: /Service Key/i, bonus: 2 },
     { pattern: /JWT/i, bonus: 1 },
     { pattern: /CORS/i, bonus: 1 },
     { pattern: /Auth Endpoints/i, bonus: 1 },
+    // NEW BONUSES v3
+    { pattern: /DDoS — Proteção CDN/i, bonus: 3 },
+    { pattern: /DDoS — WAF/i, bonus: 2 },
+    { pattern: /DDoS — Rate Limiting/i, bonus: 2 },
+    { pattern: /Brute Force.*PASS/i, bonus: 2 },
+    { pattern: /Account Lockout.*PASS/i, bonus: 2 },
+    { pattern: /SSL\/TLS.*PASS/i, bonus: 2 },
+    { pattern: /Security Headers.*PASS/i, bonus: 1 },
   ];
   for (const { pattern, bonus } of KEY_PASS_BONUSES) {
     const passing = results.filter(r => pattern.test(r.check || '') && r.status === 'PASS');
     if (passing.length > 0) score += bonus;
   }
 
-  return Math.max(5, Math.min(98, Math.round(score)));
+  return Math.max(0, Math.min(100, Math.round(score)));
 }
 
 function getScoreGrade(score) {
@@ -184,6 +225,10 @@ async function runFullAudit(config, emit) {
     { name: 'Service Key Leak', fn: checkServiceKeyLeak, enabled: true },
     { name: 'Open Signup', fn: checkOpenSignup, enabled: true },
     { name: 'JWT Configuration', fn: checkJWTConfig, enabled: true },
+    // ── NEW v3: DDoS, Brute Force & Security Headers ──
+    { name: '🌐 DDoS & DoS Resilience', fn: checkDDoSResilience, enabled: config.options.checkDDoS !== false, usesEmit: true },
+    { name: '🔓 Brute Force Login Check', fn: checkBruteForce, enabled: config.options.checkBruteForce !== false, usesEmit: true },
+    { name: '🛡️ Security Headers Analysis', fn: checkSecurityHeaders, enabled: config.options.checkSecurityHeaders !== false, usesEmit: true },
     // ── Advanced Supabase Modules (dependem de credenciais) ──
     { name: '📡 OpenAPI Introspection', fn: openAPIIntrospection, enabled: config.options.checkOpenAPI !== false, usesEmit: true },
     { name: '🔍 REST Scan Deep', fn: restScanDeep, enabled: config.options.checkRESTDeep !== false, usesEmit: true },

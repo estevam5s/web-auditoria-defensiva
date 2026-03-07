@@ -31,15 +31,34 @@
     <header class="header">
       <div class="header-brand">
         <div class="shield-icon">
-          <svg viewBox="0 0 400 400" width="60" height="60">
+          <svg viewBox="0 0 100 100" width="48" height="48" viewBox="0 0 100 100">
             <defs>
-              <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#00d4ff"/>
-                <stop offset="100%" style="stop-color:#a855f7"/>
+              <linearGradient id="shieldGradNew" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#00ff9f"/>
+                <stop offset="100%" style="stop-color:#00cc33"/>
               </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
             </defs>
-            <path d="M200,40 C280,40 320,80 320,160 C320,240 280,320 200,360 C120,320 80,240 80,160 C80,80 120,40 200,40 Z" fill="none" stroke="url(#shieldGrad)" stroke-width="10"/>
-            <path d="M150,160 L190,200 L260,120" fill="none" stroke="#00ff9f" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M50,8 C75,8 90,25 90,50 C90,75 75,92 50,92 C25,92 10,75 10,50 C10,25 25,8 50,8 Z" 
+                  fill="none" 
+                  stroke="url(#shieldGradNew)" 
+                  stroke-width="4" 
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  filter="url(#glow)"/>
+            <path d="M35,50 L47,62 L68,38" 
+                  fill="none" 
+                  stroke="#00ff9f" 
+                  stroke-width="5" 
+                  stroke-linecap="round" 
+                  stroke-linejoin="round"
+                  filter="url(#glow)"/>
           </svg>
         </div>
         <div>
@@ -48,7 +67,7 @@
         </div>
       </div>
       <div class="header-meta">
-        <span class="badge">v3.0.0</span>
+        <span class="badge">v3.1.0</span>
         <span class="badge">Engine: Node.js</span>
         <span class="badge">Evidence: SHA-256</span>
         <span class="badge badge-history" onclick="toggleHistory()" style="cursor:pointer;">📊 Histórico</span>
@@ -174,6 +193,9 @@
             <textarea id="customHeaders" rows="2" placeholder='{"X-Custom-Header": "valor", "Cookie": "session=abc"}'></textarea>
           </div>
           <div class="check-grid deep-grid" style="margin-top:0.75rem">
+            <label class="check-item deep"><input type="checkbox" id="chkDDoS" checked> 🌐 DDoS/DoS Resilience</label>
+            <label class="check-item deep"><input type="checkbox" id="chkBruteForce" checked> 🔓 Brute Force Check</label>
+            <label class="check-item deep"><input type="checkbox" id="chkSecurityHeaders" checked> 🛡️ Security Headers</label>
             <label class="check-item deep"><input type="checkbox" id="chkSSL" checked> 🔒 Análise SSL/TLS</label>
             <label class="check-item deep"><input type="checkbox" id="chkGitExposure" checked> 🔍 Git Exposure Check</label>
             <label class="check-item deep"><input type="checkbox" id="chkOpenRedirect" checked> 🔗 Open Redirect</label>
@@ -220,10 +242,10 @@
       </div>
 
       <div class="console-output" id="consoleOutput">
-        <div class="console-line info">
-          <span class="line-prefix">[INFO]</span>
-          <span>Supabase Guard v1.0 — Pronto para auditoria.</span>
-        </div>
+          <div class="console-line info">
+            <span class="line-prefix">[INFO]</span>
+            <span>Supabase Guard v3.1 — Pronto para auditoria.</span>
+          </div>
         <div class="console-line info">
           <span class="line-prefix">[INFO]</span>
           <span>Insira a URL do seu projeto Supabase e clique em "Iniciar Auditoria".</span>
@@ -486,10 +508,66 @@
 
     <!-- Footer -->
     <footer class="footer">
-      <div class="footer-links">
-        <a href="#" onclick="showTerms()">Termos de Uso e Limitação de Responsabilidade</a>
-        <span>•</span>
-        <a href="#" onclick="showHowItWorks()">Como a auditoria funciona</a>
+      <div class="footer-main">
+        <div">
+          <div class="footer-brand class="footer-logo">
+            <svg viewBox="0 0 100 100" width="32" height="32">
+              <defs>
+                <linearGradient id="footerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#00ff9f"/>
+                  <stop offset="100%" style="stop-color:#00cc33"/>
+                </linearGradient>
+              </defs>
+              <path d="M50,8 C75,8 90,25 90,50 C90,75 75,92 50,92 C25,92 10,75 10,50 C10,25 25,8 50,8 Z" fill="none" stroke="url(#footerGrad)" stroke-width="3"/>
+              <path d="M35,50 L47,62 L68,38" fill="none" stroke="#00ff9f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>SUPABASE <strong>GUARD</strong></span>
+          </div>
+          <p class="footer-version">v3.1.0 — Defensive Audit Console</p>
+        </div>
+        
+        <div class="footer-tools">
+          <h4>Ferramentas de Análise</h4>
+          <div class="footer-tool-grid">
+            <span class="tool-tag">REST API</span>
+            <span class="tool-tag">RPC Functions</span>
+            <span class="tool-tag">GraphQL</span>
+            <span class="tool-tag">Storage</span>
+            <span class="tool-tag">Edge Functions</span>
+            <span class="tool-tag">Realtime</span>
+            <span class="tool-tag">Auth</span>
+            <span class="tool-tag">DDoS Check</span>
+            <span class="tool-tag">Brute Force</span>
+            <span class="tool-tag">SSL/TLS</span>
+            <span class="tool-tag">Security Headers</span>
+            <span class="tool-tag">Deep Scan</span>
+          </div>
+        </div>
+        
+        <div class="footer-status">
+          <h4>Status</h4>
+          <div class="status-item">
+            <span class="status-dot online"></span>
+            <span>Online</span>
+          </div>
+          <div class="status-item">
+            <span class="status-dot latency"></span>
+            <span id="footerLatency">Calculando...</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="footer-bottom">
+        <div class="footer-links">
+          <a href="#" onclick="showTerms()">Termos de Uso</a>
+          <span>•</span>
+          <a href="#" onclick="showHowItWorks()">Como a auditoria funciona</a>
+          <span>•</span>
+          <a href="#" onclick="showPrivacy()">Privacidade</a>
+          <span>•</span>
+          <a href="#" onclick="showContact()">Contato</a>
+        </div>
+        <p class="footer-copyright">© 2024-2026 Supabase Guard. Todos os direitos reservados.</p>
       </div>
     </footer>
   </div>

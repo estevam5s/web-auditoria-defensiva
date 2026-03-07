@@ -124,6 +124,7 @@ app.post('/api/audit', async (req, res) => {
         checkREST: true, checkRPC: true, checkGraphQL: true, checkStorage: true,
         checkEdgeFunctions: true, checkRealtime: true, checkAuth: true,
         checkEnvExposure: true, checkRLS: true, checkCORS: true,
+        checkDDoS: true, checkBruteForce: true, checkSecurityHeaders: true,
         guestMode: true, userMode: options?.userMode || false,
         ...options
       }
@@ -290,8 +291,8 @@ app.get('/api/health', async (req, res) => {
   res.json({
     status: 'ok',
     engine: 'supabase-guard',
-    version: '3.0.0',
-    features: ['pdf-report', 'html-report', 'site-scraper', 'stack-detection', 'deep-analysis-v2', 'auto-detect', 'openapi-introspection', 'rest-scan-deep', 'relationship-rls', 'graphql-scan', 'auth-settings-deep', 'supabase-catalog', 'supabase-db-save', 'git-history-analysis', 'audit-history'],
+    version: '3.1.0',
+    features: ['pdf-report', 'html-report', 'site-scraper', 'stack-detection', 'deep-analysis-v2', 'auto-detect', 'openapi-introspection', 'rest-scan-deep', 'relationship-rls', 'graphql-scan', 'auth-settings-deep', 'supabase-catalog', 'supabase-db-save', 'git-history-analysis', 'audit-history', 'ddos-check', 'brute-force-check', 'ssl-analysis', 'security-headers'],
     storedAudits: auditStore.size,
     supabase: {
       configured: !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY),
@@ -654,8 +655,14 @@ app.get('*', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`\n  ╔══════════════════════════════════════════╗`);
-  console.log(`  ║   SUPABASE GUARD — Audit Console v3.0    ║`);
+  console.log(`  ║   SUPABASE GUARD — Audit Console v3.1    ║`);
   console.log(`  ║   Running on http://localhost:${PORT}        ║`);
+  console.log(`  ║                                          ║`);
+  console.log(`  ║   NEW Features v3.1:                      ║`);
+  console.log(`  ║   🌐 DDoS/DoS Resilience Check            ║`);
+  console.log(`  ║   🔓 Brute Force Login Check               ║`);
+  console.log(`  ║   🛡️ Security Headers Analysis             ║`);
+  console.log(`  ║   🔒 Enhanced SSL/TLS Analysis             ║`);
   console.log(`  ║                                          ║`);
   console.log(`  ║   Routes:                                ║`);
   console.log(`  ║   POST /api/audit        — Run audit     ║`);
