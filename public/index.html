@@ -4,7 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Supabase Guard — Defensive Audit Console</title>
+  <meta name="description" content="Auditoria defensiva para Supabase com validação de exposição em REST, RPC, GraphQL, Storage, Edge Functions e Realtime">
+  <meta name="theme-color" content="#00d4ff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Supabase Guard">
+  
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%2300d4ff'/><stop offset='100%25' stop-color='%23a855f7'/></linearGradient></defs><path d='M200,40 C280,40 320,80 320,160 C320,240 280,320 200,360 C120,320 80,240 80,160 C80,80 120,40 200,40 Z' fill='none' stroke='url(%23g)' stroke-width='12'/><path d='M150,160 L190,200 L260,120' fill='none' stroke='%2300ff9f' stroke-width='14' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%2300d4ff'/><stop offset='100%25' stop-color='%23a855f7'/></linearGradient></defs><path d='M200,40 C280,40 320,80 320,160 C320,240 280,320 200,360 C120,320 80,240 80,160 C80,80 120,40 200,40 Z' fill='none' stroke='url(%23g)' stroke-width='12'/><path d='M150,160 L190,200 L260,120' fill='none' stroke='%2300ff9f' stroke-width='14' stroke-linecap='round' stroke-linejoin='round'/></svg>">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -42,6 +50,14 @@
         <span class="badge">Evidence: SHA-256</span>
         <span class="badge badge-history" onclick="toggleHistory()" style="cursor:pointer;">📊 Histórico</span>
         <span class="badge badge-ai" onclick="showAIChat()" style="cursor:pointer;">🤖 AI: Grok</span>
+        <button class="btn-install" id="btnInstall" onclick="installApp()" style="display: none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Instalar App
+        </button>
       </div>
     </header>
 

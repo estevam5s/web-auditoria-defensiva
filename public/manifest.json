@@ -1,0 +1,41 @@
+{
+  "name": "Supabase Guard - Defensive Audit Console",
+  "short_name": "Supabase Guard",
+  "description": "Auditoria defensiva para Supabase com validação de exposição em REST, RPC, GraphQL, Storage, Edge Functions e Realtime",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#00d4ff",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%2300d4ff'/><stop offset='100%25' stop-color='%23a855f7'/></linearGradient></defs><path d='M200,40 C280,40 320,80 320,160 C320,240 280,320 200,360 C120,320 80,240 80,160 C80,80 120,40 200,40 Z' fill='none' stroke='url(%23g)' stroke-width='12'/><path d='M150,160 L190,200 L260,120' fill='none' stroke='%2300ff9f' stroke-width='14' stroke-linecap='round' stroke-linejoin='round'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%2300d4ff'/><stop offset='100%25' stop-color='%23a855f7'/></linearGradient></defs><path d='M200,40 C280,40 320,80 320,160 C320,240 280,320 200,360 C120,320 80,240 80,160 C80,80 120,40 200,40 Z' fill='none' stroke='url(%23g)' stroke-width='12'/><path d='M150,160 L190,200 L260,120' fill='none' stroke='%2300ff9f' stroke-width='14' stroke-linecap='round' stroke-linejoin='round'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["security", "developer tools", "utilities"],
+  "shortcuts": [
+    {
+      "name": "Nova Auditoria",
+      "short_name": "Auditar",
+      "description": "Iniciar nova auditoria de segurança",
+      "url": "/",
+      "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300d4ff' stroke-width='2'><circle cx='11' cy='11' r='8'/><path d='M21 21l-4.35-4.35'/></svg>", "sizes": "96x96" }]
+    },
+    {
+      "name": "Histórico",
+      "short_name": "Histórico",
+      "description": "Ver histórico de auditorias",
+      "url": "/#history",
+      "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300d4ff' stroke-width='2'><path d='M3 3v5h5'/><path d='M3.05 13A9 9 0 1 0 6 5.3L3 8'/><path d='M12 7v5l4 2'/></svg>", "sizes": "96x96" }]
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
+}

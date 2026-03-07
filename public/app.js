@@ -1302,3 +1302,86 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .catch(err => console.error('Health check error:', err));
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// PWA - Progressive Web App Support
+// ═══════════════════════════════════════════════════════════════════
+
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  
+  // Show install button
+  const installBtn = document.getElementById('btnInstall');
+  if (installBtn) {
+    installBtn.style.display = 'flex';
+    installBtn.style.alignItems = 'center';
+    installBtn.style.gap = '6px';
+    installBtn.style.background = 'linear-gradient(135deg, #00d4ff 0%, #a855f7 100%)';
+    installBtn.style.border = 'none';
+    installBtn.style.color = '#fff';
+    installBtn.style.padding = '8px 16px';
+    installBtn.style.borderRadius = '8px';
+    installBtn.style.cursor = 'pointer';
+    installBtn.style.fontSize = '0.85rem';
+    installBtn.style.fontWeight = '500';
+    installBtn.style.marginLeft = '8px';
+    installBtn.style.transition = 'all 0.3s';
+    
+    installBtn.onmouseenter = () => {
+      installBtn.style.transform = 'scale(1.05)';
+      installBtn.style.boxShadow = '0 4px 20px rgba(0, 212, 255, 0.4)';
+    };
+    installBtn.onmouseleave = () => {
+      installBtn.style.transform = 'scale(1)';
+      installBtn.style.boxShadow = 'none';
+    };
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  console.log('✅ App installed successfully!');
+  deferredPrompt = null;
+  
+  const installBtn = document.getElementById('btnInstall');
+  if (installBtn) {
+    installBtn.style.display = 'none';
+  }
+  
+  appendLog('info', 'PWA', 'App instalado com sucesso!');
+});
+
+function installApp() {
+  if (!deferredPrompt) {
+    appendLog('warn', 'PWA', 'Não é possível instalar agora. Tente novamente.');
+    return;
+  }
+  
+  deferredPrompt.prompt();
+  
+  deferredPrompt.userChoice.then((choiceResult) => {
+    if (choiceResult.outcome === 'accepted') {
+      console.log('User accepted the install prompt');
+      appendLog('info', 'PWA', 'Instalando app...');
+    } else {
+      console.log('User dismissed the install prompt');
+      appendLog('info', 'PWA', 'Instalação cancelada.');
+    }
+    deferredPrompt = null;
+  });
+}
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('✅ Service Worker registered:', registration.scope);
+      })
+      .catch(error => {
+        console.error('❌ Service Worker registration failed:', error);
+      });
+  });
+}
