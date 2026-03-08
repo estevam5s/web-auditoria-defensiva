@@ -13,6 +13,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const { runFullAudit } = require('./audit/engine');
 const { generatePDFReport } = require('./audit/report-pdf');
 const { generateHTMLReport } = require('./audit/report-html');
@@ -26,10 +27,52 @@ const { generateChecklistHTML } = require('./audit/checklist-generator');
 
 const app = express();
 const PORT = process.env.PORT || 2998;
+const APP_VERSION = '3.2.0';
+
+// ─── Build hash: muda toda vez que o servidor inicia ─────────────
+// Combina a versão + timestamp de boot para invalidar cache no deploy
+const BUILD_HASH = process.env.BUILD_HASH ||
+  crypto.createHash('sha256')
+    .update(APP_VERSION + process.env.npm_package_version + Date.now().toString())
+    .digest('hex')
+    .slice(0, 12);
+
+console.log(`[Cache] Build hash: ${BUILD_HASH}`);
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
+
+// ─── Cache-control: no-cache para arquivos que mudam a cada deploy ─
+// O SW também usa /api/version para invalidar automaticamente
+app.use((req, res, next) => {
+  const ext = path.extname(req.path);
+  if (['.html', '.js', '.css'].includes(ext) || req.path === '/') {
+    // Força revalidação — nunca serve versão obsoleta do cache HTTP
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('X-Build-Hash', BUILD_HASH);
+  } else if (['.woff', '.woff2', '.ttf', '.svg', '.png', '.ico'].includes(ext)) {
+    // Fontes e imagens podem ser cacheadas por mais tempo
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 dia
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ─── Endpoint de versão para o Service Worker ────────────────────
+// O SW polling chama este endpoint e invalida o cache local quando
+// o buildHash muda (ou seja, quando o servidor foi reiniciado/deployado)
+app.get('/api/version', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.json({
+    version: APP_VERSION,
+    buildHash: BUILD_HASH,
+    startedAt: new Date().toISOString(),
+    uptime: Math.floor(process.uptime()),
+  });
+});
 
 // ─── In-memory audit store (latest per URL hash) ─────────────────
 const auditStore = new Map();

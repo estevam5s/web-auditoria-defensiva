@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   SUPABASE GUARD — Frontend Application Logic v2.0
+   SUPABASE GUARD — Frontend Application Logic v3.2
    Handles audit execution, SSE streaming, report generation,
    PDF/HTML reports, charts, and site scraper
    ═══════════════════════════════════════════════════════════════════ */
@@ -11,6 +11,87 @@ let isScanning = false;
 // ── DOM Elements ─────────────────────────────────────────────────
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
+
+// ── Service Worker Registration & Cache Auto-invalidation ────────
+(function registerSW() {
+  if (!('serviceWorker' in navigator)) return;
+
+  navigator.serviceWorker.register('/sw.js').then(reg => {
+    console.log('[SW] Registrado:', reg.scope);
+
+    // Detecta quando um novo SW está pronto para assumir
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      if (!newWorker) return;
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          showUpdateBanner();
+        }
+      });
+    });
+  }).catch(err => console.warn('[SW] Falha no registro:', err));
+
+  // Recebe mensagem do SW quando cache é invalidado por novo deploy
+  navigator.serviceWorker.addEventListener('message', event => {
+    if (event.data?.type === 'CACHE_INVALIDATED') {
+      console.log('[SW] Nova versão detectada:', event.data.newVersion, '— recarregando...');
+      window.location.reload();
+    }
+    if (event.data?.type === 'CACHE_CLEARED') {
+      console.log('[SW] Cache limpo com sucesso.');
+    }
+  });
+})();
+
+// ── Update Banner ─────────────────────────────────────────────────
+function showUpdateBanner() {
+  // Avoid duplicate banners
+  if (document.getElementById('updateBanner')) return;
+
+  const banner = document.createElement('div');
+  banner.id = 'updateBanner';
+  banner.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+    background: linear-gradient(90deg, #00ff9f, #00d4ff);
+    color: #0a0a0f; padding: 10px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600;
+    box-shadow: 0 2px 12px rgba(0,255,159,0.4);
+  `;
+  banner.innerHTML = `
+    <span>🚀 Nova versão disponível!</span>
+    <div style="display:flex;gap:10px">
+      <button onclick="window.location.reload()" style="
+        background:#0a0a0f;color:#00ff9f;border:none;padding:6px 14px;
+        border-radius:4px;cursor:pointer;font-family:inherit;font-weight:600;
+      ">Atualizar agora</button>
+      <button onclick="this.closest('#updateBanner').remove()" style="
+        background:transparent;color:#0a0a0f;border:1px solid #0a0a0f;
+        padding:6px 14px;border-radius:4px;cursor:pointer;font-family:inherit;
+      ">Depois</button>
+    </div>
+  `;
+  document.body.prepend(banner);
+}
+
+// ── Manual cache clear (chamado do console ou botão) ─────────────
+function clearAppCache() {
+  if (navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_CACHE' });
+  }
+  if ('caches' in window) {
+    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+      .then(() => { console.log('[Cache] Limpo. Recarregando...'); window.location.reload(); });
+  }
+}
+
+// ── Check for updates manually ────────────────────────────────────
+function checkForUpdates() {
+  if (navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({ type: 'CHECK_UPDATE' });
+  }
+  navigator.serviceWorker.getRegistration().then(reg => reg?.update());
+}
 
 // ── Start Audit ──────────────────────────────────────────────────
 async function startAudit() {
