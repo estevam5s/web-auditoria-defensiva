@@ -25,6 +25,7 @@ const { saveAuditToSupabase, getAuditHistory, getAuditById } = require('./audit/
 const { analyzeGitHistory, checkForExposedSecrets } = require('./audit/git-analyzer');
 const { generateChecklistHTML } = require('./audit/checklist-generator');
 const { generatePythonScripts } = require('./audit/python-scripts-generator');
+const fetch = require('node-fetch');
 
 const app = express();
 const PORT = process.env.PORT || 2998;
@@ -690,6 +691,170 @@ app.get('/api/checklist/:id/export', (req, res) => {
     console.error('Checklist export error:', err.message);
     res.status(500).json({ error: 'Erro ao gerar checklist: ' + err.message });
   }
+});
+
+// ─── Bug Bounty Report Routes ─────────────────────────────────────
+
+// Serve the bug bounty reporting page
+app.get('/bugbounty/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'bugbounty.html'));
+});
+
+app.get('/bugbounty', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'bugbounty.html'));
+});
+
+// Generate a complete bug bounty report from audit data
+app.post('/api/bugbounty/generate', async (req, res) => {
+  const { auditId, auditData, reporterInfo } = req.body;
+  const auditDataToUse = auditData || (auditId ? auditStore.get(auditId) : null);
+  if (!auditDataToUse) return res.status(404).json({ error: 'Audit not found. Run an audit first.' });
+
+  try {
+    const GROQ_API_KEY = process.env.GROQ_API_KEY || process.env.GROK_API_KEY || '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';
+    const { projectUrl, results = [], score, grade, evidence } = auditDataToUse;
+
+    const criticalFindings = results.filter(r => r.status === 'FAIL' || r.severity === 'critical' || r.severity === 'high');
+    const findingsSummary = criticalFindings.slice(0, 10).map(r =>
+      `- [${(r.severity || r.status || 'UNKNOWN').toUpperCase()}] ${r.check}: ${r.message}`
+    ).join('\n');
+
+    const prompt = `Você é um especialista em Bug Bounty e segurança ofensiva/defensiva.
+Com base nos resultados desta auditoria de segurança, gere um relatório profissional de bug bounty.
+
+Site auditado: ${projectUrl}
+Score de Segurança: ${score}/100 (${grade?.grade || 'N/A'} — ${grade?.label || ''})
+Audit ID: ${evidence?.auditId || 'N/A'}
+SHA-256: ${evidence?.sha256 || 'N/A'}
+
+Vulnerabilidades encontradas:
+${findingsSummary || '- Sem vulnerabilidades críticas encontradas'}
+
+Gere um relatório profissional em português com:
+1. EXECUTIVE SUMMARY (2-3 parágrafos)
+2. IMPACT ASSESSMENT (impacto de negócio de cada vuln crítica)
+3. CVSS SCORES estimados para cada vulnerabilidade principal
+4. PROOF OF CONCEPT (como reproduzir — sem código malicioso, apenas descrição técnica)
+5. REMEDIATION STEPS detalhados
+6. RECOMMENDED BOUNTY TIER (P1/P2/P3/P4 conforme HackerOne/Bugcrowd)
+7. DISCLOSURE TIMELINE sugerido
+
+Seja técnico e profissional, como se fosse enviado para um programa de bug bounty real.`;
+
+    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY}` },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: 'Você é um especialista em Bug Bounty e penetration testing. Escreva relatórios técnicos profissionais.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 3000,
+      }),
+    });
+
+    let aiReport = '';
+    if (groqRes.ok) {
+      const groqData = await groqRes.json();
+      aiReport = groqData.choices?.[0]?.message?.content || '';
+    }
+
+    // Build known bug bounty platforms for this target
+    const domain = (() => { try { return new URL(projectUrl).hostname; } catch { return projectUrl; } })();
+    const platforms = [
+      { name: 'HackerOne', url: 'https://hackerone.com/directory/programs', match: domain },
+      { name: 'Bugcrowd', url: 'https://bugcrowd.com/programs', match: domain },
+      { name: 'Intigriti', url: 'https://app.intigriti.com/programs', match: domain },
+      { name: 'Synack', url: 'https://www.synack.com/', match: domain },
+      { name: 'YesWeHack', url: 'https://yeswehack.com/programs', match: domain },
+    ];
+
+    // Classify vulnerabilities by bounty tier
+    const tierMapping = criticalFindings.map(f => {
+      const sev = (f.severity || '').toLowerCase();
+      const msg = (f.message || '').toLowerCase();
+      let tier = 'P4';
+      if (sev === 'critical' || msg.includes('rce') || msg.includes('sql injection') || msg.includes('jwt') && msg.includes('none')) tier = 'P1';
+      else if (sev === 'high' || msg.includes('xss') || msg.includes('ssrf') || msg.includes('credentials')) tier = 'P2';
+      else if (sev === 'medium' || msg.includes('cors') || msg.includes('csrf') || msg.includes('redirect')) tier = 'P3';
+      return { check: f.check, message: f.message?.slice(0, 100), tier, severity: f.severity || f.status };
+    });
+
+    res.json({
+      success: true,
+      targetUrl: projectUrl,
+      domain,
+      auditId: evidence?.auditId,
+      score,
+      grade,
+      sha256: evidence?.sha256,
+      generatedAt: new Date().toISOString(),
+      criticalCount: criticalFindings.length,
+      aiReport,
+      tierMapping,
+      platforms,
+      reporterInfo: reporterInfo || {},
+    });
+  } catch (err) {
+    console.error('Bug bounty generation error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Export bug bounty report as Markdown
+app.post('/api/bugbounty/export/md', (req, res) => {
+  const { reportData, reporterInfo } = req.body;
+  if (!reportData) return res.status(400).json({ error: 'reportData required' });
+
+  const { targetUrl, domain, auditId, score, grade, sha256, aiReport, tierMapping, generatedAt } = reportData;
+  const reporter = reporterInfo || {};
+
+  const md = `# Bug Bounty Report — ${domain}
+**Reporter:** ${reporter.name || 'Security Researcher'}
+**Email:** ${reporter.email || 'N/A'}
+**Date:** ${new Date(generatedAt).toLocaleDateString('pt-BR')}
+**Audit ID:** \`${auditId || 'N/A'}\`
+**SHA-256 Evidence:** \`${sha256 || 'N/A'}\`
+
+---
+
+## Target
+- **URL:** ${targetUrl}
+- **Security Score:** ${score}/100 (${grade?.grade || 'N/A'} — ${grade?.label || ''})
+- **Findings:** ${tierMapping?.length || 0} vulnerabilities
+
+---
+
+## Vulnerability Summary
+
+| Check | Severity | Bounty Tier |
+|-------|----------|-------------|
+${(tierMapping || []).map(t => `| ${t.check} | ${t.severity} | **${t.tier}** |`).join('\n')}
+
+---
+
+## AI Analysis Report
+
+${aiReport || 'N/A'}
+
+---
+
+## Evidence
+
+This report was generated by **Supabase Guard v3.2** — Defensive Audit Console.
+- Audit ID: \`${auditId}\`
+- SHA-256: \`${sha256}\`
+- Generated: ${generatedAt}
+
+*This report is for authorized security testing only. The researcher has permission to test this target.*
+`;
+
+  const filename = `bugbounty-${domain}-${Date.now()}.md`;
+  res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.send(md);
 });
 
 // ─── Python Blue Team Scripts Routes ───────────────────────────────

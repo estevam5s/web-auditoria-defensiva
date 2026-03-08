@@ -72,6 +72,7 @@
         <span class="badge">Evidence: SHA-256</span>
         <span class="badge badge-history" onclick="toggleHistory()" style="cursor:pointer;">📊 Histórico</span>
         <span class="badge badge-ai" onclick="showAIChat()" style="cursor:pointer;">🤖 AI: Grok</span>
+        <span class="badge badge-bounty" onclick="openBugBounty()" style="cursor:pointer;">🐛 Bug Bounty</span>
         <button class="btn-install" id="btnInstall" onclick="installApp()" style="display: none;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -373,6 +374,13 @@
             </button>
             <button class="btn-report btn-iso" id="btnISO" onclick="openISO()" style="display:none">
               🏅 Conformidade ISO
+            </button>
+            <button class="btn-report btn-bounty" id="btnBugBounty" onclick="openBugBounty()" style="display:none">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 8v4l3 3"/>
+              </svg>
+              🐛 Bug Bounty Report
             </button>
             <button class="btn-report btn-python" id="btnPythonScripts" onclick="openScriptsPage()" style="display:none">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
