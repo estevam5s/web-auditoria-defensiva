@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supabase Guard — Blue Team Python Scripts</title>
+  <meta name="theme-color" content="#00d4ff">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Prism.js for Python syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --bg2: #0f0f1a;
+      --bg3: #13131f;
+      --border: rgba(0,255,159,0.15);
+      --accent: #00ff9f;
+      --accent2: #00d4ff;
+      --accent3: #a855f7;
+      --python: #3ddc84;
+      --text: #e2e8f0;
+      --text-muted: #64748b;
+      --red: #ff4444;
+      --orange: #ff9800;
+      --yellow: #ffd700;
+      --green: #00ff9f;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(180deg, rgba(0,255,159,0.06) 0%, transparent 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+    .header-logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .header-logo span { color: var(--text-muted); }
+    .header-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      color: var(--python);
+      padding: 0.25rem 0.75rem;
+      border: 1px solid rgba(61,220,132,0.3);
+      border-radius: 4px;
+      background: rgba(61,220,132,0.06);
+    }
+    .header-right { display: flex; gap: 0.75rem; align-items: center; }
+    .btn-back {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+    .btn-back:hover { border-color: var(--accent2); color: var(--accent2); }
+
+    /* ── Loading State ── */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      z-index: 200;
+    }
+    .loading-overlay.hidden { display: none; }
+    .loading-spinner {
+      width: 60px;
+      height: 60px;
+      border: 3px solid rgba(61,220,132,0.1);
+      border-top-color: var(--python);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--python);
+      font-size: 1rem;
+    }
+    .loading-steps { display: flex; flex-direction: column; gap: 0.4rem; }
+    .loading-step {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      padding: 0.2rem 0;
+      transition: color 0.3s;
+    }
+    .loading-step.active { color: var(--python); }
+    .loading-step.done { color: var(--accent); }
+    .loading-step::before { content: '> '; }
+
+    /* ── Main Content ── */
+    .main { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+
+    /* ── Intro Banner ── */
+    .intro-banner {
+      background: linear-gradient(135deg, rgba(61,220,132,0.06) 0%, rgba(0,212,255,0.04) 100%);
+      border: 1px solid rgba(61,220,132,0.2);
+      border-radius: 12px;
+      padding: 1.5rem 2rem;
+      margin-bottom: 2rem;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1.5rem;
+      align-items: center;
+    }
+    .intro-target {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--python);
+      margin-bottom: 0.5rem;
+    }
+    .intro-target span { color: var(--text-muted); }
+    .intro-stats {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .intro-stat {
+      text-align: center;
+    }
+    .intro-stat-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--python);
+    }
+    .intro-stat-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .btn-download-all {
+      background: linear-gradient(135deg, rgba(61,220,132,0.15) 0%, rgba(0,212,255,0.1) 100%);
+      border: 1px solid rgba(61,220,132,0.4);
+      color: var(--python);
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-download-all:hover {
+      background: linear-gradient(135deg, rgba(61,220,132,0.25) 0%, rgba(0,212,255,0.18) 100%);
+      border-color: var(--python);
+      box-shadow: 0 0 16px rgba(61,220,132,0.25);
+    }
+    .btn-download-all:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* ── Warning Banner ── */
+    .warning-banner {
+      background: rgba(255,152,0,0.08);
+      border: 1px solid rgba(255,152,0,0.3);
+      border-radius: 8px;
+      padding: 0.75rem 1.25rem;
+      margin-bottom: 2rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: #ffb347;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+    .warning-banner svg { flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Scripts Grid ── */
+    .scripts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(600px, 1fr));
+      gap: 1.5rem;
+    }
+    @media (max-width: 680px) {
+      .scripts-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Script Card ── */
+    .script-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.2s;
+    }
+    .script-card:hover { border-color: rgba(61,220,132,0.3); }
+
+    .script-header {
+      padding: 1rem 1.25rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+    .script-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .script-meta { flex: 1; min-width: 0; }
+    .script-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--python);
+      margin-bottom: 0.25rem;
+    }
+    .script-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .script-badges {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 3px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge-category {
+      background: rgba(0,212,255,0.1);
+      color: var(--accent2);
+      border: 1px solid rgba(0,212,255,0.2);
+    }
+    .badge-severity-high {
+      background: rgba(255,68,68,0.1);
+      color: var(--red);
+      border: 1px solid rgba(255,68,68,0.2);
+    }
+    .badge-severity-medium {
+      background: rgba(255,152,0,0.1);
+      color: var(--orange);
+      border: 1px solid rgba(255,152,0,0.2);
+    }
+    .badge-severity-low {
+      background: rgba(0,255,159,0.1);
+      color: var(--green);
+      border: 1px solid rgba(0,255,159,0.2);
+    }
+    .badge-deps {
+      background: rgba(168,85,247,0.1);
+      color: var(--accent3);
+      border: 1px solid rgba(168,85,247,0.2);
+    }
+
+    /* ── AI Analysis ── */
+    .script-ai-analysis {
+      padding: 0.75rem 1.25rem;
+      background: rgba(168,85,247,0.04);
+      border-bottom: 1px solid rgba(168,85,247,0.1);
+      font-size: 0.78rem;
+      color: #c4b5fd;
+      line-height: 1.6;
+    }
+    .script-ai-analysis-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent3);
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* ── Code Block ── */
+    .script-code-wrapper {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    .script-code-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 1rem;
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+    }
+    .code-lang-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--python);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .code-line-count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+    .code-actions { display: flex; gap: 0.4rem; }
+    .btn-code-action {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text-muted);
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.2s;
+    }
+    .btn-code-action:hover {
+      border-color: var(--python);
+      color: var(--python);
+      background: rgba(61,220,132,0.05);
+    }
+    .btn-code-action.copied {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .script-code-scroll {
+      max-height: 380px;
+      overflow: auto;
+    }
+    .script-code-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+    .script-code-scroll::-webkit-scrollbar-track { background: transparent; }
+    .script-code-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+
+    pre[class*="language-"] {
+      margin: 0 !important;
+      border-radius: 0 !important;
+      background: #1a1a2e !important;
+      font-size: 0.75rem !important;
+      line-height: 1.55 !important;
+      padding: 1rem !important;
+    }
+    code[class*="language-"] {
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 0.75rem !important;
+    }
+
+    /* ── Error State ── */
+    .error-state {
+      text-align: center;
+      padding: 4rem 2rem;
+    }
+    .error-state h2 {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--red);
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+    }
+    .error-state p { color: var(--text-muted); font-size: 0.9rem; }
+
+    /* ── Empty State ── */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+    }
+    .empty-state h2 {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    /* ── Footer note ── */
+    .footer-note {
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .header { padding: 0.75rem 1rem; }
+      .main { padding: 1rem; }
+      .intro-banner { grid-template-columns: 1fr; }
+      .intro-stats { justify-content: space-around; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">🐍 Gerando Scripts Python...</div>
+  <div class="loading-steps" id="loadingSteps">
+    <div class="loading-step active" id="step1">Carregando dados da auditoria</div>
+    <div class="loading-step" id="step2">Analisando vulnerabilidades detectadas</div>
+    <div class="loading-step" id="step3">Consultando Groq AI (Llama 70B)</div>
+    <div class="loading-step" id="step4">Gerando scripts Blue Team personalizados</div>
+    <div class="loading-step" id="step5">Preparando visualização</div>
+  </div>
+</div>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-left">
+    <a href="/" class="header-logo">SUPABASE <span>GUARD</span></a>
+    <span class="header-title">🐍 Blue Team Python Scripts</span>
+  </div>
+  <div class="header-right">
+    <button class="btn-back" onclick="window.close()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+      Fechar
+    </button>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="main" id="mainContent" style="display:none">
+
+  <!-- Intro Banner -->
+  <div class="intro-banner" id="introBanner">
+    <div>
+      <div class="intro-target">
+        <span>Target: </span><span id="targetUrl">—</span>
+      </div>
+      <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem">
+        Scripts gerados com base nas vulnerabilidades detectadas na auditoria.
+        Use apenas em sistemas com autorização explícita por escrito.
+      </div>
+      <div class="intro-stats">
+        <div class="intro-stat">
+          <div class="intro-stat-num" id="statScripts">0</div>
+          <div class="intro-stat-label">Scripts</div>
+        </div>
+        <div class="intro-stat">
+          <div class="intro-stat-num" id="statScore">—</div>
+          <div class="intro-stat-label">Score</div>
+        </div>
+        <div class="intro-stat">
+          <div class="intro-stat-num" id="statVulns">0</div>
+          <div class="intro-stat-label">Vulns</div>
+        </div>
+        <div class="intro-stat">
+          <div class="intro-stat-num" id="statLines">0</div>
+          <div class="intro-stat-label">Linhas de Código</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn-download-all" id="btnDownloadAll" onclick="downloadAllZip()" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      ⬇ Download ZIP
+    </button>
+  </div>
+
+  <!-- Warning Banner -->
+  <div class="warning-banner">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <span>
+      <strong>AVISO LEGAL:</strong> Estes scripts são exclusivamente para <strong>Blue Team / testes defensivos</strong> em sistemas
+      pelos quais você é responsável ou tem autorização explícita por escrito.
+      O uso não autorizado viola leis de crimes computacionais (LGPD, Lei 12.737/2012, CFAA).
+      Supabase Guard não se responsabiliza pelo uso indevido.
+    </span>
+  </div>
+
+  <!-- Scripts Grid -->
+  <div class="scripts-grid" id="scriptsGrid"></div>
+
+  <!-- Footer Note -->
+  <div class="footer-note">
+    Supabase Guard v3.2.0 — Blue Team Python Scripts — Powered by Groq AI (Llama 3.3 70B)
+  </div>
+</main>
+
+<!-- Error State -->
+<main class="main" id="errorContent" style="display:none">
+  <div class="error-state">
+    <h2>⚠ Erro ao Gerar Scripts</h2>
+    <p id="errorMessage">Ocorreu um erro inesperado.</p>
+    <br><br>
+    <button class="btn-back" onclick="history.back()">← Voltar</button>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script>
+  // ── State ──
+  let generatedScripts = [];
+  let auditTargetUrl = '';
+
+  // ── Helpers ──
+  const $ = id => document.getElementById(id);
+
+  function setLoadingStep(step) {
+    for (let i = 1; i <= 5; i++) {
+      const el = $('step' + i);
+      if (i < step) el.className = 'loading-step done';
+      else if (i === step) el.className = 'loading-step active';
+      else el.className = 'loading-step';
+    }
+  }
+
+  function showError(msg) {
+    $('loadingOverlay').classList.add('hidden');
+    $('errorContent').style.display = 'block';
+    $('errorMessage').textContent = msg;
+  }
+
+  function countLines(code) {
+    return (code || '').split('\n').length;
+  }
+
+  function severityBadge(severity) {
+    const s = (severity || 'low').toLowerCase();
+    if (s === 'critical' || s === 'high') return `<span class="badge badge-severity-high">${s}</span>`;
+    if (s === 'medium') return `<span class="badge badge-severity-medium">${s}</span>`;
+    return `<span class="badge badge-severity-low">${s}</span>`;
+  }
+
+  // ── Copy to clipboard ──
+  async function copyScript(btn, code) {
+    try {
+      await navigator.clipboard.writeText(code);
+      btn.classList.add('copied');
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg> Copiado!`;
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar`;
+      }, 2000);
+    } catch {
+      alert('Copie manualmente o código acima.');
+    }
+  }
+
+  // ── Download single script ──
+  async function downloadScript(script) {
+    try {
+      const res = await fetch('/api/ai/scripts/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scriptId: script.id,
+          code: script.code,
+          filename: script.filename || `${script.id}.py`
+        })
+      });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = script.filename || `${script.id}.py`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      // Fallback: direct download via data URI
+      const blob = new Blob([script.code], { type: 'text/x-python' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = script.filename || `${script.id}.py`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  // ── Download all as ZIP ──
+  async function downloadAllZip() {
+    const btn = $('btnDownloadAll');
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Preparando ZIP...';
+
+    try {
+      const res = await fetch('/api/ai/scripts/download-zip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scripts: generatedScripts,
+          targetUrl: auditTargetUrl
+        })
+      });
+
+      if (!res.ok) throw new Error('Erro ao gerar ZIP');
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `blue-team-scripts.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Erro ao gerar ZIP: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> ⬇ Download ZIP`;
+    }
+  }
+
+  // ── Render a single script card ──
+  function renderScriptCard(script) {
+    const lines = countLines(script.code);
+    const deps = (script.dependencies || ['requests']).join(', ');
+    const aiText = script.aiAnalysis || '';
+
+    const card = document.createElement('div');
+    card.className = 'script-card';
+    card.id = `card-${script.id}`;
+
+    card.innerHTML = `
+      <div class="script-header">
+        <div class="script-icon">${script.icon || '🐍'}</div>
+        <div class="script-meta">
+          <div class="script-name">${escapeHtml(script.name || script.id)}</div>
+          <div class="script-desc">${escapeHtml(script.description || '')}</div>
+          <div class="script-badges">
+            <span class="badge badge-category">${escapeHtml(script.category || 'Blue Team')}</span>
+            ${severityBadge(script.severity)}
+            <span class="badge badge-deps">pip: ${escapeHtml(deps)}</span>
+          </div>
+        </div>
+      </div>
+      ${aiText ? `
+      <div class="script-ai-analysis">
+        <div class="script-ai-analysis-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+            <path d="M12 2a10 10 0 1 0 10 10H12V2z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          Análise da IA — Groq (Llama 3.3 70B)
+        </div>
+        ${escapeHtml(aiText)}
+      </div>` : ''}
+      <div class="script-code-wrapper">
+        <div class="script-code-toolbar">
+          <div class="code-lang-tag">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
+            </svg>
+            Python 3
+          </div>
+          <div class="code-line-count">${lines} linhas</div>
+          <div class="code-actions">
+            <button class="btn-code-action" id="copy-${script.id}" onclick="copyScript(this, scripts['${script.id}'])">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+                <rect x="9" y="9" width="13" height="13" rx="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              Copiar
+            </button>
+            <button class="btn-code-action" onclick="downloadScript(scripts['${script.id}'])">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Download
+            </button>
+          </div>
+        </div>
+        <div class="script-code-scroll">
+          <pre><code class="language-python">${escapeHtml(script.code || '')}</code></pre>
+        </div>
+      </div>
+    `;
+
+    return card;
+  }
+
+  function escapeHtml(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  // ── Script lookup map for onclick handlers ──
+  const scripts = {};
+
+  // ── Render all scripts ──
+  function renderScripts(data) {
+    const grid = $('scriptsGrid');
+    grid.innerHTML = '';
+    generatedScripts = data.scripts || [];
+
+    if (!generatedScripts.length) {
+      grid.innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1">
+          <h2>Nenhum script gerado</h2>
+          <p>Não foram encontradas vulnerabilidades críticas que requerem scripts de teste.</p>
+        </div>`;
+      return;
+    }
+
+    let totalLines = 0;
+    for (const s of generatedScripts) {
+      scripts[s.id] = s;
+      totalLines += countLines(s.code);
+      grid.appendChild(renderScriptCard(s));
+    }
+
+    // Update stats
+    $('statScripts').textContent = generatedScripts.length;
+    $('statScore').textContent = data.auditScore !== undefined ? data.auditScore : '—';
+    $('statVulns').textContent = data.vulnerabilityCount || 0;
+    $('statLines').textContent = totalLines.toLocaleString();
+
+    // Enable ZIP download
+    $('btnDownloadAll').disabled = false;
+
+    // Apply Prism syntax highlighting
+    Prism.highlightAll();
+  }
+
+  // ── Main: fetch audit data + generate scripts ──
+  async function init() {
+    const auditId = window.location.pathname.split('/scripts/')[1];
+    if (!auditId) { showError('ID de auditoria não encontrado na URL.'); return; }
+
+    setLoadingStep(1);
+
+    try {
+      // Step 1: Fetch audit data
+      const auditRes = await fetch(`/api/audit/${auditId}`);
+      setLoadingStep(2);
+
+      if (!auditRes.ok) {
+        throw new Error(`Auditoria não encontrada (ID: ${auditId}). Execute a auditoria novamente.`);
+      }
+
+      const auditData = await auditRes.json();
+      auditTargetUrl = auditData.projectUrl || '';
+      $('targetUrl').textContent = auditTargetUrl;
+
+      setLoadingStep(3);
+
+      // Step 2: Generate scripts via AI
+      const genRes = await fetch('/api/ai/generate-scripts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ auditId, auditData })
+      });
+
+      setLoadingStep(4);
+
+      if (!genRes.ok) {
+        const errData = await genRes.json().catch(() => ({}));
+        throw new Error(errData.error || `Erro ${genRes.status} ao gerar scripts.`);
+      }
+
+      const data = await genRes.json();
+
+      setLoadingStep(5);
+      await new Promise(r => setTimeout(r, 400)); // Brief pause for UX
+
+      // Show content
+      $('loadingOverlay').classList.add('hidden');
+      $('mainContent').style.display = 'block';
+
+      renderScripts(data);
+
+    } catch (err) {
+      showError(err.message);
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>

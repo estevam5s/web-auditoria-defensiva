@@ -1602,6 +1602,19 @@ input[type="text"]::placeholder {
   box-shadow: 0 0 12px rgba(255, 215, 0, 0.25);
 }
 
+/* Python Blue Team Scripts Button — green-yellow gradient */
+.btn-python {
+  border-color: rgba(50, 205, 50, 0.5);
+  color: #3ddc84;
+  background: linear-gradient(135deg, rgba(50, 205, 50, 0.08) 0%, rgba(255, 214, 10, 0.06) 100%);
+}
+.btn-python:hover {
+  background: linear-gradient(135deg, rgba(50, 205, 50, 0.18) 0%, rgba(255, 214, 10, 0.14) 100%);
+  border-color: #3ddc84;
+  color: #7fff7f;
+  box-shadow: 0 0 12px rgba(50, 205, 50, 0.3);
+}
+
 /* Floating AI Button */
 .floating-ai-btn {
   position: fixed;
