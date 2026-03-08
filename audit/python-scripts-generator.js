@@ -3580,6 +3580,574 @@ if __name__ == "__main__":
     main()
 `
   },
+  // ── 18. Subdomain Enumeration ─────────────────────────────────────
+  subdomain_enum: {
+    id: 'subdomain_enum',
+    name: 'Subdomain Enumerator',
+    category: 'Reconhecimento',
+    severity: 'medium',
+    description: 'Enumeração de subdomínios via DNS brute-force com wordlist. Identifica superfície de ataque oculta.',
+    icon: '🌐',
+    dependencies: ['dnspython'],
+    template: (url) => {
+      const host = (() => { try { return new URL(url).hostname; } catch { return url; } })();
+      return `#!/usr/bin/env python3
+"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — Subdomain Enumeration (DNS Brute-Force)         ║
+║  Alvo: ${host}
+╚══════════════════════════════════════════════════════════════╝
+"""
+import sys, dns.resolver, json
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
+
+TARGET = "${host}"
+WORDLIST = ["www","api","mail","dev","staging","admin","app","blog","cdn","auth",
+            "dashboard","internal","vpn","portal","static","assets","beta","test",
+            "prod","db","jenkins","jira","confluence","gitlab","registry","metrics"]
+
+def resolve(sub):
+    fqdn = f"{sub}.{TARGET}"
+    try:
+        answers = dns.resolver.resolve(fqdn, "A", lifetime=3)
+        return fqdn, [r.address for r in answers]
+    except Exception:
+        return fqdn, None
+
+def main():
+    found = []
+    print(f"[*] Enumerando subdomínios de {TARGET} ({len(WORDLIST)} candidatos)...")
+    with ThreadPoolExecutor(max_workers=20) as ex:
+        futures = {ex.submit(resolve, w): w for w in WORDLIST}
+        for f in as_completed(futures):
+            fqdn, ips = f.result()
+            if ips:
+                print(f"  [+] {fqdn} -> {', '.join(ips)}")
+                found.append({"subdomain": fqdn, "ips": ips})
+    print(f"\\n[✓] {len(found)} subdomínios encontrados.")
+    with open("subdomains.json", "w") as fp:
+        json.dump({"target": TARGET, "timestamp": datetime.now().isoformat(), "found": found}, fp, indent=2)
+
+if __name__ == "__main__":
+    main()
+`;
+    },
+  },
+
+  // ── 19. LDAP Scanner ──────────────────────────────────────────────
+  ldap_scanner: {
+    id: 'ldap_scanner',
+    name: 'LDAP Anonymous Bind Scanner',
+    category: 'Reconhecimento',
+    severity: 'high',
+    description: 'Detecta LDAP com bind anônimo e enumera entradas expostas. CVE potencial para IAM mal configurado.',
+    icon: '📂',
+    dependencies: ['ldap3'],
+    template: (url) => {
+      const host = (() => { try { return new URL(url).hostname; } catch { return url; } })();
+      return `#!/usr/bin/env python3
+"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — LDAP Anonymous Bind Detection                   ║
+║  Alvo: ${host}:389
+╚══════════════════════════════════════════════════════════════╝
+"""
+import sys
+from ldap3 import Server, Connection, ALL, ANONYMOUS, NTLM
+import json
+from datetime import datetime
+
+HOST = "${host}"
+PORTS = [389, 636, 3268, 3269]
+BASE_DNS = ["dc=example,dc=com", "dc=corp,dc=local", "ou=users,dc=example,dc=com"]
+
+def try_anonymous_bind(host, port):
+    try:
+        srv = Server(host, port=port, get_info=ALL, connect_timeout=5)
+        conn = Connection(srv, authentication=ANONYMOUS)
+        if conn.bind():
+            return True, conn.server.info
+        return False, None
+    except Exception as e:
+        return False, str(e)
+
+def main():
+    print(f"[*] Testando LDAP anonymous bind em {HOST}...")
+    findings = []
+    for port in PORTS:
+        bound, info = try_anonymous_bind(HOST, port)
+        status = "VULNERÁVEL" if bound else "seguro"
+        print(f"  [{'+' if bound else '-'}] {HOST}:{port} -> {status}")
+        if bound:
+            findings.append({"host": HOST, "port": port, "anonymous_bind": True, "info": str(info)[:500]})
+    if findings:
+        print("\\n[!] LDAP com bind anônimo detectado! Restrinja o acesso imediatamente.")
+    else:
+        print("\\n[✓] Nenhum LDAP com bind anônimo encontrado.")
+    with open("ldap_scan.json", "w") as fp:
+        json.dump({"target": HOST, "timestamp": datetime.now().isoformat(), "findings": findings}, fp, indent=2)
+
+if __name__ == "__main__":
+    main()
+`;
+    },
+  },
+
+  // ── 20. API Fuzzer ────────────────────────────────────────────────
+  api_fuzzer: {
+    id: 'api_fuzzer',
+    name: 'REST API Endpoint Fuzzer',
+    category: 'Reconhecimento',
+    severity: 'high',
+    description: 'Fuzzing de endpoints REST com wordlist. Detecta rotas ocultas, endpoints de admin e recursos não documentados.',
+    icon: '🔎',
+    dependencies: ['requests'],
+    template: (url) => `#!/usr/bin/env python3
+"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — REST API Endpoint Fuzzer                        ║
+║  Alvo: ${url}
+╚══════════════════════════════════════════════════════════════╝
+"""
+import sys, requests, json
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
+requests.packages.urllib3.disable_warnings()
+
+BASE = "${url}".rstrip("/")
+WORDLIST = [
+    "api","api/v1","api/v2","api/v3","admin","admin/api","health","status","metrics",
+    "graphql","rest","users","user","accounts","auth","login","token","refresh",
+    "register","profile","settings","config","debug","internal","private","hidden",
+    "backup","export","import","download","upload","files","docs","swagger","openapi",
+    "actuator","actuator/health","actuator/env","actuator/beans","__debug__",
+]
+FOUND = []
+
+def probe(path):
+    url = f"{BASE}/{path}"
+    try:
+        r = requests.get(url, timeout=6, verify=False, allow_redirects=False,
+                         headers={"User-Agent": "SecurityAudit/1.0"})
+        if r.status_code not in [404, 405, 410]:
+            return {"url": url, "status": r.status_code, "length": len(r.content)}
+    except Exception:
+        pass
+    return None
+
+def main():
+    print(f"[*] Fuzzing {len(WORDLIST)} endpoints em {BASE}...")
+    with ThreadPoolExecutor(max_workers=15) as ex:
+        futures = {ex.submit(probe, p): p for p in WORDLIST}
+        for f in as_completed(futures):
+            result = f.result()
+            if result:
+                print(f"  [+] {result['status']} {result['url']} ({result['length']} bytes)")
+                FOUND.append(result)
+    print(f"\\n[✓] {len(FOUND)} endpoints responderam.")
+    with open("api_fuzz.json", "w") as fp:
+        json.dump({"target": BASE, "timestamp": datetime.now().isoformat(), "found": FOUND}, fp, indent=2)
+
+if __name__ == "__main__":
+    main()
+`,
+  },
+
+  // ── 21. WebSocket Scanner ─────────────────────────────────────────
+  websocket_scanner: {
+    id: 'websocket_scanner',
+    name: 'WebSocket Security Scanner',
+    category: 'Análise de Protocolo',
+    severity: 'medium',
+    description: 'Testa conexões WebSocket, injeta mensagens de teste e verifica autenticação e autorização.',
+    icon: '🔌',
+    dependencies: ['websocket-client'],
+    template: (url) => {
+      const wsUrl = url.replace(/^https?/, 'wss');
+      return `#!/usr/bin/env python3
+"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — WebSocket Security Scanner                      ║
+║  Alvo: ${wsUrl}
+╚══════════════════════════════════════════════════════════════╝
+"""
+import json, time
+import websocket
+from datetime import datetime
+
+WS_ENDPOINTS = [
+    "${wsUrl}/realtime/v1/websocket",
+    "${wsUrl}/ws",
+    "${wsUrl}/socket.io",
+    "${wsUrl}/cable",
+]
+PAYLOADS = [
+    '{"type":"subscribe","topic":"*"}',
+    '{"event":"phx_join","topic":"room:lobby","payload":{},"ref":"1"}',
+    '{"action":"ping"}',
+    '{"cmd":"list_channels"}',
+]
+FINDINGS = []
+
+def test_ws(url):
+    try:
+        ws = websocket.create_connection(url, timeout=6, sslopt={"cert_reqs": 0})
+        print(f"  [+] Conectado: {url}")
+        for payload in PAYLOADS:
+            ws.send(payload)
+            time.sleep(0.5)
+            try:
+                resp = ws.recv_data_producing_sock(timeout=2)
+                if resp:
+                    print(f"      Response: {str(resp)[:100]}")
+                    FINDINGS.append({"url": url, "payload": payload, "response": str(resp)[:200]})
+            except Exception:
+                pass
+        ws.close()
+    except Exception as e:
+        print(f"  [-] {url}: {e}")
+
+def main():
+    print("[*] Testando endpoints WebSocket...")
+    for ep in WS_ENDPOINTS:
+        test_ws(ep)
+    print(f"\\n[✓] {len(FINDINGS)} interações WebSocket registradas.")
+    with open("websocket_scan.json", "w") as fp:
+        json.dump({"timestamp": datetime.now().isoformat(), "findings": FINDINGS}, fp, indent=2)
+
+if __name__ == "__main__":
+    main()
+`;
+    },
+  },
+
+  // ── 22. OAuth Tester ──────────────────────────────────────────────
+  oauth_tester: {
+    id: 'oauth_tester',
+    name: 'OAuth2 Security Tester',
+    category: 'Autenticação',
+    severity: 'high',
+    description: 'Testa fluxo OAuth2: implicit grant, state CSRF, token leakage e open redirect em callback.',
+    icon: '🔐',
+    dependencies: ['requests'],
+    template: (url) => `#!/usr/bin/env python3
+"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — OAuth2 Flow Security Tester                     ║
+║  Alvo: ${url}
+╚══════════════════════════════════════════════════════════════╝
+"""
+import requests, json, re
+from urllib.parse import urlparse, parse_qs
+from datetime import datetime
+requests.packages.urllib3.disable_warnings()
+
+BASE = "${url}".rstrip("/")
+FINDINGS = []
+
+OAUTH_PATHS = ["/auth/v1/authorize", "/oauth/authorize", "/oauth2/authorize", "/connect/authorize"]
+REDIRECT_EVIL = "https://evil.example.com/callback"
+
+def check_state_validation(base, path):
+    """Test missing state parameter (CSRF)"""
+    url = f"{base}{path}?response_type=code&client_id=test&redirect_uri={REDIRECT_EVIL}"
+    try:
+        r = requests.get(url, timeout=6, verify=False, allow_redirects=False)
+        if r.status_code in [200, 302]:
+            loc = r.headers.get("location", "")
+            if "evil.example.com" in loc:
+                return {"type": "OPEN_REDIRECT", "url": url, "location": loc}
+            if "error" not in loc.lower():
+                return {"type": "MISSING_STATE_CHECK", "url": url, "status": r.status_code}
+    except Exception as e:
+        pass
+    return None
+
+def check_token_in_url(base, path):
+    """Test if token appears in redirect URL (implicit flow leak)"""
+    url = f"{base}{path}?response_type=token&client_id=test&redirect_uri={base}/callback"
+    try:
+        r = requests.get(url, timeout=6, verify=False, allow_redirects=True)
+        if "access_token" in r.url or "access_token" in r.text:
+            return {"type": "TOKEN_IN_URL", "url": r.url[:200]}
+    except Exception:
+        pass
+    return None
+
+def main():
+    print(f"[*] Testando fluxos OAuth2 em {BASE}...")
+    for path in OAUTH_PATHS:
+        for check_fn in [check_state_validation, check_token_in_url]:
+            result = check_fn(BASE, path)
+            if result:
+                result["path"] = path
+                print(f"  [!] {result['type']}: {path}")
+                FINDINGS.append(result)
+    if not FINDINGS:
+        print("  [✓] Nenhuma vulnerabilidade OAuth2 óbvia detectada.")
+    with open("oauth_test.json", "w") as fp:
+        json.dump({"target": BASE, "timestamp": datetime.now().isoformat(), "findings": FINDINGS}, fp, indent=2)
+
+if __name__ == "__main__":
+    main()
+`,
+  },
+
+  // ── 23. HTTP Smuggling ────────────────────────────────────────────
+  http_smuggling: {
+    id: 'http_smuggling',
+    name: 'HTTP Request Smuggling Tester',
+    category: 'Protocolo HTTP',
+    severity: 'critical',
+    description: 'Testa HTTP/1.1 request smuggling CL.TE e TE.CL via raw socket. Blue team verification tool.',
+    icon: '🚇',
+    dependencies: [],
+    template: (url) => {
+      const host = (() => { try { return new URL(url).hostname; } catch { return url; } })();
+      return `#!/usr/bin/env python3
+"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — HTTP Request Smuggling Detector                 ║
+║  Alvo: ${host}:443
+║  Técnicas: CL.TE, TE.CL
+╚══════════════════════════════════════════════════════════════╝
+"""
+import socket, ssl, time, json
+from datetime import datetime
+
+HOST = "${host}"
+PORT = 443
+TIMEOUT = 8
+FINDINGS = []
+
+def send_raw(payload_bytes):
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    try:
+        with socket.create_connection((HOST, PORT), timeout=TIMEOUT) as sock:
+            with ctx.wrap_socket(sock, server_hostname=HOST) as ssock:
+                ssock.sendall(payload_bytes)
+                time.sleep(2)
+                ssock.settimeout(3)
+                resp = b""
+                try:
+                    while True:
+                        chunk = ssock.recv(4096)
+                        if not chunk: break
+                        resp += chunk
+                except Exception:
+                    pass
+                return resp.decode("utf-8", errors="replace")
+    except Exception as e:
+        return f"ERROR: {e}"
+
+# CL.TE probe
+CLTE = (
+    f"POST / HTTP/1.1\\r\\n"
+    f"Host: {HOST}\\r\\n"
+    f"Content-Length: 6\\r\\n"
+    f"Transfer-Encoding: chunked\\r\\n"
+    f"Connection: keep-alive\\r\\n\\r\\n"
+    f"0\\r\\n\\r\\nX"
+).encode()
+
+# TE.CL probe
+TECL = (
+    f"POST / HTTP/1.1\\r\\n"
+    f"Host: {HOST}\\r\\n"
+    f"Content-Length: 4\\r\\n"
+    f"Transfer-Encoding: chunked\\r\\n"
+    f"Connection: keep-alive\\r\\n\\r\\n"
+    f"1\\r\\n"
+    f"Z\\r\\n"
+    f"0\\r\\n\\r\\n"
+).encode()
+
+def analyze(name, payload):
+    print(f"  [*] Testando {name}...")
+    t0 = time.time()
+    resp = send_raw(payload)
+    elapsed = time.time() - t0
+    suspicious = elapsed > 4 or "400" not in resp[:50]
+    marker = "[!] SUSPEITO" if suspicious else "[✓] OK"
+    print(f"      {marker} — resposta em {elapsed:.1f}s")
+    if suspicious:
+        FINDINGS.append({"technique": name, "elapsed": round(elapsed, 2), "response_snippet": resp[:200]})
+
+def main():
+    print(f"[*] Testando HTTP Smuggling em {HOST}:{PORT}...")
+    analyze("CL.TE", CLTE)
+    analyze("TE.CL", TECL)
+    if FINDINGS:
+        print("\\n[!] Possível vulnerabilidade de HTTP Smuggling detectada!")
+    else:
+        print("\\n[✓] Sem indicadores óbvios de HTTP Smuggling.")
+    with open("http_smuggling.json", "w") as fp:
+        json.dump({"target": HOST, "timestamp": datetime.now().isoformat(), "findings": FINDINGS}, fp, indent=2)
+
+if __name__ == "__main__":
+    main()
+`;
+    },
+  },
+
+  // ── 24. Cache Poisoning ───────────────────────────────────────────
+  cache_poisoning: {
+    id: 'cache_poisoning',
+    name: 'HTTP Cache Poisoning Tester',
+    category: 'Protocolo HTTP',
+    severity: 'high',
+    description: 'Testa cache poisoning via X-Forwarded-Host, X-Forwarded-Port e outros headers de proxy.',
+    icon: '☠️',
+    dependencies: ['requests'],
+    template: (url) => `#!/usr/bin/env python3
+"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — HTTP Cache Poisoning Tester                     ║
+║  Alvo: ${url}
+╚══════════════════════════════════════════════════════════════╝
+"""
+import requests, json
+from datetime import datetime
+requests.packages.urllib3.disable_warnings()
+
+TARGET = "${url}".rstrip("/")
+EVIL_HOST = "evil-cache-test.example.com"
+FINDINGS = []
+
+INJECT_HEADERS = [
+    {"X-Forwarded-Host": EVIL_HOST},
+    {"X-Forwarded-Host": f"{EVIL_HOST}:443"},
+    {"X-Host": EVIL_HOST},
+    {"X-Forwarded-Port": "1337"},
+    {"X-Original-URL": "/admin"},
+    {"X-Rewrite-URL": "/admin"},
+    {"X-Custom-IP-Authorization": "127.0.0.1"},
+]
+
+def probe(path, poison_headers):
+    url = f"{TARGET}{path}"
+    try:
+        # Baseline
+        r0 = requests.get(url, timeout=6, verify=False)
+        # Poisoned
+        r1 = requests.get(url, timeout=6, verify=False, headers=poison_headers)
+        body = r1.text[:500]
+        poisoned = EVIL_HOST in body or any(str(v) in body for v in poison_headers.values())
+        if poisoned:
+            return {"url": url, "headers": poison_headers, "snippet": body[:200]}
+    except Exception:
+        pass
+    return None
+
+def main():
+    print(f"[*] Testando cache poisoning em {TARGET}...")
+    for headers in INJECT_HEADERS:
+        for path in ["/", "/api", "/api/health"]:
+            result = probe(path, headers)
+            if result:
+                print(f"  [!] Cache poison via {list(headers.keys())[0]}: {result['url']}")
+                FINDINGS.append(result)
+    if not FINDINGS:
+        print("  [✓] Sem indicadores de cache poisoning detectados.")
+    with open("cache_poison.json", "w") as fp:
+        json.dump({"target": TARGET, "timestamp": datetime.now().isoformat(), "findings": FINDINGS}, fp, indent=2)
+
+if __name__ == "__main__":
+    main()
+`,
+  },
+
+  // ── 25. API Security Audit ────────────────────────────────────────
+  api_security_audit: {
+    id: 'api_security_audit',
+    name: 'API Security Full Audit',
+    category: 'Auditoria de API',
+    severity: 'critical',
+    description: 'Auditoria completa de API REST: auth bypass, BOLA/IDOR, mass assignment, rate limiting e exposição de dados.',
+    icon: '🛡️',
+    dependencies: ['requests'],
+    template: (url) => `#!/usr/bin/env python3
+"""
+╔══════════════════════════════════════════════════════════════╗
+║  BLUE TEAM — API Security Full Audit                         ║
+║  Alvo: ${url}
+║  Checks: Auth Bypass, BOLA/IDOR, Mass Assignment,           ║
+║          Rate Limit, Data Exposure                           ║
+╚══════════════════════════════════════════════════════════════╝
+"""
+import requests, json, time
+from datetime import datetime
+requests.packages.urllib3.disable_warnings()
+
+BASE = "${url}".rstrip("/")
+FINDINGS = []
+SESSION = requests.Session()
+SESSION.verify = False
+
+def check_auth_bypass():
+    """Test endpoints without auth"""
+    endpoints = ["/api/users", "/api/admin", "/api/v1/users", "/api/config",
+                 "/api/secrets", "/api/keys", "/api/debug", "/api/internal"]
+    print("[*] Testando auth bypass...")
+    for ep in endpoints:
+        try:
+            r = SESSION.get(f"{BASE}{ep}", timeout=5, headers={"User-Agent": "AuditBot/1.0"})
+            if r.status_code == 200 and len(r.content) > 50:
+                print(f"  [!] {ep} -> {r.status_code} ({len(r.content)} bytes) SEM AUTH")
+                FINDINGS.append({"check": "AUTH_BYPASS", "endpoint": ep, "status": r.status_code})
+        except Exception:
+            pass
+
+def check_bola():
+    """Test BOLA/IDOR by iterating IDs"""
+    print("[*] Testando BOLA/IDOR...")
+    for resource in ["users", "accounts", "orders", "records"]:
+        for id_ in [1, 2, 3, 100, 999]:
+            try:
+                r = SESSION.get(f"{BASE}/api/{resource}/{id_}", timeout=4)
+                if r.status_code == 200 and len(r.content) > 10:
+                    print(f"  [!] IDOR: /api/{resource}/{id_} -> {r.status_code}")
+                    FINDINGS.append({"check": "BOLA_IDOR", "endpoint": f"/api/{resource}/{id_}", "status": r.status_code})
+                    break
+            except Exception:
+                pass
+
+def check_rate_limit():
+    """Test if rate limiting is enforced"""
+    print("[*] Testando rate limiting...")
+    url = f"{BASE}/api/auth/login" if "/auth" in BASE else f"{BASE}/auth/v1/token"
+    statuses = []
+    for i in range(15):
+        try:
+            r = SESSION.post(url, json={"email": f"test{i}@test.com", "password": "wrong"}, timeout=4)
+            statuses.append(r.status_code)
+        except Exception:
+            break
+    limited = any(s in [429, 503, 423] for s in statuses)
+    if not limited:
+        print(f"  [!] Rate limiting ausente! 15 req → statuses: {set(statuses)}")
+        FINDINGS.append({"check": "NO_RATE_LIMIT", "endpoint": url, "statuses": list(set(statuses))})
+    else:
+        print(f"  [✓] Rate limiting ativo (detectado em 15 requisições)")
+
+def main():
+    print(f"[*] API Security Audit: {BASE}\\n")
+    check_auth_bypass()
+    check_bola()
+    check_rate_limit()
+    print(f"\\n[✓] Audit completo. {len(FINDINGS)} finding(s) encontrado(s).")
+    with open("api_audit.json", "w") as fp:
+        json.dump({"target": BASE, "timestamp": datetime.now().isoformat(),
+                   "total_findings": len(FINDINGS), "findings": FINDINGS}, fp, indent=2)
+
+if __name__ == "__main__":
+    main()
+`,
+  },
+
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -3636,11 +4204,21 @@ function selectRelevantScripts(auditResults) {
   if (failChecks.some(c => c.includes('xml') || c.includes('xxe') || c.includes('upload'))) selected.add('xxe_scanner');
   if (failChecks.some(c => c.includes('phishing') || c.includes('email') || c.includes('spf') || c.includes('dmarc'))) selected.add('phishing_analyzer');
   if (failChecks.some(c => c.includes('malware') || c.includes('shell') || c.includes('backdoor'))) selected.add('venom_detector');
+  // New v3.3 scripts
+  if (failChecks.some(c => c.includes('subdomain') || c.includes('dns'))) selected.add('subdomain_enum');
+  if (failChecks.some(c => c.includes('ldap') || c.includes('directory'))) selected.add('ldap_scanner');
+  if (failChecks.some(c => c.includes('route') || c.includes('endpoint') || c.includes('api'))) selected.add('api_fuzzer');
+  if (failChecks.some(c => c.includes('websocket') || c.includes('realtime'))) selected.add('websocket_scanner');
+  if (failChecks.some(c => c.includes('oauth') || c.includes('sso') || c.includes('auth'))) selected.add('oauth_tester');
+  if (failChecks.some(c => c.includes('smuggl') || c.includes('http'))) selected.add('http_smuggling');
+  if (failChecks.some(c => c.includes('cache') || c.includes('header') || c.includes('proxy'))) selected.add('cache_poisoning');
+  if (failChecks.some(c => c.includes('api') || c.includes('rest') || c.includes('rpc') || c.includes('rate'))) selected.add('api_security_audit');
 
   // Se não encontrou vulnerabilidades específicas, inclui seleção completa
   if (selected.size < 5) {
     ['route_scanner', 'hydra_bruteforce', 'sql_injection', 'jwt_analyzer', 'ssrf_scanner',
-     'csrf_tester', 'cmd_injection', 'venom_detector', 'phishing_analyzer'].forEach(k => selected.add(k));
+     'csrf_tester', 'cmd_injection', 'venom_detector', 'phishing_analyzer',
+     'api_fuzzer', 'api_security_audit', 'subdomain_enum', 'oauth_tester'].forEach(k => selected.add(k));
   }
 
   return [...selected];

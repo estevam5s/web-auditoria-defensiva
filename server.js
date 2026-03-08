@@ -21,7 +21,7 @@ const { lightScrape } = require('./audit/scraper');
 
 const { generateSupabaseCatalog, generateCatalogHTML } = require('./audit/report-supabase-catalog');
 const { askGrok, askGrokStream, generateFixPrompt } = require('./audit/grok-ai');
-const { saveAuditToSupabase, getAuditHistory, getAuditById } = require('./audit/supabase-db');
+const { saveAuditToSupabase, getAuditHistory, getAuditById, supabaseFetch, getVulnerabilitiesByAudit } = require('./audit/supabase-db');
 const { analyzeGitHistory, checkForExposedSecrets } = require('./audit/git-analyzer');
 const { generateChecklistHTML } = require('./audit/checklist-generator');
 const { generatePythonScripts } = require('./audit/python-scripts-generator');
@@ -29,7 +29,7 @@ const fetch = require('node-fetch');
 
 const app = express();
 const PORT = process.env.PORT || 2998;
-const APP_VERSION = '3.2.0';
+const APP_VERSION = '3.3.0';
 
 // ─── Build hash: muda toda vez que o servidor inicia ─────────────
 // Combina a versão + timestamp de boot para invalidar cache no deploy
@@ -310,6 +310,9 @@ app.get('/api/audits', (req, res) => {
   res.json(list.reverse());
 });
 
+// ─── Hacker Academy ───────────────────────────────────────────────
+app.get('/learn', (req, res) => res.sendFile(path.join(__dirname, 'public', 'learn.html')));
+
 // ─── Audit Detail Dashboard (live page, fetches /api/audit/:id) ──
 app.get('/audit/:id', (req, res) => {
   // Serve the interactive dashboard; data loaded client-side via /api/audit/:id
@@ -336,7 +339,7 @@ app.get('/api/health', async (req, res) => {
   res.json({
     status: 'ok',
     engine: 'supabase-guard',
-    version: '3.2.0',
+    version: '3.3.0',
     features: ['pdf-report', 'html-report', 'site-scraper', 'stack-detection', 'deep-analysis-v2', 'auto-detect', 'openapi-introspection', 'rest-scan-deep', 'relationship-rls', 'graphql-scan', 'auth-settings-deep', 'supabase-catalog', 'supabase-db-save', 'git-history-analysis', 'audit-history', 'ddos-check', 'brute-force-check', 'ssl-analysis', 'security-headers', 'hydra-simulation', 'tailscale-network-check', 'dos-advanced-slowloris-redos', 'route-discovery-expanded'],
     storedAudits: auditStore.size,
     supabase: {
@@ -433,6 +436,10 @@ app.get('/api/audits/db/full/:auditId', async (req, res) => {
     }
 
     const audit = auditResult.data;
+
+    if (!audit?.id) {
+      return res.status(404).json({ success: false, error: 'Audit data incomplete' });
+    }
 
     // Get individual results
     const resultsResult = await supabaseFetch(

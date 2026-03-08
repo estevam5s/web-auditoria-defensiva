@@ -178,6 +178,8 @@ async function startAudit() {
     bearerToken: $('#bearerToken')?.value?.trim() || '',
     customHeaders,
     customWordlist,
+    checkPortScan: $('#chkPortScan')?.checked ?? true,
+    checkHTTPSmuggling: $('#chkHTTPSmuggling')?.checked ?? false,
     checkDDoS: $('#chkDDoS')?.checked ?? true,
     checkBruteForce: $('#chkBruteForce')?.checked ?? true,
     checkSecurityHeaders: $('#chkSecurityHeaders')?.checked ?? true,

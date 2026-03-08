@@ -67,12 +67,13 @@
         </div>
       </div>
       <div class="header-meta">
-        <span class="badge">v3.2.0</span>
+        <span class="badge">v3.3.0</span>
         <span class="badge">Engine: Node.js</span>
         <span class="badge">Evidence: SHA-256</span>
         <span class="badge badge-history" onclick="toggleHistory()" style="cursor:pointer;">📊 Histórico</span>
         <span class="badge badge-ai" onclick="showAIChat()" style="cursor:pointer;">🤖 AI: Grok</span>
         <span class="badge badge-bounty" onclick="openBugBounty()" style="cursor:pointer;">🐛 Bug Bounty</span>
+        <a class="badge badge-academy" href="/learn" style="cursor:pointer;text-decoration:none;">🎓 Academia</a>
         <button class="btn-install" id="btnInstall" onclick="installApp()" style="display: none;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -194,6 +195,8 @@
             <textarea id="customHeaders" rows="2" placeholder='{"X-Custom-Header": "valor", "Cookie": "session=abc"}'></textarea>
           </div>
           <div class="check-grid deep-grid" style="margin-top:0.75rem">
+            <label class="check-item deep"><input type="checkbox" id="chkPortScan" checked> 🔌 Port Scan</label>
+            <label class="check-item deep"><input type="checkbox" id="chkHTTPSmuggling"> 🚇 HTTP Smuggling</label>
             <label class="check-item deep"><input type="checkbox" id="chkDDoS" checked> 🌐 DDoS/DoS Resilience</label>
             <label class="check-item deep"><input type="checkbox" id="chkBruteForce" checked> 🔓 Brute Force Check</label>
             <label class="check-item deep"><input type="checkbox" id="chkSecurityHeaders" checked> 🛡️ Security Headers</label>

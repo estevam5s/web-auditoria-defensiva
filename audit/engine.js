@@ -46,6 +46,12 @@ const { graphqlScan } = require('./checks/graphql-scan');
 const { authSettingsScan } = require('./checks/auth-settings');
 const { hardeningCheck } = require('./checks/hardening-check');
 
+// ── New v3.3 Modules ──────────────────────────────────────────────────
+const { checkPortScan }      = require('./checks/port-scanner');
+const { checkSSL }           = require('./checks/ssl-analysis');
+const { checkGitExposure }   = require('./checks/git-exposure');
+const { checkOpenRedirect }  = require('./checks/open-redirect');
+
 // ── DDoS, Brute Force & Security Modules ──────────────────────────────
 const { checkDDoSResilience } = require('./checks/ddos-check');
 const { checkBruteForce } = require('./checks/brute-force');
@@ -106,6 +112,10 @@ function calculateScore(results) {
     { group: 'hydra',           pattern: /Hydra/i,                   weight: 1.5, keyControl: true },
     { group: 'network',         pattern: /Network|Tailscale|VPN/i,   weight: 1.2, keyControl: true },
     { group: 'dos-advanced',    pattern: /DoS Avançado|Slowloris|ReDoS|Connection Exhaustion/i, weight: 1.3, keyControl: true },
+    // NEW GROUPS v3.3
+    { group: 'port-scan',       pattern: /Port Scan|Serviços.*Expostos|Portas.*Abertas/i,        weight: 2.0, keyControl: true },
+    { group: 'git-exposure',    pattern: /Git Exposure|\.git|docker-compose|\.env\b/i,            weight: 2.0, keyControl: true },
+    { group: 'open-redirect',   pattern: /Open Redirect|Redirecionamento.*Aberto/i,               weight: 1.5, keyControl: true },
   ];
 
   const failPenalties = { critical: 25, high: 14, medium: 7, low: 2, info: 0 };
@@ -138,22 +148,13 @@ function calculateScore(results) {
     }
   }
 
-  // Apply weighted penalties
+  // Apply weighted penalties (single pass — no double-counting)
   let score = 100;
   for (const [group, { result }] of Object.entries(groupedResults)) {
-    const basePenalty = result.status === 'FAIL'
-      ? (failPenalties[result.severity] ?? 5)
-      : (warnPenalties[result.severity] ?? 1);
-
     const groupDef = SEMANTIC_GROUPS.find(g => g.group === group);
     const weight = groupDef?.weight ?? 1.0;
     if (weight === 0) continue; // e.g. stack detection
 
-    score -= Math.round(basePenalty * weight);
-  }
-
-  // Enhanced penalty application for DDoS/Brute Force/SSL
-  for (const [group, { result }] of Object.entries(groupedResults)) {
     let basePenalty;
     // Use enhanced penalties for critical security areas
     if (group === 'ddos' || group === 'brute-force') {
@@ -165,10 +166,6 @@ function calculateScore(results) {
         ? (failPenalties[result.severity] ?? 5)
         : (warnPenalties[result.severity] ?? 1);
     }
-
-    const groupDef = SEMANTIC_GROUPS.find(g => g.group === group);
-    const weight = groupDef?.weight ?? 1.0;
-    if (weight === 0) continue; // e.g. stack detection
 
     score -= Math.round(basePenalty * weight);
   }
@@ -231,6 +228,11 @@ async function runFullAudit(config, emit) {
     { name: 'Service Key Leak', fn: checkServiceKeyLeak, enabled: true },
     { name: 'Open Signup', fn: checkOpenSignup, enabled: true },
     { name: 'JWT Configuration', fn: checkJWTConfig, enabled: true },
+    // ── NEW v3.3: Port Scan, SSL, Git Exposure, Open Redirect ──
+    { name: '🔌 Port Scan', fn: checkPortScan, enabled: config.options.checkPortScan !== false, usesEmit: true, useWebsiteUrl: true },
+    { name: '🔒 SSL/TLS Analysis', fn: checkSSL, enabled: config.options.checkSSL !== false, usesEmit: true, useWebsiteUrl: true },
+    { name: '🔍 Git Exposure Check', fn: checkGitExposure, enabled: config.options.checkGitExposure !== false, usesEmit: true, useWebsiteUrl: true },
+    { name: '🔗 Open Redirect Check', fn: checkOpenRedirect, enabled: config.options.checkOpenRedirect !== false, usesEmit: true, useWebsiteUrl: true },
     // ── NEW v3: DDoS, Brute Force & Security Headers ──
     { name: '🌐 DDoS & DoS Resilience', fn: checkDDoSResilience, enabled: config.options.checkDDoS !== false, usesEmit: true },
     { name: '🔓 Brute Force Login Check', fn: checkBruteForce, enabled: config.options.checkBruteForce !== false, usesEmit: true },

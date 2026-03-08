@@ -294,7 +294,7 @@ async function checkDosAdvanced(config, emit) {
   ];
 
   for (const ep of redosEndpoints) {
-    for (const payload of redosPayloads.slice(0, 2)) {
+    for (const payload of redosPayloads) {
       const url = baseUrl + ep.path + encodeURIComponent(payload);
       const t0 = Date.now();
       const res = await httpGet(url, { timeout: 10000 });
