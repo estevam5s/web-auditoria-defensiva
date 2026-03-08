@@ -67,7 +67,7 @@
         </div>
       </div>
       <div class="header-meta">
-        <span class="badge">v3.1.0</span>
+        <span class="badge">v3.2.0</span>
         <span class="badge">Engine: Node.js</span>
         <span class="badge">Evidence: SHA-256</span>
         <span class="badge badge-history" onclick="toggleHistory()" style="cursor:pointer;">📊 Histórico</span>
@@ -199,6 +199,9 @@
             <label class="check-item deep"><input type="checkbox" id="chkSSL" checked> 🔒 Análise SSL/TLS</label>
             <label class="check-item deep"><input type="checkbox" id="chkGitExposure" checked> 🔍 Git Exposure Check</label>
             <label class="check-item deep"><input type="checkbox" id="chkOpenRedirect" checked> 🔗 Open Redirect</label>
+            <label class="check-item deep"><input type="checkbox" id="chkHydra" checked> 🔱 Hydra Credential Attack</label>
+            <label class="check-item deep"><input type="checkbox" id="chkTailscale" checked> 🕸️ Tailscale/VPN/Network</label>
+            <label class="check-item deep"><input type="checkbox" id="chkDosAdvanced" checked> 🌊 DoS Avançado (Slowloris/ReDoS)</label>
             <label class="check-item deep"><input type="checkbox" id="chkSubdomains"> 🌐 Scan Subdomínios</label>
             <label class="check-item deep"><input type="checkbox" id="chkScreenshot"> 📸 Screenshots (Puppeteer)</label>
             <label class="check-item deep"><input type="checkbox" id="chkPassive"> 👁️ Modo Passivo (sem writes)</label>
@@ -244,7 +247,7 @@
       <div class="console-output" id="consoleOutput">
           <div class="console-line info">
             <span class="line-prefix">[INFO]</span>
-            <span>Supabase Guard v3.1 — Pronto para auditoria.</span>
+            <span>Supabase Guard v3.2 — Pronto para auditoria.</span>
           </div>
         <div class="console-line info">
           <span class="line-prefix">[INFO]</span>
@@ -523,7 +526,7 @@
             </svg>
             <span>SUPABASE <strong>GUARD</strong></span>
           </div>
-          <p class="footer-version">v3.1.0 — Defensive Audit Console</p>
+          <p class="footer-version">v3.2.0 — Defensive Audit Console</p>
         </div>
         
         <div class="footer-tools">
@@ -538,6 +541,11 @@
             <span class="tool-tag">Auth</span>
             <span class="tool-tag">DDoS Check</span>
             <span class="tool-tag">Brute Force</span>
+            <span class="tool-tag">Hydra Simulation</span>
+            <span class="tool-tag">Tailscale/VPN</span>
+            <span class="tool-tag">DoS Avançado</span>
+            <span class="tool-tag">Slowloris</span>
+            <span class="tool-tag">ReDoS</span>
             <span class="tool-tag">SSL/TLS</span>
             <span class="tool-tag">Security Headers</span>
             <span class="tool-tag">Deep Scan</span>

@@ -50,6 +50,9 @@ const { hardeningCheck } = require('./checks/hardening-check');
 const { checkDDoSResilience } = require('./checks/ddos-check');
 const { checkBruteForce } = require('./checks/brute-force');
 const { checkSecurityHeaders } = require('./checks/headers-security');
+const { checkHydraSimulation } = require('./checks/hydra-simulation');
+const { checkTailscaleNetwork } = require('./checks/tailscale-network');
+const { checkDosAdvanced } = require('./checks/dos-advanced');
 
 // ── Evidence signing ─────────────────────────────────────────────
 function signEvidence(data) {
@@ -100,6 +103,9 @@ function calculateScore(results) {
     { group: 'brute-force', pattern: /Brute Force|Lockout/i,    weight: 1.4, keyControl: true },
     { group: 'ssl',         pattern: /SSL|TLS/i,                weight: 1.2, keyControl: true },
     { group: 'security-headers', pattern: /Security Headers/i,   weight: 0.8 },
+    { group: 'hydra',           pattern: /Hydra/i,                   weight: 1.5, keyControl: true },
+    { group: 'network',         pattern: /Network|Tailscale|VPN/i,   weight: 1.2, keyControl: true },
+    { group: 'dos-advanced',    pattern: /DoS Avançado|Slowloris|ReDoS|Connection Exhaustion/i, weight: 1.3, keyControl: true },
   ];
 
   const failPenalties = { critical: 25, high: 14, medium: 7, low: 2, info: 0 };
@@ -229,6 +235,9 @@ async function runFullAudit(config, emit) {
     { name: '🌐 DDoS & DoS Resilience', fn: checkDDoSResilience, enabled: config.options.checkDDoS !== false, usesEmit: true },
     { name: '🔓 Brute Force Login Check', fn: checkBruteForce, enabled: config.options.checkBruteForce !== false, usesEmit: true },
     { name: '🛡️ Security Headers Analysis', fn: checkSecurityHeaders, enabled: config.options.checkSecurityHeaders !== false, usesEmit: true },
+    { name: '🔱 Hydra Credential Attack Check', fn: checkHydraSimulation, enabled: config.options.checkHydra !== false, usesEmit: true, useWebsiteUrl: true },
+    { name: '🌐 Tailscale & Network Security', fn: checkTailscaleNetwork, enabled: config.options.checkTailscale !== false, usesEmit: true, useWebsiteUrl: true },
+    { name: '🌊 Advanced DoS Analysis', fn: checkDosAdvanced, enabled: config.options.checkDosAdvanced !== false, usesEmit: true, useWebsiteUrl: true },
     // ── Advanced Supabase Modules (dependem de credenciais) ──
     { name: '📡 OpenAPI Introspection', fn: openAPIIntrospection, enabled: config.options.checkOpenAPI !== false, usesEmit: true },
     { name: '🔍 REST Scan Deep', fn: restScanDeep, enabled: config.options.checkRESTDeep !== false, usesEmit: true },

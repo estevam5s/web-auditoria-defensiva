@@ -291,8 +291,8 @@ app.get('/api/health', async (req, res) => {
   res.json({
     status: 'ok',
     engine: 'supabase-guard',
-    version: '3.1.0',
-    features: ['pdf-report', 'html-report', 'site-scraper', 'stack-detection', 'deep-analysis-v2', 'auto-detect', 'openapi-introspection', 'rest-scan-deep', 'relationship-rls', 'graphql-scan', 'auth-settings-deep', 'supabase-catalog', 'supabase-db-save', 'git-history-analysis', 'audit-history', 'ddos-check', 'brute-force-check', 'ssl-analysis', 'security-headers'],
+    version: '3.2.0',
+    features: ['pdf-report', 'html-report', 'site-scraper', 'stack-detection', 'deep-analysis-v2', 'auto-detect', 'openapi-introspection', 'rest-scan-deep', 'relationship-rls', 'graphql-scan', 'auth-settings-deep', 'supabase-catalog', 'supabase-db-save', 'git-history-analysis', 'audit-history', 'ddos-check', 'brute-force-check', 'ssl-analysis', 'security-headers', 'hydra-simulation', 'tailscale-network-check', 'dos-advanced-slowloris-redos', 'route-discovery-expanded'],
     storedAudits: auditStore.size,
     supabase: {
       configured: !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY),
@@ -655,10 +655,14 @@ app.get('*', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`\n  ╔══════════════════════════════════════════╗`);
-  console.log(`  ║   SUPABASE GUARD — Audit Console v3.1    ║`);
+  console.log(`  ║   SUPABASE GUARD — Audit Console v3.2    ║`);
   console.log(`  ║   Running on http://localhost:${PORT}        ║`);
   console.log(`  ║                                          ║`);
-  console.log(`  ║   NEW Features v3.1:                      ║`);
+  console.log(`  ║   NEW Features v3.2:                      ║`);
+  console.log(`  ║   🔱 Hydra Credential Attack Simulation   ║`);
+  console.log(`  ║   🕸️ Tailscale/VPN/Network Security       ║`);
+  console.log(`  ║   🌊 Advanced DoS (Slowloris/ReDoS/HTTP2) ║`);
+  console.log(`  ║   🗺️ Expanded Route Discovery (+80 paths) ║`);
   console.log(`  ║   🌐 DDoS/DoS Resilience Check            ║`);
   console.log(`  ║   🔓 Brute Force Login Check               ║`);
   console.log(`  ║   🛡️ Security Headers Analysis             ║`);
