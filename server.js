@@ -31,15 +31,17 @@ const app = express();
 const PORT = process.env.PORT || 2998;
 const APP_VERSION = '3.3.0';
 
-// ─── Build hash: muda toda vez que o servidor inicia ─────────────
-// Combina a versão + timestamp de boot para invalidar cache no deploy
+// ─── Build hash: estável por versão, muda apenas em novo deploy ──
+// Usa só APP_VERSION + npm_package_version (sem Date.now).
+// Em produção, defina BUILD_HASH via variável de ambiente no CI/CD.
+// Isso evita que reinícios do servidor em dev disparem reload no browser.
 const BUILD_HASH = process.env.BUILD_HASH ||
   crypto.createHash('sha256')
-    .update(APP_VERSION + process.env.npm_package_version + Date.now().toString())
+    .update(APP_VERSION + (process.env.npm_package_version || ''))
     .digest('hex')
     .slice(0, 12);
 
-console.log(`[Cache] Build hash: ${BUILD_HASH}`);
+console.log(`[Cache] Build hash: ${BUILD_HASH} (versão: ${APP_VERSION})`);
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));

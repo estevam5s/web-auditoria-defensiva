@@ -34,8 +34,15 @@ const $$ = (sel) => document.querySelectorAll(sel);
   // Recebe mensagem do SW quando cache é invalidado por novo deploy
   navigator.serviceWorker.addEventListener('message', event => {
     if (event.data?.type === 'CACHE_INVALIDATED') {
-      console.log('[SW] Nova versão detectada:', event.data.newVersion, '— recarregando...');
-      window.location.reload();
+      console.log('[SW] Nova versão detectada:', event.data.newVersion);
+      // NUNCA recarregar automaticamente — mostrar banner apenas se não houver scan ativo
+      if (isScanning) {
+        // Scan em andamento: agendar notificação para quando terminar
+        console.log('[SW] Scan ativo — reload adiado para após o término.');
+        window._pendingReload = true;
+      } else {
+        showUpdateBanner();
+      }
     }
     if (event.data?.type === 'CACHE_CLEARED') {
       console.log('[SW] Cache limpo com sucesso.');
@@ -242,6 +249,12 @@ async function startAudit() {
   btn.disabled = false;
   btn.classList.remove('scanning');
   btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg> Iniciar Auditoria`;
+
+  // Exibir banner de atualização adiado se havia versão nova pendente
+  if (window._pendingReload) {
+    window._pendingReload = false;
+    showUpdateBanner();
+  }
 }
 
 // ── Handle SSE Events ────────────────────────────────────────────

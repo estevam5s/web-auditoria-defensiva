@@ -7,9 +7,10 @@
 
 const CACHE_PREFIX = 'supabase-guard-';
 const VERSION_URL  = '/api/version';
-const VERSION_CHECK_INTERVAL = 30 * 1000; // 30s
+const VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5 min — era 30s, aumentado para evitar reload durante scans
 
 let CURRENT_CACHE = null;
+let _notifiedVersion = null; // evita notificar a mesma versão múltiplas vezes
 
 // ── Helpers ──────────────────────────────────────────────────────
 
@@ -48,10 +49,14 @@ async function deleteOldCaches(keepName) {
 }
 
 async function nukeCacheAndReload(newHash) {
+  // Evita notificar múltiplas vezes para a mesma versão
+  if (_notifiedVersion === newHash) return;
+  _notifiedVersion = newHash;
+
   const newCacheName = CACHE_PREFIX + newHash;
   CURRENT_CACHE = newCacheName;
   await deleteOldCaches(newCacheName);
-  // Notify all clients to reload
+  // Notifica clientes — eles decidem quando recarregar (não forçamos)
   const clients = await self.clients.matchAll({ type: 'window' });
   for (const client of clients) {
     client.postMessage({ type: 'CACHE_INVALIDATED', newVersion: newHash });
