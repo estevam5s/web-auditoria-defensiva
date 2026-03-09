@@ -330,17 +330,19 @@ function handleComplete(results) {
   showResultsList(results.results);
   showEvidence(results);
 
-  // Reveal checklist, ISO and Python Scripts buttons now that we have an auditId
+  // Reveal checklist, ISO, Python Scripts, Terminal buttons now that we have an auditId
   const btnChecklist = $('#btnChecklist');
   const btnExport = $('#btnChecklistExport');
   const btnISO = $('#btnISO');
   const btnPython = $('#btnPythonScripts');
   const btnBounty = $('#btnBugBounty');
+  const btnTerminal = $('#btnTerminal');
   if (btnChecklist) btnChecklist.style.display = '';
   if (btnExport) btnExport.style.display = '';
   if (btnISO) btnISO.style.display = '';
   if (btnPython) btnPython.style.display = '';
   if (btnBounty) btnBounty.style.display = '';
+  if (btnTerminal) btnTerminal.style.display = '';
 }
 
 // ── ISO Compliance Page ──────────────────────────────────────────
@@ -365,6 +367,13 @@ function openBugBounty() {
   } else {
     window.open('/bugbounty', '_blank');
   }
+}
+
+// ── Security Terminal ──────────────────────────────────────────
+function openTerminal() {
+  const id = currentAuditId || auditResults?.evidence?.auditId;
+  if (!id) { alert('Execute uma auditoria primeiro para abrir o Terminal de Segurança.'); return; }
+  window.open(`/terminal/${id}`, '_blank');
 }
 
 // ── Score Card ───────────────────────────────────────────────────

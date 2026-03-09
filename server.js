@@ -332,6 +332,28 @@ app.get('/api/audits', (req, res) => {
 // ─── Hacker Academy ───────────────────────────────────────────────
 app.get('/learn', (req, res) => res.sendFile(path.join(__dirname, 'public', 'learn.html')));
 
+// ─── Security Terminal ────────────────────────────────────────────
+app.get('/terminal/:auditId', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'terminal.html'));
+});
+
+// Terminal AI endpoint — calls Groq and returns analysis
+app.post('/api/terminal/:auditId/ai', async (req, res) => {
+  const data = auditStore.get(req.params.auditId);
+  if (!data) return res.status(404).json({ error: 'Auditoria não encontrada. Execute novamente.' });
+
+  const { question } = req.body;
+  if (!question) return res.status(400).json({ error: 'question é obrigatório' });
+
+  try {
+    const result = await askGrok(data, question);
+    res.json(result);
+  } catch (err) {
+    console.error('[Terminal AI] Error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ─── Audit Detail Dashboard (live page, fetches /api/audit/:id) ──
 app.get('/audit/:id', (req, res) => {
   // Serve the interactive dashboard; data loaded client-side via /api/audit/:id

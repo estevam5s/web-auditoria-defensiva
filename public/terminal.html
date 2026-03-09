@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Terminal — Supabase Guard</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0a0a0f;
+      --bg2:        #0d0d14;
+      --bg3:        #111118;
+      --border:     rgba(0,255,65,0.18);
+      --green:      #00ff41;
+      --green2:     #00cc33;
+      --cyan:       #00d4ff;
+      --yellow:     #ffd700;
+      --red:        #ff4040;
+      --orange:     #ff9800;
+      --purple:     #a855f7;
+      --text:       #c8ffc8;
+      --text-dim:   #5a7a5a;
+      --font:       'JetBrains Mono', 'Courier New', monospace;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      line-height: 1.55;
+      overflow: hidden;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    #header {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 0.45rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      gap: 1rem;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      min-width: 0;
+    }
+    .logo {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--green);
+      text-decoration: none;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .logo span { color: var(--text-dim); }
+    .badge {
+      background: rgba(0,255,65,0.1);
+      border: 1px solid var(--border);
+      color: var(--green);
+      padding: 0.12rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    #audit-meta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      overflow: hidden;
+    }
+    #meta-url {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 280px;
+    }
+    .header-actions {
+      display: flex;
+      gap: 0.4rem;
+      flex-shrink: 0;
+    }
+    .btn-h {
+      background: rgba(0,255,65,0.07);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.22rem 0.65rem;
+      border-radius: 4px;
+      font-family: var(--font);
+      font-size: 0.72rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.18s;
+      white-space: nowrap;
+    }
+    .btn-h:hover {
+      background: rgba(0,255,65,0.15);
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    /* ── TABS ── */
+    #tabs {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: stretch;
+      flex-shrink: 0;
+      overflow-x: auto;
+    }
+    #tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      padding: 0.38rem 1rem;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      cursor: pointer;
+      border-right: 1px solid var(--border);
+      transition: all 0.15s;
+      user-select: none;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+    }
+    .tab:hover { color: var(--text); background: rgba(0,255,65,0.05); }
+    .tab.active { color: var(--green); background: rgba(0,255,65,0.1); border-bottom-color: var(--green); }
+
+    /* ── TERMINAL BODY ── */
+    #terminal {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #output {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.7rem 1rem;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0,255,65,0.2) transparent;
+    }
+    #output::-webkit-scrollbar { width: 5px; }
+    #output::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.2); border-radius: 3px; }
+
+    .line {
+      display: block;
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.5;
+      min-height: 1em;
+      font-size: 13px;
+    }
+    .line.output  { color: var(--text); }
+    .line.error   { color: var(--red); }
+    .line.warn    { color: var(--yellow); }
+    .line.info    { color: var(--cyan); }
+    .line.success { color: var(--green2); }
+    .line.dim     { color: var(--text-dim); }
+    .line.prompt-line { color: var(--green); }
+    .line.critical { color: var(--red); }
+    .line.high    { color: var(--orange); }
+    .line.medium  { color: var(--yellow); }
+    .line.pass    { color: var(--green2); }
+
+    .c-green  { color: var(--green);    }
+    .c-green2 { color: var(--green2);   }
+    .c-cyan   { color: var(--cyan);     }
+    .c-yellow { color: var(--yellow);   }
+    .c-red    { color: var(--red);      }
+    .c-orange { color: var(--orange);   }
+    .c-purple { color: var(--purple);   }
+    .c-dim    { color: var(--text-dim); }
+    .c-bold   { font-weight: 700;       }
+    .c-dir    { color: var(--cyan);     }
+    .c-file   { color: var(--text);     }
+
+    /* ── INPUT ROW ── */
+    #input-row {
+      display: flex;
+      align-items: center;
+      padding: 0.45rem 1rem;
+      border-top: 1px solid var(--border);
+      background: var(--bg2);
+      flex-shrink: 0;
+      gap: 0.4rem;
+    }
+    #prompt-display {
+      color: var(--green);
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-size: 13px;
+    }
+    #cmd-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      caret-color: var(--green);
+    }
+    #cmd-input::placeholder { color: var(--text-dim); font-size: 0.75rem; }
+
+    /* ── STATUS BAR ── */
+    #statusbar {
+      background: rgba(0,255,65,0.06);
+      border-top: 1px solid rgba(0,255,65,0.08);
+      padding: 0.18rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.66rem;
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }
+
+    /* ── LOADING ── */
+    #loading {
+      position: absolute;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 2px solid var(--border);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+    .cursor-blink { animation: blink 1s step-start infinite; color: var(--green); }
+
+    /* ── AI STREAM BOX ── */
+    .ai-box {
+      border-left: 2px solid var(--purple);
+      padding-left: 0.75rem;
+      margin: 0.2rem 0;
+    }
+
+    /* ── SCORE BAR ── */
+    .score-bar { letter-spacing: -0.5px; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <div id="header">
+    <div class="header-left">
+      <a href="/" class="logo">SUPABASE<span>/</span>GUARD</a>
+      <span class="badge">🖥 SECURITY TERMINAL v3.3</span>
+      <div id="audit-meta">
+        <span id="meta-url" title="">—</span>
+        <span id="meta-score">—</span>
+        <span id="meta-ts" style="display:none">—</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-h" onclick="runCmd('export json')">⬇ JSON</button>
+      <button class="btn-h" onclick="runCmd('export evidence')">🔐 Evidência</button>
+      <button class="btn-h" onclick="runCmd('ai report')">🤖 AI Report</button>
+      <a href="javascript:history.back()" class="btn-h">← Voltar</a>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div id="tabs">
+    <div class="tab active"  data-tab="terminal"  onclick="tabClick(this,'terminal')">⌨  Terminal</div>
+    <div class="tab"         data-tab="status"    onclick="tabClick(this,'status')">📊 Status</div>
+    <div class="tab"         data-tab="vulns"     onclick="tabClick(this,'vulns')">🔴 Vulnerabilidades</div>
+    <div class="tab"         data-tab="env"       onclick="tabClick(this,'env')">🔑 Credenciais</div>
+    <div class="tab"         data-tab="evidence"  onclick="tabClick(this,'evidence')">🔐 Evidência</div>
+    <div class="tab"         data-tab="tree"      onclick="tabClick(this,'tree')">📁 Arquivos</div>
+  </div>
+
+  <!-- TERMINAL -->
+  <div id="terminal">
+    <div id="loading">
+      <div class="spinner"></div>
+      <span style="color:var(--green);font-size:0.85rem">Carregando auditoria...</span>
+    </div>
+    <div id="output"></div>
+    <div id="input-row">
+      <span id="prompt-display">analyst@guard:~$ </span>
+      <input id="cmd-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="comando (help para ajuda)">
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div id="statusbar">
+    <span id="status-left">🟢 Terminal ativo — <strong>help</strong> para comandos</span>
+    <span id="status-right"><span id="status-cwd">/</span> | Supabase Guard v3.3</span>
+  </div>
+
+</div>
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════════════════════
+//  SUPABASE GUARD — SECURITY TERMINAL
+//  Virtual filesystem + Linux commands + Groq AI integration
+// ═══════════════════════════════════════════════════════════════════
+
+const AUDIT_ID  = location.pathname.split('/').filter(Boolean).pop();
+
+let auditData   = null;
+let vfs         = null;
+let cwd         = '/';
+let cmdHistory  = [];
+let histIdx     = -1;
+let aiRunning   = false;
+
+// ── DOM ────────────────────────────────────────────────────────────
+const outputEl   = document.getElementById('output');
+const cmdInput   = document.getElementById('cmd-input');
+const promptEl   = document.getElementById('prompt-display');
+const statusCwd  = document.getElementById('status-cwd');
+const loadingEl  = document.getElementById('loading');
+
+// ── Output helpers ─────────────────────────────────────────────────
+function esc(s) {
+  return String(s ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function writeLine(html = '', cls = 'output') {
+  const d = document.createElement('div');
+  d.className = 'line ' + cls;
+  d.innerHTML = html;
+  outputEl.appendChild(d);
+  outputEl.scrollTop = outputEl.scrollHeight;
+  return d;
+}
+const write    = (t,  cls='output') => writeLine(esc(t), cls);
+const writeRaw = (h,  cls='output') => writeLine(h, cls);
+const writeBlank = ()               => writeLine('', 'dim');
+const writeErr   = (m)              => write('bash: ' + m, 'error');
+const writeSep   = (c='─', n=70)    => writeRaw(`<span class="c-dim">${c.repeat(n)}</span>`, 'dim');
+
+// ── Path helpers ───────────────────────────────────────────────────
+function normPath(p) {
+  const parts = p.replace(/\/+/g,'/').split('/').filter(Boolean);
+  const s = [];
+  for (const x of parts) { if (x==='..') s.pop(); else if (x!=='.') s.push(x); }
+  return '/' + s.join('/');
+}
+function resolvePath(p) {
+  if (!p || p==='~') return '/';
+  if (p.startsWith('/')) return normPath(p);
+  return normPath(cwd + '/' + p);
+}
+function getNode(path) {
+  if (path==='/') return vfs;
+  const parts = path.replace(/^\//,'').split('/');
+  let node = vfs;
+  for (const part of parts) {
+    if (!node || node.type!=='dir') return null;
+    node = node.children?.[part];
+  }
+  return node ?? null;
+}
+function getContent(node) {
+  if (!node || node.type!=='file') return null;
+  try { return typeof node.content==='function' ? node.content() : node.content; }
+  catch { return '[erro ao ler arquivo]'; }
+}
+function hashCode(s) {
+  let h=0;
+  for (let i=0;i<s.length;i++) h=Math.imul(31,h)+s.charCodeAt(i)|0;
+  return Math.abs(h);
+}
+
+// ── Boot ───────────────────────────────────────────────────────────
+async function boot() {
+  try {
+    const r = await fetch(`/api/audit/${AUDIT_ID}`);
+    if (!r.ok) throw new Error(`Auditoria não encontrada (id: ${AUDIT_ID})`);
+    auditData = await r.json();
+  } catch(e) {
+    loadingEl.innerHTML = `<span style="color:var(--red)">❌ ${esc(e.message)}</span><br><br><a href="/" style="color:var(--cyan)">← Voltar ao início</a>`;
+    return;
+  }
+  vfs = buildVFS(auditData);
+  updateHeader(auditData);
+  loadingEl.style.display = 'none';
+  cwd = '/audit';
+  updatePrompt();
+  cmdInput.focus();
+  printBanner();
+}
+
+function updateHeader(data) {
+  const url   = data.projectUrl || '—';
+  const score = data.score ?? '?';
+  const grade = data.grade?.grade || '?';
+  const color = data.grade?.color || '#fff';
+  document.getElementById('meta-url').textContent = url.length>50 ? url.slice(0,50)+'…' : url;
+  document.getElementById('meta-url').title = url;
+  document.getElementById('meta-score').innerHTML =
+    `<span style="color:${color};font-weight:700">${score}/100 (${grade} — ${data.grade?.label||''})</span>`;
+  document.title = `Terminal — ${url}`;
+}
+function updatePrompt() {
+  const p = cwd==='/' ? '~' : cwd;
+  promptEl.innerHTML =
+    `<span class="c-green">analyst</span><span class="c-dim">@guard</span><span class="c-dim">:</span><span class="c-cyan">${esc(p)}</span><span class="c-green">$ </span>`;
+  statusCwd.textContent = cwd;
+}
+
+// ── Banner ─────────────────────────────────────────────────────────
+function printBanner() {
+  const d = auditData;
+  writeRaw(`<span class="c-green c-bold">╔══════════════════════════════════════════════════════════════╗
+║  SUPABASE GUARD ─ SECURITY TERMINAL v3.3                    ║
+║  Virtual FS · Linux Commands · Groq AI · Signed Evidence    ║
+╚══════════════════════════════════════════════════════════════╝</span>`);
+  writeBlank();
+  writeRaw(`  <span class="c-dim">Target   :</span> <span class="c-cyan">${esc(d.projectUrl||'—')}</span>`);
+  writeRaw(`  <span class="c-dim">Audit ID :</span> <span class="c-yellow">${esc(AUDIT_ID)}</span>`);
+  writeRaw(`  <span class="c-dim">Score    :</span> <span class="c-bold" style="color:${d.grade?.color||'#fff'}">${d.score||0}/100 — ${d.grade?.grade||'?'} — ${d.grade?.label||''}</span>`);
+  writeRaw(`  <span class="c-dim">Checks   :</span> <span class="c-green2">✅ ${d.passed||0}</span>  <span class="c-red">❌ ${d.failed||0}</span>  <span class="c-yellow">⚠ ${d.warnings||0}</span>  <span class="c-dim">(${d.totalChecks||0} total)</span>`);
+  writeBlank();
+  writeRaw(`  <span class="c-dim">VFS montado em</span> <span class="c-cyan">/audit</span>  <span class="c-dim">—  IA em</span> <span class="c-cyan">/ai</span>`);
+  writeRaw(`  <span class="c-dim">Digite</span> <span class="c-green">help</span> <span class="c-dim">ou explore com</span> <span class="c-green">ls /audit</span>  <span class="c-dim">·</span>  <span class="c-green">tree /</span>`);
+  writeBlank();
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  VIRTUAL FILESYSTEM
+// ══════════════════════════════════════════════════════════════════
+function buildVFS(data) {
+  const results = data.results || [];
+  const url     = data.projectUrl || '';
+
+  const fails = sev => sev==='all'
+    ? results.filter(r => r.status!=='PASS')
+    : results.filter(r => r.severity===sev && r.status!=='PASS');
+
+  function buildSummary() {
+    const ts = data.evidence?.timestamp
+      ? new Date(data.evidence.timestamp).toLocaleString('pt-BR') : '—';
+    return [
+      '╔══════════════════════════════════════════════════════════════╗',
+      '║  SUPABASE GUARD — AUDIT SUMMARY REPORT                      ║',
+      '╚══════════════════════════════════════════════════════════════╝',
+      '',
+      `  Target      : ${url}`,
+      `  Audit ID    : ${data.evidence?.auditId||AUDIT_ID}`,
+      `  Timestamp   : ${ts}`,
+      `  Duration    : ${data.duration?(data.duration/1000).toFixed(1)+'s':'—'}`,
+      '',
+      '  ── SECURITY SCORE ────────────────────────────────────────────',
+      `  Score : ${data.score||0}/100`,
+      `  Grade : ${data.grade?.grade||'?'} — ${data.grade?.label||'—'}`,
+      '',
+      '  ── CHECK RESULTS ─────────────────────────────────────────────',
+      `  ✅ PASSED   : ${data.passed||0}`,
+      `  ❌ FAILED   : ${data.failed||0}`,
+      `  ⚠  WARNINGS : ${data.warnings||0}`,
+      `  Total       : ${data.totalChecks||0}`,
+      '',
+      '  ── SEVERITY BREAKDOWN ────────────────────────────────────────',
+      `  CRITICAL : ${fails('critical').length}`,
+      `  HIGH     : ${fails('high').length}`,
+      `  MEDIUM   : ${fails('medium').length}`,
+      `  LOW      : ${fails('low').length}`,
+      '',
+      '  ── TOP CRITICAL FINDINGS ─────────────────────────────────────',
+      ...(() => {
+        const c = fails('critical').slice(0,10);
+        if (!c.length) return ['  None — no critical findings detected.'];
+        return c.flatMap((r,i) => [`  [${i+1}] ${r.check}`, `      ${r.message}`, '']);
+      })(),
+      '',
+      `  Generated by Supabase Guard v3.3`,
+    ].join('\n');
+  }
+
+  function buildVulns(sev) {
+    const items = sev==='warn'||sev==='warnings'
+      ? results.filter(r=>r.status==='WARN')
+      : sev==='passed'
+        ? results.filter(r=>r.status==='PASS')
+        : sev==='all'
+          ? results.filter(r=>r.status!=='PASS')
+          : results.filter(r=>r.severity===sev && r.status!=='PASS');
+
+    if (!items.length) return `# No ${sev} findings.\n`;
+
+    const lines = [
+      `╔══════════════════════════════════════════════════════════════╗`,
+      `║  VULNERABILITIES ─ ${(sev||'ALL').toUpperCase().padEnd(41)}║`,
+      `╚══════════════════════════════════════════════════════════════╝`,
+      '',`Target : ${url}`, `Total  : ${items.length} finding(s)`, '',
+    ];
+    items.forEach((r,i) => {
+      lines.push(`[${String(i+1).padStart(3,'0')}] ${r.check||'—'}`);
+      lines.push(`     Status   : ${r.status}`);
+      lines.push(`     Severity : ${(r.severity||'?').toUpperCase()}`);
+      lines.push(`     Message  : ${r.message||'—'}`);
+      if (r.details) {
+        const det = r.details;
+        if (det.findings && Array.isArray(det.findings)) {
+          lines.push(`     Findings :`);
+          det.findings.slice(0,5).forEach(f => {
+            if (f.tipo||f.type)         lines.push(`       • Tipo     : ${f.tipo||f.type}`);
+            if (f.localização||f.source) lines.push(`       • Local    : ${f.localização||f.source}`);
+            if (f.valor_mascarado||f.value) lines.push(`       • Valor    : ${f.valor_mascarado||f.value}`);
+            if (f.contexto||f.context)  lines.push(`       • Contexto : ${(f.contexto||f.context||'').slice(0,100)}`);
+          });
+        }
+        if (det.recommendation) lines.push(`     Fix      : ${det.recommendation.slice(0,200)}`);
+        if (det.affectedUrls)   lines.push(`     URLs     : ${(det.affectedUrls||[]).slice(0,3).join(', ')}`);
+      }
+      lines.push('');
+    });
+    return lines.join('\n');
+  }
+
+  function buildEvidence() {
+    const ev = data.evidence || {};
+    return [
+      '╔══════════════════════════════════════════════════════════════╗',
+      '║  SIGNED EVIDENCE — SHA-256 Integrity Certificate            ║',
+      '╚══════════════════════════════════════════════════════════════╝',
+      '',
+      `  Audit ID   : ${ev.auditId||AUDIT_ID}`,
+      `  SHA-256    : ${ev.sha256||'N/A'}`,
+      `  Timestamp  : ${ev.timestamp||'N/A'}`,
+      `  Algorithm  : SHA-256`,
+      '',
+      '  ── VERIFICATION ──────────────────────────────────────────────',
+      '  To verify this report integrity, compare the SHA-256 hash',
+      '  above with a sha256sum of the full audit JSON:',
+      '',
+      `  cat audit/report.json | sha256sum`,
+      '',
+      '  ── CHAIN OF CUSTODY ──────────────────────────────────────────',
+      `  Target URL : ${url}`,
+      `  Score      : ${data.score}/100 (${data.grade?.grade||'?'})`,
+      `  Checks Run : ${data.totalChecks||0}`,
+      `  Duration   : ${data.duration?(data.duration/1000).toFixed(1)+'s':'—'}`,
+      '',
+      '  This evidence was generated by Supabase Guard v3.3.',
+      '  It can be used in security audits and compliance reports.',
+    ].join('\n');
+  }
+
+  function buildCreds() {
+    const envChecks = results.filter(r =>
+      /env|credential|secret|key|leak|exposed|senha|password/i.test(r.check) && r.status!=='PASS'
+    );
+    if (!envChecks.length) return '# Nenhuma credencial ou variável de ambiente detectada.\n';
+
+    const lines = [
+      '╔══════════════════════════════════════════════════════════════╗',
+      '║  CREDENCIAIS E VARIÁVEIS DE AMBIENTE EXPOSTAS               ║',
+      '╚══════════════════════════════════════════════════════════════╝',
+      '',
+      `  Target   : ${url}`,
+      `  Achados  : ${envChecks.length}`,
+      '',
+      '  ⚠ AÇÃO URGENTE: Rotacione TODAS as credenciais listadas!',
+      '',
+    ];
+    envChecks.forEach((r,i) => {
+      lines.push(`[${String(i+1).padStart(3,'0')}] ${r.check}`);
+      lines.push(`     Severity     : ${(r.severity||'?').toUpperCase()}`);
+      lines.push(`     Mensagem     : ${r.message}`);
+      if (r.details?.findings) {
+        r.details.findings.forEach(f => {
+          lines.push('');
+          lines.push(`     ┌─ ${f.tipo||f.type||'Credencial'}`);
+          lines.push(`     │  Localização : ${f.localização||f.location||f.source||'—'}`);
+          lines.push(`     │  Valor       : ${f.valor_mascarado||f.value||'—'}`);
+          if (f.contexto||f.context) lines.push(`     │  Contexto    : ${(f.contexto||f.context||'').slice(0,120)}`);
+          lines.push('     └─');
+        });
+      }
+      if (r.details?.affectedUrls?.length) {
+        lines.push(`     URLs afetadas:`);
+        r.details.affectedUrls.forEach(u => lines.push(`       • ${u}`));
+      }
+      if (r.details?.recommendation) {
+        lines.push(`     Recomendação : ${r.details.recommendation.slice(0,200)}`);
+      }
+      lines.push('');
+    });
+    return lines.join('\n');
+  }
+
+  function buildAllJson() {
+    return JSON.stringify({
+      auditId: data.evidence?.auditId||AUDIT_ID,
+      projectUrl: url, score: data.score, grade: data.grade,
+      timestamp: data.evidence?.timestamp, duration: data.duration,
+      totalChecks: data.totalChecks, passed: data.passed,
+      failed: data.failed, warnings: data.warnings,
+      results, evidence: data.evidence,
+    }, null, 2);
+  }
+
+  function buildChecks() {
+    const icon = {PASS:'✅',FAIL:'❌',WARN:'⚠ '};
+    const lines = [
+      '╔══════════════════════════════════════════════════════════════╗',
+      '║  ALL SECURITY CHECKS                                        ║',
+      '╚══════════════════════════════════════════════════════════════╝',
+      '', `Total: ${results.length} checks performed`, '',
+    ];
+    results.forEach(r => {
+      const ic = icon[r.status]||'  ';
+      const sev = r.severity ? ` [${r.severity.toUpperCase()}]`.padEnd(12) : '            ';
+      lines.push(`${ic}${sev} ${r.check||'—'}`);
+      if (r.status!=='PASS') lines.push(`              → ${(r.message||'').slice(0,140)}`);
+    });
+    return lines.join('\n');
+  }
+
+  function buildReadme() {
+    return [
+      '╔══════════════════════════════════════════════════════════════╗',
+      '║  SUPABASE GUARD SECURITY TERMINAL — VIRTUAL FILESYSTEM      ║',
+      '╚══════════════════════════════════════════════════════════════╝',
+      '',
+      'DESCRIPTION',
+      `  Auditoria de segurança de: ${url}`,
+      '',
+      'ESTRUTURA DE DIRETÓRIOS',
+      '  /audit/',
+      '    summary.txt          — Resumo legível da auditoria',
+      '    evidence.sha256      — Certificado de evidência assinado',
+      '    report.json          — Dados completos da auditoria (JSON)',
+      '    vulnerabilities/',
+      '      critical.txt       — Vulnerabilidades críticas',
+      '      high.txt           — Vulnerabilidades altas',
+      '      medium.txt         — Vulnerabilidades médias',
+      '      warnings.txt       — Todos os avisos',
+      '      passed.txt         — Verificações aprovadas',
+      '      all.json           — Todos os achados (JSON)',
+      '    credentials/',
+      '      leaked.txt         — Credenciais e env vars expostos',
+      '    checks/',
+      '      all-results.txt    — Todos os resultados',
+      '  /ai/',
+      '    (relatórios gerados via: ai report)',
+      '',
+      'USO RÁPIDO',
+      '  ls /audit              — Explorar arquivos de auditoria',
+      '  cat /audit/summary.txt — Ver resumo',
+      '  audit vulns critical   — Listar vulns críticas',
+      '  audit env              — Ver credenciais expostas',
+      '  ai analyze             — Análise AI completa',
+      '  ai report              — Gerar relatório AI em markdown',
+      '  export json            — Baixar auditoria como JSON',
+      '  help                   — Todos os comandos',
+    ].join('\n');
+  }
+
+  // ── VFS root ────────────────────────────────────────────────────
+  return {
+    type: 'dir',
+    children: {
+      'README.txt': { type:'file', content: buildReadme },
+      'audit': {
+        type: 'dir',
+        children: {
+          'summary.txt':     { type:'file', content: buildSummary     },
+          'evidence.sha256': { type:'file', content: buildEvidence    },
+          'report.json':     { type:'file', content: buildAllJson     },
+          'vulnerabilities': {
+            type: 'dir',
+            children: {
+              'critical.txt': { type:'file', content: ()=>buildVulns('critical') },
+              'high.txt':     { type:'file', content: ()=>buildVulns('high')     },
+              'medium.txt':   { type:'file', content: ()=>buildVulns('medium')   },
+              'warnings.txt': { type:'file', content: ()=>buildVulns('warn')     },
+              'passed.txt':   { type:'file', content: ()=>buildVulns('passed')   },
+              'all.json': {
+                type:'file',
+                content: ()=>JSON.stringify(results.filter(r=>r.status!=='PASS'), null, 2)
+              },
+            }
+          },
+          'credentials': {
+            type: 'dir',
+            children: {
+              'leaked.txt': { type:'file', content: buildCreds },
+            }
+          },
+          'checks': {
+            type: 'dir',
+            children: {
+              'all-results.txt': { type:'file', content: buildChecks },
+            }
+          },
+        }
+      },
+      'ai': {
+        type: 'dir',
+        children: {
+          '.gitkeep': { type:'file', content: ()=>'# Relatórios gerados via: ai report\n' }
+        }
+      },
+      'scripts': {
+        type: 'dir',
+        children: {
+          'README.txt': { type:'file', content: ()=>`# Blue Team Scripts\n# Acesse: /scripts/${AUDIT_ID}\n` }
+        }
+      },
+    }
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  COMMAND DISPATCHER
+// ══════════════════════════════════════════════════════════════════
+function execCmd(raw) {
+  const line = raw.trim();
+  if (!line) return;
+
+  writeRaw(`${promptEl.innerHTML}<span class="c-dim">${esc(line)}</span>`, 'prompt-line');
+
+  if (cmdHistory[cmdHistory.length-1] !== line) {
+    cmdHistory.push(line);
+    if (cmdHistory.length>500) cmdHistory.shift();
+  }
+  histIdx = cmdHistory.length;
+
+  const tokens    = parseTokens(line);
+  const cmd       = tokens[0]?.toLowerCase();
+  const args      = tokens.slice(1);
+  const flags     = args.filter(a=>a.startsWith('-'));
+  const positional= args.filter(a=>!a.startsWith('-'));
+
+  switch (cmd) {
+    // Navigation
+    case 'ls':     cmdLs(positional[0], flags); break;
+    case 'll':     cmdLs(positional[0], ['-la',...flags]); break;
+    case 'la':     cmdLs(positional[0], ['-la',...flags]); break;
+    case 'cd':     cmdCd(positional[0]); break;
+    case 'pwd':    write(cwd); break;
+    case 'cat':    cmdCat(positional[0]); break;
+    case 'head':   cmdHead(args); break;
+    case 'tail':   cmdTail(args); break;
+    case 'grep':   cmdGrep(args); break;
+    case 'find':   cmdFind(args); break;
+    case 'tree':   cmdTree(positional[0]||cwd); break;
+    case 'wc':     cmdWc(args); break;
+    case 'less':
+    case 'more':   cmdCat(positional[0]); break;
+    case 'file':   cmdFile(positional[0]); break;
+    case 'stat':   cmdStat(positional[0]); break;
+    case 'cp':
+    case 'mv':
+    case 'rm':     writeErr(`${cmd}: filesystem é somente-leitura`); break;
+    case 'touch':
+    case 'mkdir':  writeErr(`${cmd}: filesystem é somente-leitura`); break;
+
+    // Audit
+    case 'audit':  cmdAudit(args); break;
+    case 'status': cmdAudit(['status']); break;
+    case 'vulns':  cmdAudit(['vulns',...args]); break;
+    case 'env':    cmdAudit(['env']); break;
+
+    // AI
+    case 'ai':     cmdAiDispatch(args); break;
+
+    // Export
+    case 'export':   cmdExport(args); break;
+    case 'download': cmdDownload(positional[0]); break;
+
+    // System
+    case 'whoami':   cmdWhoami(); break;
+    case 'id':       write('uid=1000(analyst) gid=1000(analyst) groups=1000(analyst),27(sudo)'); break;
+    case 'date':     write(new Date().toString()); break;
+    case 'uname':    write('Supabase-Guard 3.3.0 #1 SMP Security-Terminal x86_64'); break;
+    case 'uptime':   cmdUptime(); break;
+    case 'history':  cmdHistoryList(); break;
+    case 'clear':    outputEl.innerHTML = ''; break;
+    case 'reset':    outputEl.innerHTML = ''; printBanner(); break;
+    case 'help':     cmdHelp(args[0]); break;
+    case 'man':      cmdHelp(args[0]); break;
+    case 'version':  write('Supabase Guard v3.3.0 — Security Terminal'); break;
+    case 'echo':     write(args.join(' ')); break;
+    case 'exit':
+    case 'quit':     history.back(); break;
+
+    case undefined:
+    case '':         break;
+
+    default:
+      writeErr(`${esc(cmd)}: comando não encontrado. Digite 'help' para ajuda.`);
+  }
+  writeBlank();
+}
+
+// ── Token parser ───────────────────────────────────────────────────
+function parseTokens(line) {
+  const tokens = [];
+  let cur='', inQ=false, qChar='';
+  for (const c of line) {
+    if (inQ) { if (c===qChar) inQ=false; else cur+=c; }
+    else if (c==='"'||c==="'") { inQ=true; qChar=c; }
+    else if (c===' ') { if (cur) { tokens.push(cur); cur=''; } }
+    else cur+=c;
+  }
+  if (cur) tokens.push(cur);
+  return tokens;
+}
+
+// ── ls ──────────────────────────────────────────────────────────
+function cmdLs(rawPath, flags=[]) {
+  const path = resolvePath(rawPath||cwd);
+  const node = getNode(path);
+  if (!node) { writeErr(`ls: '${rawPath}': Arquivo ou diretório não encontrado`); return; }
+
+  if (node.type==='file') { writeRaw(`<span class="c-file">${esc(path.split('/').pop())}</span>`); return; }
+
+  const showAll = flags.some(f=>f.includes('a'));
+  const longFmt = flags.some(f=>f.includes('l'));
+  const entries = Object.entries(node.children||{});
+  const filtered = showAll ? entries : entries.filter(([k])=>!k.startsWith('.'));
+
+  if (!filtered.length) { write('(diretório vazio)', 'dim'); return; }
+
+  if (!longFmt) {
+    const cols = filtered.map(([name,n]) => {
+      const cls = n.type==='dir' ? 'c-dir' : 'c-file';
+      const suf = n.type==='dir' ? '/' : '';
+      return `<span class="${cls}">${esc(name)}${suf}</span>`;
+    });
+    writeRaw(`<span class="c-dim">total ${filtered.length}</span>`);
+    for (let i=0; i<cols.length; i+=4) writeRaw(cols.slice(i,i+4).join('  '));
+  } else {
+    writeRaw(`<span class="c-dim">total ${filtered.length}</span>`);
+    const now = 'Mar  9 2026';
+    filtered.forEach(([name,n]) => {
+      const isDir = n.type==='dir';
+      const perms = isDir ? `<span class="c-cyan">drwxr-xr-x</span>` : `<span class="c-dim">-rw-r--r--</span>`;
+      const size  = isDir ? `<span class="c-dim">     -</span>` : (() => {
+        try { const c=getContent(n); return `<span class="c-dim">${String(c?.length||0).padStart(6)}</span>`; } catch { return `<span class="c-dim">     0</span>`; }
+      })();
+      const cls = isDir ? 'c-dir' : 'c-file';
+      const suf = isDir ? '/' : '';
+      writeRaw(`${perms} 1 analyst analyst ${size} <span class="c-dim">${now}</span> <span class="${cls}">${esc(name)}${suf}</span>`);
+    });
+  }
+}
+
+// ── cd ──────────────────────────────────────────────────────────
+function cmdCd(rawPath) {
+  const path = resolvePath(rawPath);
+  const node = getNode(path);
+  if (!node)            { writeErr(`cd: '${rawPath}': Não encontrado`); return; }
+  if (node.type!=='dir'){ writeErr(`cd: '${rawPath}': Não é um diretório`); return; }
+  cwd = path;
+  updatePrompt();
+}
+
+// ── cat ─────────────────────────────────────────────────────────
+function cmdCat(rawPath) {
+  if (!rawPath) { writeErr('cat: operando ausente'); return; }
+  const path = resolvePath(rawPath);
+  const node = getNode(path);
+  if (!node)            { writeErr(`cat: '${rawPath}': Não encontrado`); return; }
+  if (node.type==='dir'){ writeErr(`cat: '${rawPath}': É um diretório`); return; }
+
+  const content = getContent(node);
+  if (content===null)   { writeErr(`cat: '${rawPath}': Erro de leitura`); return; }
+
+  content.split('\n').forEach(l => {
+    if (/^[╔║╚╠╣╬]/.test(l)) writeRaw(`<span class="c-green">${esc(l)}</span>`);
+    else if (/^  ──|^──/.test(l)) writeRaw(`<span class="c-cyan">${esc(l)}</span>`);
+    else if (/CRITICAL|URGENTE/.test(l)) writeRaw(`<span class="c-red">${esc(l)}</span>`);
+    else if (/\[HIGH\]/.test(l)) writeRaw(`<span class="c-orange">${esc(l)}</span>`);
+    else if (/\[MEDIUM\]|WARNING|⚠/.test(l)) writeRaw(`<span class="c-yellow">${esc(l)}</span>`);
+    else if (/✅|PASS/.test(l)) writeRaw(`<span class="c-green2">${esc(l)}</span>`);
+    else write(l);
+  });
+}
+
+// ── head / tail ─────────────────────────────────────────────────
+function cmdHead(args) {
+  const ni = args.indexOf('-n'); const n = ni!==-1 ? parseInt(args[ni+1])||10 : 10;
+  const file = args.find(a=>!a.startsWith('-')&&a!==String(n));
+  if (!file) { writeErr('head: operando ausente'); return; }
+  const node = getNode(resolvePath(file));
+  if (!node||node.type!=='file') { writeErr(`head: '${file}': Não encontrado`); return; }
+  getContent(node).split('\n').slice(0,n).forEach(l=>write(l));
+}
+function cmdTail(args) {
+  const ni = args.indexOf('-n'); const n = ni!==-1 ? parseInt(args[ni+1])||10 : 10;
+  const file = args.find(a=>!a.startsWith('-')&&a!==String(n));
+  if (!file) { writeErr('tail: operando ausente'); return; }
+  const node = getNode(resolvePath(file));
+  if (!node||node.type!=='file') { writeErr(`tail: '${file}': Não encontrado`); return; }
+  const lines = getContent(node).split('\n');
+  lines.slice(Math.max(0,lines.length-n)).forEach(l=>write(l));
+}
+
+// ── grep ─────────────────────────────────────────────────────────
+function cmdGrep(args) {
+  const iFlag = args.some(a=>/^-[a-z]*i/.test(a));
+  const rFlag = args.some(a=>/^-[a-z]*r/.test(a));
+  const nFlag = args.some(a=>/^-[a-z]*n/.test(a));
+  const pos   = args.filter(a=>!a.startsWith('-'));
+  if (pos.length<2) { writeErr('grep: Usage: grep [options] PATTERN FILE'); return; }
+
+  let re;
+  try { re = new RegExp(pos[0], iFlag?'gi':'g'); } catch { writeErr(`grep: regex inválida: ${pos[0]}`); return; }
+
+  const target = pos[1];
+  const path   = resolvePath(target);
+  const node   = getNode(path);
+  if (!node) { writeErr(`grep: '${target}': Não encontrado`); return; }
+
+  let found=0;
+  const searchFile = (fPath, fNode) => {
+    const c=getContent(fNode); if(!c) return;
+    c.split('\n').forEach((l,idx) => {
+      re.lastIndex=0;
+      if(re.test(l)) {
+        re.lastIndex=0;
+        found++;
+        const pre  = rFlag ? `<span class="c-cyan">${esc(fPath)}:</span>` : '';
+        const lnum = nFlag ? `<span class="c-yellow">${idx+1}:</span>` : '';
+        const hi   = esc(l).replace(new RegExp(re.source, iFlag?'gi':'g'), m=>`<span class="c-red c-bold">${m}</span>`);
+        writeRaw(`${pre}${lnum}${hi}`);
+      }
+    });
+  };
+
+  if (node.type==='file') { searchFile(path, node); }
+  else if (rFlag) {
+    const walk = (n,p) => {
+      for (const [name,child] of Object.entries(n.children||{})) {
+        const cp=p+'/'+name;
+        if(child.type==='dir') walk(child,cp);
+        else searchFile(cp,child);
+      }
+    };
+    walk(node, path);
+  } else { writeErr(`grep: '${target}': É um diretório (use -r para recursivo)`); return; }
+
+  if (!found) write(`(nenhuma correspondência encontrada)`, 'dim');
+}
+
+// ── find ─────────────────────────────────────────────────────────
+function cmdFind(args) {
+  const ni = args.indexOf('-name'); const namePat = ni!==-1 ? args[ni+1] : null;
+  const ti = args.indexOf('-type'); const typeFil = ti!==-1 ? args[ti+1] : null;
+  const startRaw = args.find(a=>!a.startsWith('-')&&a!==namePat&&a!==typeFil) || cwd;
+  const node = getNode(resolvePath(startRaw));
+  if (!node) { writeErr(`find: '${startRaw}': Não encontrado`); return; }
+
+  let pat = null;
+  if (namePat) pat = new RegExp('^'+namePat.replace(/\./g,'\\.').replace(/\*/g,'.*').replace(/\?/g,'.')+'$','i');
+
+  const walk = (n,p) => {
+    const name = p.split('/').pop()||'';
+    const okName = !pat||pat.test(name);
+    const okType = !typeFil||(typeFil==='d'?n.type==='dir':n.type==='file');
+    if (okName&&okType) {
+      const cls = n.type==='dir' ? 'c-dir' : 'c-file';
+      writeRaw(`<span class="${cls}">${esc(p)}${n.type==='dir'?'/':''}</span>`);
+    }
+    if (n.type==='dir') for (const [cn,cc] of Object.entries(n.children||{})) walk(cc,p+'/'+cn);
+  };
+  walk(node, resolvePath(startRaw));
+}
+
+// ── tree ─────────────────────────────────────────────────────────
+function cmdTree(rawPath) {
+  const path = resolvePath(rawPath);
+  const node = getNode(path);
+  if (!node) { writeErr(`tree: '${rawPath}': Não encontrado`); return; }
+
+  let fc=0, dc=0;
+  const topName = path==='/' ? '/' : path.split('/').pop();
+  writeRaw(`<span class="${node.type==='dir'?'c-dir':'c-file'}">${esc(topName)}${node.type==='dir'?'/':''}</span>`);
+
+  const walk=(n,prefix='') => {
+    const entries=Object.entries(n.children||{});
+    entries.forEach(([name,child],idx) => {
+      const last = idx===entries.length-1;
+      const conn = last ? '└── ' : '├── ';
+      const cls  = child.type==='dir' ? 'c-dir' : 'c-file';
+      const suf  = child.type==='dir' ? '/' : '';
+      writeRaw(`<span class="c-dim">${esc(prefix+conn)}</span><span class="${cls}">${esc(name)}${suf}</span>`);
+      if (child.type==='dir') { dc++; walk(child, prefix+(last?'    ':'│   ')); }
+      else fc++;
+    });
+  };
+  if (node.type==='dir') walk(node);
+  writeBlank();
+  write(`${dc} directories, ${fc} files`);
+}
+
+// ── wc ──────────────────────────────────────────────────────────
+function cmdWc(args) {
+  const lFlag = args.includes('-l');
+  const file  = args.find(a=>!a.startsWith('-'));
+  if (!file) { writeErr('wc: operando ausente'); return; }
+  const node = getNode(resolvePath(file));
+  if (!node||node.type!=='file') { writeErr(`wc: '${file}': Não encontrado`); return; }
+  const c = getContent(node)||'';
+  const nl= c.split('\n').length;
+  const nw= c.split(/\s+/).filter(Boolean).length;
+  if (lFlag) write(`${nl} ${file}`);
+  else write(`${nl}\t${nw}\t${c.length} ${file}`);
+}
+
+// ── file / stat ──────────────────────────────────────────────────
+function cmdFile(rawPath) {
+  const node = getNode(resolvePath(rawPath));
+  if (!node) { writeErr(`file: '${rawPath}': Não encontrado`); return; }
+  if (node.type==='dir') write(`${rawPath}: directory`);
+  else {
+    const t = rawPath.endsWith('.json') ? 'JSON data' :
+              rawPath.endsWith('.sha256') ? 'ASCII text (SHA-256 certificate)' :
+              rawPath.endsWith('.py') ? 'Python script text' : 'ASCII text';
+    write(`${rawPath}: ${t}`);
+  }
+}
+function cmdStat(rawPath) {
+  if (!rawPath) { writeErr('stat: operando ausente'); return; }
+  const path = resolvePath(rawPath);
+  const node = getNode(path);
+  if (!node) { writeErr(`stat: '${rawPath}': Não encontrado`); return; }
+  const c    = node.type==='file' ? getContent(node) : null;
+  const size = c ? c.length : 0;
+  write(`  File: ${rawPath}`);
+  write(`  Size: ${size}\tBlocks: ${Math.ceil(size/512)}\t${node.type}`);
+  write(`  Inode: ${hashCode(path)}\tLinks: 1`);
+  write(`  Access: ${node.type==='dir'?'drwxr-xr-x':'-rw-r--r--'}  Uid: 1000/analyst  Gid: 1000/analyst`);
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  AUDIT COMMANDS
+// ══════════════════════════════════════════════════════════════════
+function cmdAudit(args) {
+  const sub=(args[0]||'status').toLowerCase();
+  switch(sub) {
+    case 'status':    cmdAuditStatus(); break;
+    case 'score':     cmdAuditScore(); break;
+    case 'vulns':     cmdAuditVulns(args[1]); break;
+    case 'env': case 'creds': case 'credentials':
+      cmdCat('/audit/credentials/leaked.txt'); break;
+    case 'evidence':  cmdCat('/audit/evidence.sha256'); break;
+    case 'checks':    cmdCat('/audit/checks/all-results.txt'); break;
+    case 'source':    cmdAuditSource(); break;
+    default:
+      writeErr(`audit: subcomando desconhecido '${sub}'. Use: status, score, vulns, env, evidence, checks, source`);
+  }
+}
+
+function cmdAuditStatus() {
+  const d = auditData;
+  writeSep('═');
+  writeRaw(`  <span class="c-green c-bold">AUDIT STATUS</span>  <span class="c-dim">— ${esc(d.projectUrl||'')}</span>`);
+  writeSep('═');
+  writeBlank();
+  const gc = d.grade?.color||'#fff';
+  writeRaw(`  <span class="c-dim">Score   :</span> <span style="color:${gc}" class="c-bold">${d.score||0}/100  Grade ${d.grade?.grade||'?'}  —  ${d.grade?.label||''}</span>`);
+  writeRaw(`  <span class="c-dim">Duração :</span> ${d.duration?(d.duration/1000).toFixed(1)+'s':'—'}`);
+  writeRaw(`  <span class="c-dim">Checks  :</span> <span class="c-green2">✅ ${d.passed||0}</span>  <span class="c-red">❌ ${d.failed||0}</span>  <span class="c-yellow">⚠ ${d.warnings||0}</span>  <span class="c-dim">(${d.totalChecks||0} total)</span>`);
+  writeBlank();
+
+  const results = d.results||[];
+  const crits   = results.filter(r=>r.severity==='critical'&&r.status!=='PASS');
+  const highs   = results.filter(r=>r.severity==='high'&&r.status!=='PASS');
+
+  if (crits.length) {
+    writeRaw(`  <span class="c-red c-bold">CRÍTICOS (${crits.length})</span>`);
+    crits.slice(0,6).forEach(r => {
+      writeRaw(`  <span class="c-red">❌</span> <span class="c-bold">${esc(r.check)}</span>`);
+      writeRaw(`     <span class="c-dim">${esc((r.message||'').slice(0,110))}</span>`);
+    });
+    if (crits.length>6) writeRaw(`  <span class="c-dim">  … e mais ${crits.length-6} (ver: audit vulns critical)</span>`);
+    writeBlank();
+  }
+  if (highs.length) {
+    writeRaw(`  <span class="c-orange c-bold">ALTOS (${highs.length})</span>`);
+    highs.slice(0,4).forEach(r =>
+      writeRaw(`  <span class="c-orange">⚠</span> <span class="c-bold">${esc(r.check)}</span>`)
+    );
+    writeBlank();
+  }
+  writeRaw(`  <span class="c-dim">Veja detalhes: </span><span class="c-green">audit vulns [critical|high|medium|all]</span>`);
+}
+
+function cmdAuditScore() {
+  const d=auditData; const s=d.score||0; const g=d.grade||{};
+  writeSep();
+  writeRaw(`  <span class="c-green c-bold">PONTUAÇÃO DE SEGURANÇA</span>`);
+  writeSep();
+  writeBlank();
+  const f=Math.round(s/2); const e=50-f;
+  const bc = s>=80?'c-green2':s>=60?'c-yellow':s>=40?'c-orange':'c-red';
+  writeRaw(`  <span class="${bc} c-bold">${s}/100</span>  Grade <span style="color:${g.color||'#fff'}" class="c-bold">${g.grade||'?'}</span>  ${g.label||''}`);
+  writeRaw(`  <span class="score-bar">[<span class="${bc}">${'█'.repeat(f)}</span><span class="c-dim">${'░'.repeat(e)}</span>]</span>`);
+  writeBlank();
+  const res=d.results||[];
+  const cn = {critical:0,high:0,medium:0,low:0};
+  res.filter(r=>r.status!=='PASS').forEach(r=>{ if(cn[r.severity]!==undefined) cn[r.severity]++; });
+  writeRaw(`  <span class="c-red">CRITICAL: ${cn.critical}</span>  <span class="c-orange">HIGH: ${cn.high}</span>  <span class="c-yellow">MEDIUM: ${cn.medium}</span>  <span class="c-cyan">LOW: ${cn.low}</span>`);
+}
+
+function cmdAuditVulns(sev) {
+  const res=auditData.results||[];
+  let items;
+  if (!sev||sev==='all')          items=res.filter(r=>r.status!=='PASS');
+  else if (sev==='warn'||sev==='warnings') items=res.filter(r=>r.status==='WARN');
+  else if (sev==='passed')        items=res.filter(r=>r.status==='PASS');
+  else                            items=res.filter(r=>r.severity===sev&&r.status!=='PASS');
+
+  if (!items.length) { write(`Nenhum achado [${sev||'all'}].`, 'success'); return; }
+  const sevCls={critical:'critical',high:'high',medium:'medium',low:'low',info:'dim'};
+
+  writeRaw(`  <span class="c-cyan c-bold">${items.length} achado(s) — severidade: ${sev||'all'}</span>`);
+  writeSep();
+  items.forEach((r,i) => {
+    const cls=sevCls[r.severity]||'output';
+    writeRaw(`<span class="c-dim">[${String(i+1).padStart(3,'0')}]</span> <span class="${cls} c-bold">[${(r.severity||'?').toUpperCase()}]</span> ${esc(r.check||'—')}`);
+    writeRaw(`       <span class="c-dim">${esc((r.message||'').slice(0,140))}</span>`);
+    if (r.details?.findings?.length) {
+      const f=r.details.findings[0];
+      if (f.localização||f.source)     writeRaw(`       <span class="c-dim">Local  : </span><span class="c-yellow">${esc(f.localização||f.source)}</span>`);
+      if (f.valor_mascarado||f.value)  writeRaw(`       <span class="c-dim">Valor  : </span><span class="c-orange">${esc(f.valor_mascarado||f.value)}</span>`);
+    }
+    writeBlank();
+  });
+}
+
+function cmdAuditSource() {
+  writeRaw(`  <span class="c-cyan c-bold">Acesso ao Código Fonte</span>`);
+  writeBlank();
+  writeRaw(`  <span class="c-dim">Arquivos encontrados durante a auditoria:</span>`);
+  writeBlank();
+  writeRaw(`  <span class="c-green">cat /audit/credentials/leaked.txt</span>  <span class="c-dim">— credenciais encontradas no fonte</span>`);
+  writeRaw(`  <span class="c-green">grep -r "secret\|key\|token" /audit</span>  <span class="c-dim">— busca em todos os artefatos</span>`);
+  writeRaw(`  <span class="c-green">audit vulns critical</span>               <span class="c-dim">— ver onde as vulns foram encontradas</span>`);
+  writeRaw(`  <span class="c-green">ai analyze</span>                         <span class="c-dim">— análise AI do código fonte</span>`);
+  writeBlank();
+  writeRaw(`  <span class="c-dim">Target: </span><span class="c-cyan">${esc(auditData.projectUrl||'')}</span>`);
+
+  // Show env findings that point to source code
+  const envFinds = (auditData.results||[]).filter(r=>
+    /env|bundle|source|script/i.test(r.check) && r.status!=='PASS' && r.details?.findings?.length
+  );
+  if (envFinds.length) {
+    writeBlank();
+    writeRaw(`  <span class="c-yellow c-bold">Segredos encontrados em código:</span>`);
+    envFinds.forEach(r => {
+      (r.details.findings||[]).slice(0,3).forEach(f => {
+        writeRaw(`  <span class="c-red">•</span> <span class="c-bold">${esc(f.tipo||f.type||'?')}</span> em <span class="c-cyan">${esc(f.localização||f.source||'—')}</span>`);
+        if (f.valor_mascarado||f.value) writeRaw(`    <span class="c-dim">Valor: </span><span class="c-orange">${esc(f.valor_mascarado||f.value)}</span>`);
+      });
+    });
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  AI COMMANDS
+// ══════════════════════════════════════════════════════════════════
+function cmdAiDispatch(args) {
+  const sub=(args[0]||'help').toLowerCase();
+  if (sub==='help'||sub==='--help'||!sub) {
+    writeRaw(`  <span class="c-purple c-bold">Comandos AI (Groq / Llama-3.3-70b):</span>`);
+    writeBlank();
+    writeRaw(`  <span class="c-green">ai analyze</span>            — Análise completa de segurança`);
+    writeRaw(`  <span class="c-green">ai fix</span> <span class="c-yellow">[check-name]</span>    — Gerar correção para uma vulnerabilidade`);
+    writeRaw(`  <span class="c-green">ai report</span>             — Relatório markdown profissional`);
+    writeRaw(`  <span class="c-green">ai ask</span> <span class="c-yellow">[pergunta]</span>      — Perguntar qualquer coisa sobre a auditoria`);
+    writeRaw(`  <span class="c-green">ai threat-model</span>       — Gerar threat model (STRIDE)`);
+    return;
+  }
+  if (aiRunning) { writeErr('AI já está em execução. Aguarde.'); return; }
+
+  let question='';
+  switch(sub) {
+    case 'analyze':
+      question='Analise esta auditoria de segurança de forma completa. Liste todas as vulnerabilidades críticas e altas, explique o impacto real de cada uma para o negócio, e forneça um plano de remediação priorizado com exemplos de código de correção onde aplicável. Formate em seções claras.';
+      break;
+    case 'fix':
+      const what=args.slice(1).join(' ');
+      question=what
+        ? `Gere um plano de correção DETALHADO e TÉCNICO para a vulnerabilidade: "${what}". Inclua: passos específicos de implementação, exemplos de código correto, como verificar se a correção foi aplicada, e ferramentas recomendadas.`
+        : 'Gere um plano de correção priorizado para TODAS as vulnerabilidades críticas e altas desta auditoria. Para cada uma: passos de correção, código de exemplo, timeline sugerida.';
+      break;
+    case 'report':
+      question='Gere um RELATÓRIO COMPLETO DE SEGURANÇA em markdown profissional. Inclua: 1) Sumário Executivo, 2) Metodologia, 3) Descobertas por Severidade (com CVSS scores estimados), 4) Análise de Impacto no Negócio, 5) Plano de Remediação com Timeline, 6) Conformidade (ISO 27001, GDPR/LGPD), 7) Conclusão e Próximos Passos. Formate para entrega direta ao cliente.';
+      break;
+    case 'ask':
+      question=args.slice(1).join(' ');
+      if (!question) { writeErr('ai ask: especifique uma pergunta. Ex: ai ask "Meu JWT está seguro?"'); return; }
+      break;
+    case 'threat-model':
+      question='Gere um threat model completo para esta aplicação usando metodologia STRIDE (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege). Para cada ameaça: probabilidade, impacto, controles existentes, controles recomendados. Inclua também uma tabela de risco priorizada.';
+      break;
+    default:
+      question=args.join(' ');
+      if (!question) { writeErr(`ai: subcomando desconhecido '${sub}'. Use: ai help`); return; }
+  }
+  callAI(question, sub).catch(e => writeErr('AI: ' + e.message));
+}
+
+async function callAI(question, sub='ask') {
+  aiRunning=true;
+  cmdInput.disabled=true;
+
+  writeSep('─');
+  writeRaw(`  <span class="c-purple c-bold">🤖 AI Assistant</span>  <span class="c-dim">Groq / Llama-3.3-70b — aguarde...</span>`);
+  writeSep('─');
+  writeBlank();
+
+  const box  = writeLine('', 'output ai-box');
+  const cursor = document.createElement('span');
+  cursor.className='cursor-blink';
+  cursor.textContent='█';
+  box.appendChild(cursor);
+
+  try {
+    const resp = await fetch(`/api/terminal/${AUDIT_ID}/ai`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ question, command: sub })
+    });
+    if (!resp.ok) throw new Error(`Server error ${resp.status}`);
+    const data=await resp.json();
+    const text=data.response||data.error||'(sem resposta)';
+
+    cursor.remove();
+    box.remove();
+
+    // Render AI text with markdown-like coloring
+    text.split('\n').forEach(l => {
+      if      (l.startsWith('# '))    writeRaw(`<span class="c-green c-bold">${esc(l)}</span>`);
+      else if (l.startsWith('## '))   writeRaw(`<span class="c-cyan c-bold">${esc(l)}</span>`);
+      else if (l.startsWith('### '))  writeRaw(`<span class="c-yellow c-bold">${esc(l)}</span>`);
+      else if (l.startsWith('- ')||l.startsWith('* '))
+                                      writeRaw(`<span class="c-dim">  •</span> ${esc(l.slice(2))}`);
+      else if (/^\d+\./.test(l))      writeRaw(`<span class="c-yellow">${esc(l)}</span>`);
+      else if (/CRÍTICO|CRITICAL|URGENTE/i.test(l))
+                                      writeRaw(`<span class="c-red">${esc(l)}</span>`);
+      else if (l.startsWith('```'))   writeRaw(`<span class="c-dim">${esc(l)}</span>`);
+      else                            write(l);
+    });
+
+    // Save report to VFS
+    if (sub==='report') {
+      const fname=`security-report-${Date.now()}.md`;
+      vfs.children['ai'].children[fname]={type:'file', content:()=>text};
+      writeBlank();
+      writeRaw(`  <span class="c-green2">✅ Relatório salvo em</span> <span class="c-cyan">/ai/${fname}</span>`);
+      writeRaw(`  <span class="c-dim">Baixar: </span><span class="c-green">download /ai/${fname}</span>`);
+    }
+
+    if (sub==='threat-model') {
+      const fname=`threat-model-${Date.now()}.md`;
+      vfs.children['ai'].children[fname]={type:'file', content:()=>text};
+      writeBlank();
+      writeRaw(`  <span class="c-green2">✅ Threat model salvo em</span> <span class="c-cyan">/ai/${fname}</span>`);
+    }
+
+  } catch(e) {
+    cursor.remove();
+    writeErr('Falha na chamada AI: '+e.message);
+  } finally {
+    aiRunning=false;
+    cmdInput.disabled=false;
+    cmdInput.focus();
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  EXPORT / DOWNLOAD
+// ══════════════════════════════════════════════════════════════════
+function cmdExport(args) {
+  const fmt=(args[0]||'json').toLowerCase();
+  switch(fmt) {
+    case 'json':
+      dlText(JSON.stringify(auditData,null,2), `audit-${AUDIT_ID}.json`, 'application/json');
+      writeRaw(`  <span class="c-green2">✅ Baixando audit-${AUDIT_ID}.json...</span>`);
+      break;
+    case 'evidence':
+      dlText(getContent(getNode('/audit/evidence.sha256'))||'', `evidence-${AUDIT_ID}.txt`, 'text/plain');
+      writeRaw(`  <span class="c-green2">✅ Baixando evidência assinada...</span>`);
+      break;
+    case 'summary':
+      dlText(getContent(getNode('/audit/summary.txt'))||'', `summary-${AUDIT_ID}.txt`, 'text/plain');
+      writeRaw(`  <span class="c-green2">✅ Baixando summary...</span>`);
+      break;
+    case 'report': {
+      const fname=args[1];
+      if (fname) {
+        const n=getNode('/ai/'+fname);
+        if (n) { dlText(getContent(n)||'', fname, 'text/markdown'); writeRaw(`  <span class="c-green2">✅ Baixando ${esc(fname)}...</span>`); }
+        else writeErr(`export: /ai/${fname} não encontrado. Gere com: ai report`);
+      } else {
+        writeRaw(`  <span class="c-yellow">Gere primeiro com:</span> <span class="c-green">ai report</span>`);
+        writeRaw(`  <span class="c-dim">Depois: export report [nome-do-arquivo]</span>`);
+        writeRaw(`  <span class="c-dim">Ver arquivos: ls /ai</span>`);
+      }
+      break;
+    }
+    case 'credentials':
+    case 'creds':
+      dlText(getContent(getNode('/audit/credentials/leaked.txt'))||'', `credentials-${AUDIT_ID}.txt`, 'text/plain');
+      writeRaw(`  <span class="c-green2">✅ Baixando relatório de credenciais...</span>`);
+      break;
+    default:
+      writeErr(`export: formato desconhecido '${fmt}'. Use: json, evidence, summary, report, credentials`);
+  }
+}
+
+function cmdDownload(rawPath) {
+  if (!rawPath) { writeErr('download: especifique um caminho'); return; }
+  const path=resolvePath(rawPath);
+  const node=getNode(path);
+  if (!node)           { writeErr(`download: '${rawPath}': Não encontrado`); return; }
+  if (node.type==='dir'){ writeErr(`download: '${rawPath}': É um diretório`); return; }
+  const c=getContent(node);
+  const fname=path.split('/').pop();
+  const mime=fname.endsWith('.json')?'application/json':fname.endsWith('.md')?'text/markdown':'text/plain';
+  dlText(c, fname, mime);
+  writeRaw(`  <span class="c-green2">✅ Baixando ${esc(fname)}...</span>`);
+}
+
+function dlText(content, filename, mime='text/plain') {
+  const blob=new Blob([content],{type:mime+';charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=filename; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  SYSTEM COMMANDS
+// ══════════════════════════════════════════════════════════════════
+function cmdWhoami() {
+  writeSep();
+  writeRaw(`  <span class="c-green c-bold">analyst</span>  —  Auditor de Segurança`);
+  writeSep();
+  writeRaw(`  <span class="c-dim">uid:</span> 1000  <span class="c-dim">gid:</span> 1000  <span class="c-dim">groups:</span> analyst,sudo,adm`);
+  writeRaw(`  <span class="c-dim">Papel:</span> Security Analyst / Blue Team`);
+  writeRaw(`  <span class="c-dim">Ferramenta:</span> Supabase Guard v3.3 — Security Terminal`);
+  writeRaw(`  <span class="c-dim">CWD:</span> ${esc(cwd)}`);
+  writeRaw(`  <span class="c-dim">Hora:</span> ${new Date().toISOString()}`);
+  writeRaw(`  <span class="c-dim">Target:</span> <span class="c-cyan">${esc(auditData?.projectUrl||'—')}</span>`);
+}
+
+async function cmdUptime() {
+  try {
+    const r=await fetch('/api/version');
+    const d=await r.json();
+    write(`Server: ${Math.floor((d.uptime||0)/60)}m ${(d.uptime||0)%60}s  versão: ${d.version}  build: ${d.buildHash}`);
+  } catch { write('uptime: servidor inacessível'); }
+}
+
+function cmdHistoryList() {
+  cmdHistory.forEach((h,i) => writeRaw(`<span class="c-dim">${String(i+1).padStart(4)}</span>  ${esc(h)}`));
+}
+
+// ── HELP ─────────────────────────────────────────────────────────
+function cmdHelp(topic) {
+  if (topic) {
+    const info = HELP_TOPICS[topic];
+    if (info) { info.forEach(l=>write(l)); return; }
+    writeErr(`help: sem ajuda para '${topic}'`);
+    return;
+  }
+  writeSep('═');
+  writeRaw(`  <span class="c-green c-bold">SUPABASE GUARD SECURITY TERMINAL — REFERÊNCIA DE COMANDOS</span>`);
+  writeSep('═');
+  writeBlank();
+
+  const groups=[
+    { title:'📁 NAVEGAÇÃO', items:[
+      ['ls [-la] [path]','Listar conteúdo do diretório'],
+      ['cd [path]','Mudar diretório'],['pwd','Imprimir diretório atual'],
+      ['cat [file]','Mostrar conteúdo do arquivo'],
+      ['head [-n N] [file]','Primeiras N linhas'],
+      ['tail [-n N] [file]','Últimas N linhas'],
+      ['grep [-irn] PAT FILE','Buscar padrão (suporta -i -r -n)'],
+      ['find [-name pat]','Encontrar arquivos por nome'],
+      ['tree [path]','Árvore de diretórios'],
+      ['wc [-l] [file]','Contar linhas/palavras/chars'],
+      ['stat [file]','Info detalhada do arquivo'],
+    ]},
+    { title:'🔍 AUDITORIA', items:[
+      ['audit status','Resumo e pontuação da auditoria'],
+      ['audit score','Detalhamento da pontuação'],
+      ['audit vulns [sev]','Listar vulns (critical/high/medium/all)'],
+      ['audit env','Credenciais e env vars expostas'],
+      ['audit evidence','Certificado de evidência assinado'],
+      ['audit checks','Todos os checks realizados'],
+      ['audit source','Info de acesso ao código fonte'],
+    ]},
+    { title:'🤖 INTELIGÊNCIA ARTIFICIAL', items:[
+      ['ai analyze','Análise completa de segurança'],
+      ['ai fix [check]','Plano de correção para uma vuln'],
+      ['ai report','Relatório markdown profissional'],
+      ['ai ask [pergunta]','Perguntar qualquer coisa'],
+      ['ai threat-model','Threat model STRIDE completo'],
+    ]},
+    { title:'📤 EXPORT & DOWNLOAD', items:[
+      ['export json','Baixar auditoria completa (JSON)'],
+      ['export evidence','Baixar certificado de evidência'],
+      ['export summary','Baixar resumo da auditoria'],
+      ['export report [f]','Baixar relatório AI gerado'],
+      ['export credentials','Baixar relatório de credenciais'],
+      ['download [file]','Baixar qualquer arquivo do VFS'],
+    ]},
+    { title:'⚙ SISTEMA', items:[
+      ['whoami','Info do usuário atual'],
+      ['date','Data e hora atual'],
+      ['uptime','Uptime do servidor'],
+      ['history','Histórico de comandos'],
+      ['clear','Limpar terminal'],['version','Versão da ferramenta'],
+      ['exit','Voltar'],
+    ]},
+  ];
+
+  groups.forEach(g => {
+    writeRaw(`  <span class="c-cyan c-bold">${g.title}</span>`);
+    g.items.forEach(([cmd,desc]) =>
+      writeRaw(`  <span class="c-green">${cmd.padEnd(28)}</span> <span class="c-dim">${esc(desc)}</span>`)
+    );
+    writeBlank();
+  });
+
+  writeRaw(`  <span class="c-dim">Início rápido:</span> <span class="c-green">ls /audit</span>  <span class="c-dim">→</span>  <span class="c-green">audit status</span>  <span class="c-dim">→</span>  <span class="c-green">ai analyze</span>`);
+}
+
+const HELP_TOPICS={
+  ls:    ['ls [-la] [path]','  Listar conteúdo.','  Opções: -l longo, -a mostrar ocultos'],
+  grep:  ['grep [-irn] PATTERN FILE','  Busca.','  -i: case-insensitive  -r: recursivo  -n: nº da linha'],
+  audit: ['audit SUBCOMANDO','  status: resumo  vulns [sev]: achados  env: credenciais','  evidence: prova  checks: todos os checks  source: código fonte'],
+  ai:    ['ai SUBCOMANDO','  analyze: análise completa  fix [check]: correção','  report: relatório markdown  ask [q]: perguntar  threat-model: STRIDE'],
+  export:['export FORMATO','  json: auditoria completa  evidence: certificado','  summary: resumo  report [f]: relatório AI  credentials: credenciais'],
+};
+
+// ══════════════════════════════════════════════════════════════════
+//  TAB COMPLETION
+// ══════════════════════════════════════════════════════════════════
+function tabComplete(partial) {
+  const tokens=partial.split(' ');
+  if (tokens.length===1) {
+    const all=['ls','ll','la','cd','pwd','cat','head','tail','grep','find','tree','wc','file','stat','less','more',
+               'audit','status','vulns','env','ai','export','download',
+               'whoami','id','date','uname','uptime','history','clear','reset','help','version','exit'];
+    const m=all.filter(c=>c.startsWith(tokens[0]));
+    if (m.length===1) return m[0]+' ';
+    if (m.length>1) { writeBlank(); write(m.join('  '),'dim'); }
+    return partial;
+  }
+  const last=tokens[tokens.length-1];
+  const comps=completePath(last);
+  if (comps.length===1) { tokens[tokens.length-1]=comps[0]; return tokens.join(' ')+(comps[0].endsWith('/')?'':' '); }
+  if (comps.length>1) {
+    writeBlank();
+    write(comps.map(c=>c.split('/').pop()).join('  '), 'dim');
+    const pre=comps.reduce((a,b)=>{ let i=0; while(i<a.length&&i<b.length&&a[i]===b[i])i++; return a.slice(0,i); });
+    if (pre.length>last.length) { tokens[tokens.length-1]=pre; return tokens.join(' '); }
+  }
+  return partial;
+}
+
+function completePath(partial) {
+  const abs=partial.startsWith('/');
+  const dir=partial.includes('/')
+    ? (abs ? partial.slice(0,partial.lastIndexOf('/')+1) : cwd+'/'+partial.slice(0,partial.lastIndexOf('/')+1))
+    : cwd;
+  const frag=partial.includes('/') ? partial.slice(partial.lastIndexOf('/')+1) : partial;
+  const nd=getNode(normPath(dir));
+  if (!nd||nd.type!=='dir') return [];
+  const prefix=partial.slice(0,partial.length-frag.length);
+  return Object.entries(nd.children||{})
+    .filter(([n])=>n.startsWith(frag))
+    .map(([n,c])=>prefix+n+(c.type==='dir'?'/':''));
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  UI / TABS
+// ══════════════════════════════════════════════════════════════════
+function tabClick(el, tab) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const cmds={status:'audit status',vulns:'audit vulns all',env:'audit env',evidence:'audit evidence',tree:'tree /'};
+  if (cmds[tab]) runCmd(cmds[tab]);
+  cmdInput.focus();
+}
+
+function runCmd(cmd) {
+  cmdInput.value=cmd;
+  handleEnter();
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  INPUT HANDLING
+// ══════════════════════════════════════════════════════════════════
+function handleEnter() {
+  const val=cmdInput.value;
+  cmdInput.value='';
+  histIdx=cmdHistory.length;
+  execCmd(val);
+}
+
+cmdInput.addEventListener('keydown', e => {
+  switch(e.key) {
+    case 'Enter':
+      e.preventDefault();
+      handleEnter();
+      break;
+    case 'ArrowUp':
+      e.preventDefault();
+      if (histIdx>0) {
+        histIdx--;
+        cmdInput.value=cmdHistory[histIdx]||'';
+        requestAnimationFrame(()=>{ cmdInput.selectionStart=cmdInput.selectionEnd=cmdInput.value.length; });
+      }
+      break;
+    case 'ArrowDown':
+      e.preventDefault();
+      if (histIdx<cmdHistory.length-1) { histIdx++; cmdInput.value=cmdHistory[histIdx]||''; }
+      else { histIdx=cmdHistory.length; cmdInput.value=''; }
+      break;
+    case 'Tab':
+      e.preventDefault();
+      cmdInput.value=tabComplete(cmdInput.value);
+      break;
+    case 'c':
+      if (e.ctrlKey) {
+        e.preventDefault();
+        const cur=cmdInput.value;
+        cmdInput.value='';
+        writeRaw(`${promptEl.innerHTML}<span class="c-dim">${esc(cur)}</span><span class="c-red">^C</span>`,'prompt-line');
+        writeBlank();
+        if (aiRunning) { aiRunning=false; cmdInput.disabled=false; }
+      }
+      break;
+    case 'l':
+      if (e.ctrlKey) { e.preventDefault(); outputEl.innerHTML=''; }
+      break;
+    case 'u':
+      if (e.ctrlKey) { e.preventDefault(); cmdInput.value=''; }
+      break;
+  }
+});
+
+// Click outside input → focus input
+document.getElementById('terminal').addEventListener('click', () => {
+  if (!window.getSelection().toString()) cmdInput.focus();
+});
+
+// ── START ─────────────────────────────────────────────────────────
+boot();
+</script>
+</body>
+</html>
