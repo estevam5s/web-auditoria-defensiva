@@ -82,109 +82,129 @@ function signEvidence(data) {
 //  - DDoS/Brute Force/SSL/Security Headers now included
 //  - Floor 0, Cap 100
 function calculateScore(results) {
-  // Semantic groups map related checks to one domain, keeping only the worst result
+  // ── Semantic groups — same definitions, unchanged ─────────────
   const SEMANTIC_GROUPS = [
-    { group: 'rls',         pattern: /RLS|Row Level/i,           weight: 1.6, keyControl: true },
-    { group: 'service-key', pattern: /Service Key/i,             weight: 1.8, keyControl: true },
-    { group: 'auth',        pattern: /Auth(?!or)|Open Signup/i,  weight: 1.3, keyControl: true },
-    { group: 'jwt',         pattern: /JWT/i,                     weight: 1.2, keyControl: true },
-    { group: 'bundle-keys', pattern: /Bundle Key/i,              weight: 1.4, keyControl: true },
-    { group: 'credential',  pattern: /Credential|PII/i,          weight: 1.3, keyControl: true },
-    { group: 'env',         pattern: /\.env|Key Exposure/i,      weight: 1.3, keyControl: true },
-    { group: 'rest',        pattern: /REST|RPC/i,                weight: 1.1 },
-    { group: 'cors',        pattern: /CORS/i,                    weight: 1.1, keyControl: true },
-    { group: 'storage',     pattern: /Storage/i,                 weight: 1.0 },
-    { group: 'graphql',     pattern: /GraphQL/i,                 weight: 0.9 },
-    { group: 'edge',        pattern: /Edge/i,                    weight: 1.0 },
-    { group: 'vuln',        pattern: /Vulnerability/i,           weight: 1.0 },
-    { group: 'routes',      pattern: /Route|Hidden/i,            weight: 0.7 },
-    { group: 'source',      pattern: /Source Code/i,             weight: 0.9 },
-    { group: 'sensitive',   pattern: /Sensitive Data/i,          weight: 1.0 },
-    { group: 'hardening',   pattern: /Hardening|Rate Limit/i,    weight: 0.8 },
-    { group: 'stack',       pattern: /Stack/i,                  weight: 0.0 }, // never penalizes
-    { group: 'dns',         pattern: /DNS/i,                     weight: 0.5 },
-    { group: 'realtime',    pattern: /Realtime/i,               weight: 0.8 },
-    // NEW GROUPS v3
-    { group: 'ddos',        pattern: /DDoS|ATTACK/i,             weight: 1.5, keyControl: true },
-    { group: 'brute-force', pattern: /Brute Force|Lockout/i,    weight: 1.4, keyControl: true },
-    { group: 'ssl',         pattern: /SSL|TLS/i,                weight: 1.2, keyControl: true },
-    { group: 'security-headers', pattern: /Security Headers/i,   weight: 0.8 },
-    { group: 'hydra',           pattern: /Hydra/i,                   weight: 1.5, keyControl: true },
-    { group: 'network',         pattern: /Network|Tailscale|VPN/i,   weight: 1.2, keyControl: true },
-    { group: 'dos-advanced',    pattern: /DoS Avançado|Slowloris|ReDoS|Connection Exhaustion/i, weight: 1.3, keyControl: true },
-    // NEW GROUPS v3.3
-    { group: 'port-scan',       pattern: /Port Scan|Serviços.*Expostos|Portas.*Abertas/i,        weight: 2.0, keyControl: true },
-    { group: 'git-exposure',    pattern: /Git Exposure|\.git|docker-compose|\.env\b/i,            weight: 2.0, keyControl: true },
-    { group: 'open-redirect',   pattern: /Open Redirect|Redirecionamento.*Aberto/i,               weight: 1.5, keyControl: true },
+    { group: 'rls',          pattern: /RLS|Row Level/i,                                           weight: 1.8, keyControl: true  },
+    { group: 'service-key',  pattern: /Service Key/i,                                             weight: 2.0, keyControl: true  },
+    { group: 'auth',         pattern: /Auth(?!or)|Open Signup/i,                                  weight: 1.4, keyControl: true  },
+    { group: 'jwt',          pattern: /JWT/i,                                                      weight: 1.3, keyControl: true  },
+    { group: 'bundle-keys',  pattern: /Bundle Key/i,                                              weight: 1.6, keyControl: true  },
+    { group: 'credential',   pattern: /Credential|PII/i,                                          weight: 1.5, keyControl: true  },
+    { group: 'env',          pattern: /\.env|Key Exposure/i,                                      weight: 1.6, keyControl: true  },
+    { group: 'rest',         pattern: /REST|RPC/i,                                                 weight: 1.1                   },
+    { group: 'cors',         pattern: /CORS/i,                                                     weight: 1.2, keyControl: true  },
+    { group: 'storage',      pattern: /Storage/i,                                                  weight: 1.1                   },
+    { group: 'graphql',      pattern: /GraphQL/i,                                                  weight: 1.0                   },
+    { group: 'edge',         pattern: /Edge/i,                                                     weight: 1.0                   },
+    { group: 'vuln',         pattern: /Vulnerability/i,                                            weight: 1.1                   },
+    { group: 'routes',       pattern: /Route|Hidden/i,                                             weight: 0.7                   },
+    { group: 'source',       pattern: /Source Code/i,                                              weight: 1.0                   },
+    { group: 'sensitive',    pattern: /Sensitive Data/i,                                           weight: 1.1                   },
+    { group: 'hardening',    pattern: /Hardening|Rate Limit/i,                                     weight: 0.9                   },
+    { group: 'stack',        pattern: /Stack/i,                                                    weight: 0.0                   },
+    { group: 'dns',          pattern: /DNS/i,                                                      weight: 0.5                   },
+    { group: 'realtime',     pattern: /Realtime/i,                                                 weight: 0.8                   },
+    { group: 'ddos',         pattern: /DDoS|ATTACK/i,                                              weight: 1.5, keyControl: true  },
+    { group: 'brute-force',  pattern: /Brute Force|Lockout/i,                                      weight: 1.4, keyControl: true  },
+    { group: 'ssl',          pattern: /SSL|TLS/i,                                                  weight: 1.3, keyControl: true  },
+    { group: 'security-headers', pattern: /Security Headers/i,                                    weight: 0.8                   },
+    { group: 'hydra',        pattern: /Hydra/i,                                                    weight: 1.5, keyControl: true  },
+    { group: 'network',      pattern: /Network|Tailscale|VPN/i,                                    weight: 1.2, keyControl: true  },
+    { group: 'dos-advanced', pattern: /DoS Avançado|Slowloris|ReDoS|Connection Exhaustion/i,       weight: 1.3, keyControl: true  },
+    { group: 'port-scan',    pattern: /Port Scan|Serviços.*Expostos|Portas.*Abertas/i,             weight: 2.0, keyControl: true  },
+    { group: 'git-exposure', pattern: /Git Exposure|\.git|docker-compose|\.env\b/i,               weight: 2.0, keyControl: true  },
+    { group: 'open-redirect',pattern: /Open Redirect|Redirecionamento.*Aberto/i,                  weight: 1.5, keyControl: true  },
   ];
 
-  const failPenalties = { critical: 25, high: 14, medium: 7, low: 2, info: 0 };
-  const warnPenalties = { critical:  8, high:  4, medium: 2, low: 1, info: 0 };
-  // Enhanced penalties for DDoS/Brute Force
-  const enhancedFailPenalties = { critical: 28, high: 16, medium: 8, low: 3, info: 0 };
-  const severityRank  = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
-  const statusRank    = { FAIL: 2, WARN: 1 };
+  // ── Severity → base penalty ───────────────────────────────────
+  const FAIL_PEN = { critical: 22, high: 13, medium: 6, low: 2, info: 0 };
+  const WARN_PEN = { critical:  7, high:  4, medium: 2, low: 1, info: 0 };
+  const SEV_RANK = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
 
   function getGroup(check) {
     if (!check) return 'other';
     for (const { group, pattern } of SEMANTIC_GROUPS) {
       if (pattern.test(check)) return group;
     }
-    // Fallback: strip emoji and use prefix before " — "
     const raw = check.replace(/^[^\w]*/u, '');
     return raw.split(' — ')[0].trim() || 'other';
   }
 
-  // Aggregate: keep worst result per semantic group
-  const groupedResults = {};
+  // ── Collect all failures/warnings per semantic group ──────────
+  const groups = {};
   for (const result of results) {
     const s = result.status;
     if (s !== 'FAIL' && s !== 'WARN') continue;
-
     const group = getGroup(result.check);
-    const rank = (statusRank[s] || 0) * 10 + (severityRank[result.severity] || 0);
-    if (!groupedResults[group] || rank > groupedResults[group].rank) {
-      groupedResults[group] = { result, rank, group };
+    if (!groups[group]) {
+      const def = SEMANTIC_GROUPS.find(g => g.group === group);
+      groups[group] = { items: [], weight: def?.weight ?? 1.0, keyControl: def?.keyControl ?? false };
     }
+    groups[group].items.push(result);
   }
 
-  // Apply weighted penalties (single pass — no double-counting)
-  let score = 100;
-  for (const [group, { result }] of Object.entries(groupedResults)) {
-    const groupDef = SEMANTIC_GROUPS.find(g => g.group === group);
-    const weight = groupDef?.weight ?? 1.0;
-    if (weight === 0) continue; // e.g. stack detection
+  // ── Compute penalty per group ─────────────────────────────────
+  let penaltyTotal = 0;
+  let criticalFailCount = 0;
+  let highFailCount = 0;
 
-    let basePenalty;
-    // Use enhanced penalties for critical security areas
-    if (group === 'ddos' || group === 'brute-force') {
-      basePenalty = result.status === 'FAIL'
-        ? (enhancedFailPenalties[result.severity] ?? 6)
-        : (warnPenalties[result.severity] ?? 1);
-    } else {
-      basePenalty = result.status === 'FAIL'
-        ? (failPenalties[result.severity] ?? 5)
-        : (warnPenalties[result.severity] ?? 1);
-    }
+  for (const [, { items, weight }] of Object.entries(groups)) {
+    if (weight === 0) continue;
 
-    score -= Math.round(basePenalty * weight);
+    // Sort: FAIL first, then by severity descending
+    items.sort((a, b) => {
+      const sr = { FAIL: 2, WARN: 1 };
+      return (sr[b.status] * 10 + SEV_RANK[b.severity]) - (sr[a.status] * 10 + SEV_RANK[a.severity]);
+    });
+
+    const worst = items[0];
+    const isFail = worst.status === 'FAIL';
+    const sev = worst.severity || 'low';
+
+    // Base penalty from worst result
+    const base = isFail ? (FAIL_PEN[sev] ?? 4) : (WARN_PEN[sev] ?? 1);
+
+    // Depth multiplier: each additional failure in same group adds 12%, capped at 1.6×
+    const extraCount = Math.min(items.length - 1, 5);
+    const depthMult = 1 + extraCount * 0.12;
+
+    // Raw group penalty
+    const groupPenalty = Math.round(base * weight * depthMult);
+    penaltyTotal += groupPenalty;
+
+    if (isFail && sev === 'critical') criticalFailCount++;
+    if (isFail && (sev === 'critical' || sev === 'high')) highFailCount++;
   }
 
-  // Bonus for key controls that pass (enhanced)
+  // ── Amplification: many critical failures compound risk ────────
+  // 3+ critical groups: +10%; 5+: +20%; 7+: +30%
+  if (criticalFailCount >= 7) {
+    penaltyTotal = Math.round(penaltyTotal * 1.30);
+  } else if (criticalFailCount >= 5) {
+    penaltyTotal = Math.round(penaltyTotal * 1.20);
+  } else if (criticalFailCount >= 3) {
+    penaltyTotal = Math.round(penaltyTotal * 1.10);
+  }
+
+  let score = 100 - penaltyTotal;
+
+  // ── Bonuses for key controls that genuinely pass ───────────────
   const KEY_PASS_BONUSES = [
-    { pattern: /RLS Policy/i, bonus: 2 },
-    { pattern: /Service Key/i, bonus: 2 },
-    { pattern: /JWT/i, bonus: 1 },
-    { pattern: /CORS/i, bonus: 1 },
-    { pattern: /Auth Endpoints/i, bonus: 1 },
-    // NEW BONUSES v3
-    { pattern: /DDoS — Proteção CDN/i, bonus: 3 },
-    { pattern: /DDoS — WAF/i, bonus: 2 },
-    { pattern: /DDoS — Rate Limiting/i, bonus: 2 },
-    { pattern: /Brute Force.*PASS/i, bonus: 2 },
-    { pattern: /Account Lockout.*PASS/i, bonus: 2 },
-    { pattern: /SSL\/TLS.*PASS/i, bonus: 2 },
-    { pattern: /Security Headers.*PASS/i, bonus: 1 },
+    { pattern: /RLS Policy/i,                 bonus: 2 },
+    { pattern: /Service Key/i,                bonus: 2 },
+    { pattern: /JWT/i,                        bonus: 1 },
+    { pattern: /CORS/i,                       bonus: 1 },
+    { pattern: /Auth Endpoints/i,             bonus: 1 },
+    { pattern: /DDoS — Proteção CDN/i,        bonus: 3 },
+    { pattern: /DDoS — WAF/i,                 bonus: 2 },
+    { pattern: /DDoS — Rate Limiting/i,        bonus: 2 },
+    { pattern: /Brute Force.*PASS/i,           bonus: 2 },
+    { pattern: /Account Lockout.*PASS/i,       bonus: 2 },
+    { pattern: /SSL\/TLS.*PASS/i,              bonus: 2 },
+    { pattern: /Security Headers.*PASS/i,      bonus: 1 },
+    { pattern: /Credential\/PII.*PASS/i,       bonus: 3 },
+    { pattern: /Git Exposure.*PASS/i,          bonus: 2 },
+    { pattern: /Port Scan.*PASS/i,             bonus: 1 },
   ];
   for (const { pattern, bonus } of KEY_PASS_BONUSES) {
     const passing = results.filter(r => pattern.test(r.check || '') && r.status === 'PASS');
@@ -195,10 +215,10 @@ function calculateScore(results) {
 }
 
 function getScoreGrade(score) {
-  if (score >= 92) return { grade: 'A', color: '#00ff41', label: 'Excelente' };
-  if (score >= 78) return { grade: 'B', color: '#7fff00', label: 'Bom' };
-  if (score >= 60) return { grade: 'C', color: '#ffff00', label: 'Atenção' };
-  if (score >= 40) return { grade: 'D', color: '#ff8c00', label: 'Risco Elevado' };
+  if (score >= 88) return { grade: 'A', color: '#00ff41', label: 'Excelente' };
+  if (score >= 72) return { grade: 'B', color: '#7fff00', label: 'Bom' };
+  if (score >= 52) return { grade: 'C', color: '#ffff00', label: 'Atenção' };
+  if (score >= 32) return { grade: 'D', color: '#ff8c00', label: 'Risco Elevado' };
   return { grade: 'F', color: '#ff0040', label: 'Crítico — Ação Imediata' };
 }
 

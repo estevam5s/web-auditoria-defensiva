@@ -1259,6 +1259,225 @@ function buildRiskMatrix(risks) {
 }
 
 /* ----------------------------------------------------------
+ * ISO 38500:2015 — 6 Princípios de Governança de TI
+ * ---------------------------------------------------------- */
+const ISO_38500_PRINCIPLES = [
+  {
+    id: 'P1', principle: 'Responsabilidade',
+    description: 'Individuals and groups within the organization understand and accept their responsibilities in respect of both supply of, and demand for, IT.',
+    ptBR: 'Responsabilidade pela TI deve ser claramente definida e atribuída.',
+    controls: ['Definição de RACI para TI', 'Nomeação de CIO/CTO', 'Comitê de Governança TI', 'SLAs definidos'],
+    tools: ['ServiceNow', 'Jira Service Management', 'PagerDuty', 'OpsGenie'],
+    sectors: ['Enterprise', 'Big Tech', 'Startup', 'Consultoria'],
+    riskIfFailed: 'Ausência de ownership causa falhas de segurança sem responsável.',
+    maturity: ['Initial', 'Managed', 'Defined', 'Quantitatively Managed', 'Optimizing']
+  },
+  {
+    id: 'P2', principle: 'Estratégia',
+    description: 'Plans and policies for IT satisfy the needs of the organization.',
+    ptBR: 'A estratégia de TI deve estar alinhada com a estratégia de negócios.',
+    controls: ['IT Strategic Plan', 'Business-IT Alignment', 'Portfolio Management', 'IT Roadmap'],
+    tools: ['Planview', 'ServiceNow SPM', 'Azure DevOps', 'Jira Align'],
+    sectors: ['Enterprise', 'Big Tech'],
+    riskIfFailed: 'Investimentos em TI sem retorno, desalinhamento com objetivos de negócio.',
+    maturity: ['Initial', 'Managed', 'Defined', 'Quantitatively Managed', 'Optimizing']
+  },
+  {
+    id: 'P3', principle: 'Aquisição',
+    description: 'IT acquisitions are made for valid reasons, with clear analysis and decision making.',
+    ptBR: 'Aquisições de TI devem ser feitas com justificativa clara e análise adequada.',
+    controls: ['IT Procurement Policy', 'Vendor Assessment', 'TCO Analysis', 'Security Review in Procurement'],
+    tools: ['Coupa', 'SAP Ariba', 'ServiceNow SPM', 'BitSight (vendor risk)'],
+    sectors: ['Enterprise', 'Big Tech', 'Startup'],
+    riskIfFailed: 'Compras desnecessárias, shadow IT, vulnerabilidades via terceiros.',
+    maturity: ['Initial', 'Managed', 'Defined', 'Quantitatively Managed', 'Optimizing']
+  },
+  {
+    id: 'P4', principle: 'Desempenho',
+    description: 'IT is fit for its purpose in supporting the organization, responding to changing requirements and technology.',
+    ptBR: 'A TI deve entregar valor mensurável e se adaptar às mudanças organizacionais.',
+    controls: ['KPIs de TI', 'SLA Monitoring', 'Capacity Planning', 'Performance Dashboards'],
+    tools: ['Datadog', 'New Relic', 'Grafana', 'Dynatrace', 'Splunk'],
+    sectors: ['Enterprise', 'Big Tech', 'Startup', 'Consultoria'],
+    riskIfFailed: 'Sistemas degradados, downtime não detectado, SLAs não cumpridos.',
+    maturity: ['Initial', 'Managed', 'Defined', 'Quantitatively Managed', 'Optimizing']
+  },
+  {
+    id: 'P5', principle: 'Conformidade',
+    description: 'IT complies with all mandatory legislation and regulations, and organizational policies.',
+    ptBR: 'A TI deve estar em conformidade com legislação, regulamentações e políticas internas.',
+    controls: ['Compliance Monitoring', 'Audit Trail', 'Policy Management', 'Regulatory Mapping'],
+    tools: ['OneTrust', 'Vanta', 'Drata', 'Tugboat Logic', 'LogicGate'],
+    sectors: ['Enterprise', 'Big Tech', 'Startup', 'Consultoria'],
+    riskIfFailed: 'Multas regulatórias (LGPD, GDPR, SOX), perda de certificações.',
+    maturity: ['Initial', 'Managed', 'Defined', 'Quantitatively Managed', 'Optimizing']
+  },
+  {
+    id: 'P6', principle: 'Comportamento Humano',
+    description: 'IT policies, practices and decisions demonstrate respect for Human Behaviour.',
+    ptBR: 'Decisões de TI devem considerar o comportamento e necessidades humanas.',
+    controls: ['Awareness Training', 'Change Management', 'UX Policies', 'Employee Digital Wellbeing'],
+    tools: ['KnowBe4', 'Proofpoint Security Awareness', 'Gartner Digital Worker Experience', 'Microsoft Viva'],
+    sectors: ['Enterprise', 'Big Tech', 'Startup'],
+    riskIfFailed: 'Shadow IT, resistência a mudanças, phishing por falta de treinamento.',
+    maturity: ['Initial', 'Managed', 'Defined', 'Quantitatively Managed', 'Optimizing']
+  }
+];
+
+/* ----------------------------------------------------------
+ * Enterprise Technology Stack
+ * ---------------------------------------------------------- */
+const ENTERPRISE_TECH_STACK = {
+  siem: {
+    label: 'SIEM & Log Management',
+    icon: '🔭',
+    description: 'Correlação de eventos de segurança e detecção de ameaças em tempo real.',
+    tools: [
+      { name: 'Splunk Enterprise Security', tier: 'enterprise', cost: '$$$', isoControls: ['A.8.15','A.8.16','A.5.25'] },
+      { name: 'Microsoft Sentinel', tier: 'enterprise', cost: '$$', isoControls: ['A.8.15','A.8.16'] },
+      { name: 'Elastic SIEM', tier: 'startup', cost: '$', isoControls: ['A.8.15','A.8.16'] },
+      { name: 'Datadog Security', tier: 'startup', cost: '$$', isoControls: ['A.8.15'] },
+      { name: 'Sumo Logic', tier: 'midmarket', cost: '$$', isoControls: ['A.8.15','A.8.16'] }
+    ]
+  },
+  iam: {
+    label: 'IAM & PAM',
+    icon: '🔑',
+    description: 'Gestão de identidades, acessos privilegiados e autenticação forte.',
+    tools: [
+      { name: 'Okta', tier: 'enterprise', cost: '$$$', isoControls: ['A.5.16','A.8.2','A.8.3'] },
+      { name: 'Microsoft Entra ID', tier: 'enterprise', cost: '$$', isoControls: ['A.5.16','A.8.2'] },
+      { name: 'CyberArk PAM', tier: 'enterprise', cost: '$$$', isoControls: ['A.8.2','A.5.18'] },
+      { name: 'HashiCorp Vault', tier: 'startup', cost: '$', isoControls: ['A.8.2','A.5.17'] },
+      { name: 'Teleport', tier: 'startup', cost: '$', isoControls: ['A.8.2','A.5.16'] },
+      { name: 'BeyondTrust', tier: 'enterprise', cost: '$$$', isoControls: ['A.8.2','A.8.3'] }
+    ]
+  },
+  cspm: {
+    label: 'CSPM & Cloud Security',
+    icon: '☁️',
+    description: 'Postura de segurança em nuvem, detecção de misconfiguration e compliance contínuo.',
+    tools: [
+      { name: 'Wiz', tier: 'enterprise', cost: '$$$', isoControls: ['A.8.9','A.8.23','A.5.23'] },
+      { name: 'Orca Security', tier: 'enterprise', cost: '$$$', isoControls: ['A.8.9','A.8.23'] },
+      { name: 'Prisma Cloud (Palo Alto)', tier: 'enterprise', cost: '$$$', isoControls: ['A.8.9','A.8.23','A.5.23'] },
+      { name: 'AWS Security Hub', tier: 'startup', cost: '$', isoControls: ['A.8.9','A.8.23'] },
+      { name: 'Lacework', tier: 'midmarket', cost: '$$', isoControls: ['A.8.9','A.8.16'] },
+      { name: 'Snyk', tier: 'startup', cost: '$', isoControls: ['A.8.8','A.8.29'] }
+    ]
+  },
+  waf_ddos: {
+    label: 'WAF & DDoS Protection',
+    icon: '🛡️',
+    description: 'Proteção de camada 7, filtragem de tráfego malicioso e mitigação de DDoS.',
+    tools: [
+      { name: 'Cloudflare Enterprise', tier: 'enterprise', cost: '$$$', isoControls: ['A.8.20','A.8.22'] },
+      { name: 'AWS WAF + Shield', tier: 'startup', cost: '$$', isoControls: ['A.8.20','A.8.22'] },
+      { name: 'Akamai Kona Site Defender', tier: 'enterprise', cost: '$$$', isoControls: ['A.8.20','A.8.22'] },
+      { name: 'Imperva WAF', tier: 'enterprise', cost: '$$$', isoControls: ['A.8.20','A.8.21'] },
+      { name: 'F5 Advanced WAF', tier: 'enterprise', cost: '$$$', isoControls: ['A.8.20','A.8.21'] }
+    ]
+  },
+  dlp: {
+    label: 'DLP & Data Protection',
+    icon: '🔒',
+    description: 'Prevenção de perda de dados, classificação e controle de exfiltração.',
+    tools: [
+      { name: 'Microsoft Purview DLP', tier: 'enterprise', cost: '$$', isoControls: ['A.5.12','A.8.12','A.8.11'] },
+      { name: 'Forcepoint DLP', tier: 'enterprise', cost: '$$$', isoControls: ['A.5.12','A.8.12'] },
+      { name: 'Symantec DLP', tier: 'enterprise', cost: '$$$', isoControls: ['A.5.12','A.8.12'] },
+      { name: 'Google Workspace DLP', tier: 'startup', cost: '$$', isoControls: ['A.5.12','A.8.12'] }
+    ]
+  },
+  endpoint: {
+    label: 'EDR & Endpoint Security',
+    icon: '💻',
+    description: 'Detecção e resposta em endpoints, proteção contra malware e ransomware.',
+    tools: [
+      { name: 'CrowdStrike Falcon', tier: 'enterprise', cost: '$$$', isoControls: ['A.8.7','A.8.16','A.8.19'] },
+      { name: 'SentinelOne', tier: 'midmarket', cost: '$$', isoControls: ['A.8.7','A.8.16'] },
+      { name: 'Microsoft Defender for Endpoint', tier: 'enterprise', cost: '$$', isoControls: ['A.8.7','A.8.16'] },
+      { name: 'Carbon Black (VMware)', tier: 'enterprise', cost: '$$$', isoControls: ['A.8.7','A.8.16'] }
+    ]
+  },
+  vuln_mgmt: {
+    label: 'Vulnerability Management',
+    icon: '🔍',
+    description: 'Gestão contínua de vulnerabilidades, DAST, SAST, SCA.',
+    tools: [
+      { name: 'Tenable.io', tier: 'enterprise', cost: '$$$', isoControls: ['A.8.8','A.8.9'] },
+      { name: 'Qualys VMDR', tier: 'enterprise', cost: '$$$', isoControls: ['A.8.8','A.8.9'] },
+      { name: 'Rapid7 InsightVM', tier: 'midmarket', cost: '$$', isoControls: ['A.8.8','A.8.9'] },
+      { name: 'Snyk (SCA)', tier: 'startup', cost: '$', isoControls: ['A.8.8','A.8.29'] },
+      { name: 'Burp Suite Enterprise', tier: 'midmarket', cost: '$$', isoControls: ['A.8.8','A.8.29'] }
+    ]
+  },
+  compliance_grc: {
+    label: 'GRC & Compliance Automation',
+    icon: '📋',
+    description: 'Gestão de conformidade, auditoria contínua e automação de GRC.',
+    tools: [
+      { name: 'OneTrust GRC', tier: 'enterprise', cost: '$$$', isoControls: ['A.5.1','A.5.36','A.5.37'] },
+      { name: 'Vanta', tier: 'startup', cost: '$$', isoControls: ['A.5.1','A.5.36'] },
+      { name: 'Drata', tier: 'startup', cost: '$$', isoControls: ['A.5.1','A.5.36'] },
+      { name: 'ServiceNow GRC', tier: 'enterprise', cost: '$$$', isoControls: ['A.5.1','A.5.36','A.5.37'] },
+      { name: 'LogicGate', tier: 'midmarket', cost: '$$', isoControls: ['A.5.36','A.5.37'] },
+      { name: 'Archer GRC', tier: 'enterprise', cost: '$$$', isoControls: ['A.5.1','A.5.36'] }
+    ]
+  },
+  secrets_pki: {
+    label: 'Secrets & PKI Management',
+    icon: '🗝️',
+    description: 'Gestão de segredos, certificados TLS, chaves criptográficas e PKI.',
+    tools: [
+      { name: 'HashiCorp Vault', tier: 'startup', cost: '$', isoControls: ['A.8.24','A.8.25','A.5.17'] },
+      { name: 'AWS Secrets Manager', tier: 'startup', cost: '$', isoControls: ['A.8.24','A.5.17'] },
+      { name: 'CyberArk Conjur', tier: 'enterprise', cost: '$$$', isoControls: ['A.8.24','A.5.17'] },
+      { name: 'Doppler', tier: 'startup', cost: '$', isoControls: ['A.8.24','A.5.17'] },
+      { name: 'Venafi (PKI)', tier: 'enterprise', cost: '$$$', isoControls: ['A.8.24','A.8.26'] }
+    ]
+  },
+  awareness: {
+    label: 'Security Awareness & Training',
+    icon: '🎓',
+    description: 'Treinamento e conscientização em segurança para todos os colaboradores.',
+    tools: [
+      { name: 'KnowBe4', tier: 'midmarket', cost: '$$', isoControls: ['A.6.3','A.6.4','A.5.1'] },
+      { name: 'Proofpoint Security Awareness', tier: 'enterprise', cost: '$$$', isoControls: ['A.6.3','A.6.4'] },
+      { name: 'Cofense PhishMe', tier: 'midmarket', cost: '$$', isoControls: ['A.6.3','A.6.4'] },
+      { name: 'Curricula', tier: 'startup', cost: '$', isoControls: ['A.6.3'] }
+    ]
+  }
+};
+
+/* ----------------------------------------------------------
+ * Multi-Framework Cross-Reference Mapping
+ * ISO 27001 → SOC 2, NIST CSF, CIS Controls v8, GDPR, LGPD
+ * ---------------------------------------------------------- */
+const FRAMEWORK_MAPPING = [
+  { iso: 'A.5.1',  soc2: 'CC1.2', nist: 'GV.OC-01', cis: null,   gdpr: 'Art.24', lgpd: 'Art.46' },
+  { iso: 'A.5.7',  soc2: 'CC9.2', nist: 'ID.RA-01', cis: null,   gdpr: null,     lgpd: null      },
+  { iso: 'A.5.14', soc2: 'CC6.7', nist: 'PR.AA-05', cis: '3.3',  gdpr: 'Art.32', lgpd: 'Art.46' },
+  { iso: 'A.5.15', soc2: 'CC6.1', nist: 'PR.AA-01', cis: '5.1',  gdpr: 'Art.25', lgpd: 'Art.46' },
+  { iso: 'A.5.23', soc2: 'CC9.2', nist: 'GV.SC-07', cis: '15.1', gdpr: 'Art.28', lgpd: 'Art.46' },
+  { iso: 'A.5.36', soc2: 'CC2.1', nist: 'GV.PO-01', cis: null,   gdpr: 'Art.5',  lgpd: 'Art.6'  },
+  { iso: 'A.6.3',  soc2: 'CC1.4', nist: 'PR.AT-01', cis: '14.1', gdpr: 'Art.39', lgpd: 'Art.41' },
+  { iso: 'A.8.2',  soc2: 'CC6.3', nist: 'PR.AA-02', cis: '5.3',  gdpr: 'Art.25', lgpd: 'Art.46' },
+  { iso: 'A.8.7',  soc2: 'CC6.8', nist: 'DE.CM-09', cis: '10.1', gdpr: 'Art.32', lgpd: 'Art.46' },
+  { iso: 'A.8.8',  soc2: 'CC7.1', nist: 'ID.RA-01', cis: '7.1',  gdpr: 'Art.32', lgpd: 'Art.46' },
+  { iso: 'A.8.9',  soc2: 'CC6.6', nist: 'PR.PS-01', cis: '4.1',  gdpr: 'Art.32', lgpd: 'Art.46' },
+  { iso: 'A.8.12', soc2: 'CC6.7', nist: 'PR.DS-01', cis: '3.2',  gdpr: 'Art.32', lgpd: 'Art.46' },
+  { iso: 'A.8.15', soc2: 'CC7.2', nist: 'DE.AE-03', cis: '8.1',  gdpr: 'Art.33', lgpd: 'Art.48' },
+  { iso: 'A.8.16', soc2: 'CC7.3', nist: 'DE.CM-01', cis: '8.2',  gdpr: 'Art.33', lgpd: 'Art.48' },
+  { iso: 'A.8.20', soc2: 'CC6.6', nist: 'PR.IR-01', cis: '12.1', gdpr: 'Art.32', lgpd: 'Art.46' },
+  { iso: 'A.8.22', soc2: 'CC6.6', nist: 'PR.IR-01', cis: '12.2', gdpr: 'Art.32', lgpd: 'Art.46' },
+  { iso: 'A.8.24', soc2: 'CC6.1', nist: 'PR.DS-01', cis: '3.11', gdpr: 'Art.32', lgpd: 'Art.46' },
+  { iso: 'A.8.26', soc2: 'CC8.1', nist: 'PR.PS-06', cis: '16.1', gdpr: 'Art.25', lgpd: 'Art.46' },
+  { iso: 'A.8.29', soc2: 'CC8.1', nist: 'PR.PS-04', cis: '16.2', gdpr: 'Art.25', lgpd: 'Art.46' },
+  { iso: 'A.8.32', soc2: 'CC8.1', nist: 'PR.PS-02', cis: '7.7',  gdpr: 'Art.25', lgpd: 'Art.46' },
+];
+
+/* ----------------------------------------------------------
  * Exports
  * ---------------------------------------------------------- */
 window.ISOEngine = {
@@ -1267,5 +1486,8 @@ window.ISOEngine = {
   buildMetrics,
   buildRiskRegister,
   buildRiskMatrix,
-  getRiskLabel
+  getRiskLabel,
+  iso38500: ISO_38500_PRINCIPLES,
+  frameworkMapping: FRAMEWORK_MAPPING,
+  techStack: ENTERPRISE_TECH_STACK
 };

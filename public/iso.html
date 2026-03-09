@@ -55,6 +55,7 @@
           <div class="iso-badge-lbl">Conformidade</div>
         </div>
         <button class="iso-btn-print" onclick="window.print()">🖨 Imprimir</button>
+        <button class="iso-btn-export" onclick="window.print()">📤 Exportar Relatório</button>
       </div>
     </div>
   </header>
@@ -69,6 +70,18 @@
     </button>
     <button class="iso-tab-btn" data-tab="27005" onclick="switchTab('27005', this)">
       <span class="iso-tab-icon">⚠</span> ISO 27005 — Riscos
+    </button>
+    <button class="iso-tab-btn" data-tab="38500" onclick="switchTab('38500', this)">
+      <span class="iso-tab-icon">🏛️</span> ISO 38500 — Governança TI
+    </button>
+    <button class="iso-tab-btn" data-tab="framework" onclick="switchTab('framework', this)">
+      <span class="iso-tab-icon">🗺️</span> Multi-Framework
+    </button>
+    <button class="iso-tab-btn" data-tab="stack" onclick="switchTab('stack', this)">
+      <span class="iso-tab-icon">🛠️</span> Stack Tecnológico
+    </button>
+    <button class="iso-tab-btn" data-tab="exec" onclick="switchTab('exec', this)">
+      <span class="iso-tab-icon">📊</span> Executivo
     </button>
   </div>
 
@@ -311,6 +324,107 @@
 
   </div><!-- end tab-27005 -->
 
+  <!-- ══════════════════════════════════
+       TAB: ISO 38500 — GOVERNANÇA TI
+  ══════════════════════════════════ -->
+  <div id="tab-38500" class="iso-tab-content" style="display:none">
+    <div class="iso-metrics-header">
+      <h2 class="iso-section-title">ISO/IEC 38500:2015 — Governança Corporativa de TI</h2>
+      <p class="iso-section-sub">Os 6 princípios de governança de TI para diretores e alta administração. Avalie a maturidade de governança da organização em cada princípio.</p>
+    </div>
+    <div class="principles-grid" id="principles38500">
+      <!-- Populated by JS -->
+    </div>
+  </div><!-- end tab-38500 -->
+
+  <!-- ══════════════════════════════════
+       TAB: MULTI-FRAMEWORK
+  ══════════════════════════════════ -->
+  <div id="tab-framework" class="iso-tab-content" style="display:none">
+    <div class="iso-metrics-header">
+      <h2 class="iso-section-title">Mapeamento Multi-Framework</h2>
+      <p class="iso-section-sub">Cruzamento dos controles ISO 27001:2022 com SOC 2, NIST CSF 2.0, CIS Controls v8, GDPR e LGPD. Use este mapeamento para evidenciar conformidade simultânea em múltiplos frameworks.</p>
+    </div>
+
+    <div class="fw-coverage-row">
+      <div class="fw-coverage-card">
+        <div class="fw-coverage-val">20</div>
+        <div class="fw-coverage-lbl">Controles mapeados</div>
+      </div>
+      <div class="fw-coverage-card fw-soc2-card">
+        <div class="fw-coverage-val">20</div>
+        <div class="fw-coverage-lbl">→ SOC 2</div>
+      </div>
+      <div class="fw-coverage-card fw-nist-card">
+        <div class="fw-coverage-val">20</div>
+        <div class="fw-coverage-lbl">→ NIST CSF</div>
+      </div>
+      <div class="fw-coverage-card fw-cis-card">
+        <div class="fw-coverage-val">15</div>
+        <div class="fw-coverage-lbl">→ CIS v8</div>
+      </div>
+      <div class="fw-coverage-card fw-gdpr-card">
+        <div class="fw-coverage-val">18</div>
+        <div class="fw-coverage-lbl">→ GDPR/LGPD</div>
+      </div>
+    </div>
+
+    <div class="iso-controls-wrap">
+      <table class="framework-table">
+        <thead>
+          <tr>
+            <th style="width:80px">ISO 27001</th>
+            <th style="width:90px">SOC 2</th>
+            <th style="width:110px">NIST CSF 2.0</th>
+            <th style="width:80px">CIS v8</th>
+            <th style="width:80px">GDPR</th>
+            <th style="width:80px">LGPD</th>
+          </tr>
+        </thead>
+        <tbody id="frameworkBody">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div><!-- end tab-framework -->
+
+  <!-- ══════════════════════════════════
+       TAB: STACK TECNOLÓGICO
+  ══════════════════════════════════ -->
+  <div id="tab-stack" class="iso-tab-content" style="display:none">
+    <div class="iso-metrics-header">
+      <h2 class="iso-section-title">Stack Tecnológico de Segurança</h2>
+      <p class="iso-section-sub">Ferramentas enterprise organizadas por categoria, mapeadas para controles ISO 27001:2022. Filtre por porte da organização para encontrar as ferramentas mais adequadas.</p>
+    </div>
+
+    <div class="stack-filters">
+      <div class="stack-filter-group">
+        <span class="stack-filter-label">Porte:</span>
+        <button class="stack-filter-btn active" onclick="renderTechStack('all', this)">Todos</button>
+        <button class="stack-filter-btn tier-startup-btn" onclick="renderTechStack('startup', this)">Startup</button>
+        <button class="stack-filter-btn tier-midmarket-btn" onclick="renderTechStack('midmarket', this)">Midmarket</button>
+        <button class="stack-filter-btn tier-enterprise-btn" onclick="renderTechStack('enterprise', this)">Enterprise</button>
+      </div>
+    </div>
+
+    <div class="tech-stack-grid" id="techStackGrid">
+      <!-- Populated by JS -->
+    </div>
+  </div><!-- end tab-stack -->
+
+  <!-- ══════════════════════════════════
+       TAB: EXECUTIVO
+  ══════════════════════════════════ -->
+  <div id="tab-exec" class="iso-tab-content" style="display:none">
+    <div class="iso-metrics-header">
+      <h2 class="iso-section-title">Sumário Executivo — C-Level</h2>
+      <p class="iso-section-sub">Visão consolidada para a alta administração. Score de conformidade, principais riscos, roadmap de remediação e estimativa de investimento em ferramentas.</p>
+    </div>
+    <div id="executiveSummary">
+      <!-- Populated by JS -->
+    </div>
+  </div><!-- end tab-exec -->
+
 </div><!-- end mainContent -->
 
 <!-- SCRIPTS -->
@@ -329,6 +443,9 @@ let _risks    = [];
 let _currentDomain = 'all';
 let _currentStatus = 'all';
 let _currentRisk   = 'all';
+
+// Lazy render tracker for new tabs
+const _tabRendered = {};
 
 /* ----------------------------------------------------------
  * Boot
@@ -362,6 +479,10 @@ let _currentRisk   = 'all';
     renderControls();
     renderMetrics();
     renderRisks();
+    render38500();
+    renderFrameworkMapping();
+    renderTechStack('all');
+    renderExecutive();
 
     // Show
     document.getElementById('loadingState').style.display = 'none';
@@ -382,6 +503,15 @@ function switchTab(id, btn) {
   document.querySelectorAll('.iso-tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + id).style.display = '';
   btn.classList.add('active');
+
+  // Lazy render on first activation for new tabs
+  if (!_tabRendered[id]) {
+    _tabRendered[id] = true;
+    if (id === '38500') render38500();
+    if (id === 'framework') renderFrameworkMapping();
+    if (id === 'stack') renderTechStack('all');
+    if (id === 'exec') renderExecutive();
+  }
 }
 
 /* ----------------------------------------------------------
@@ -709,6 +839,209 @@ function filterRisk(level, btn) {
   document.querySelectorAll('.iso-risk-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   buildRiskRows();
+}
+
+/* ----------------------------------------------------------
+ * RENDER: ISO 38500 — IT Governance Principles
+ * ---------------------------------------------------------- */
+function render38500() {
+  const principles = ISOEngine.iso38500 || [];
+  const grid = document.getElementById('principles38500');
+  if (!grid) return;
+  grid.innerHTML = principles.map(p => `
+    <div class="principle-card">
+      <div class="principle-header">
+        <span class="principle-id">${p.id}</span>
+        <span class="principle-name">${p.principle}</span>
+      </div>
+      <p class="principle-desc">${p.ptBR}</p>
+      <div class="principle-controls">
+        <strong>Controles:</strong>
+        <ul>${p.controls.map(c => `<li>${c}</li>`).join('')}</ul>
+      </div>
+      <div class="principle-tools">
+        <strong>Ferramentas:</strong>
+        ${p.tools.map(t => `<span class="tool-badge">${t}</span>`).join('')}
+      </div>
+      <div class="principle-sectors">
+        ${p.sectors.map(s => `<span class="sector-badge sector-${s.toLowerCase().replace(/\s/g,'-')}">${s}</span>`).join('')}
+      </div>
+      <div class="principle-risk">⚠️ <em>${p.riskIfFailed}</em></div>
+    </div>
+  `).join('');
+}
+
+/* ----------------------------------------------------------
+ * RENDER: Multi-Framework Mapping Table
+ * ---------------------------------------------------------- */
+function renderFrameworkMapping() {
+  const mappings = ISOEngine.frameworkMapping || [];
+  const tbody = document.getElementById('frameworkBody');
+  if (!tbody) return;
+  tbody.innerHTML = mappings.map(m => `
+    <tr>
+      <td class="fw-iso"><strong>${m.iso}</strong></td>
+      <td class="fw-soc2">${m.soc2 || '<span class="fw-na">—</span>'}</td>
+      <td class="fw-nist">${m.nist || '<span class="fw-na">—</span>'}</td>
+      <td class="fw-cis">${m.cis || '<span class="fw-na">—</span>'}</td>
+      <td class="fw-gdpr">${m.gdpr || '<span class="fw-na">—</span>'}</td>
+      <td class="fw-lgpd">${m.lgpd || '<span class="fw-na">—</span>'}</td>
+    </tr>
+  `).join('');
+}
+
+/* ----------------------------------------------------------
+ * RENDER: Technology Stack Cards
+ * ---------------------------------------------------------- */
+function renderTechStack(tierFilter, clickedBtn) {
+  // Update active filter button
+  if (clickedBtn) {
+    document.querySelectorAll('.stack-filter-btn').forEach(b => b.classList.remove('active'));
+    clickedBtn.classList.add('active');
+  }
+
+  const stack = ISOEngine.techStack || {};
+  const grid = document.getElementById('techStackGrid');
+  if (!grid) return;
+  grid.innerHTML = Object.entries(stack).map(([key, cat]) => {
+    const tools = tierFilter === 'all' ? cat.tools : cat.tools.filter(t => t.tier === tierFilter);
+    if (tools.length === 0) return '';
+    return `
+      <div class="stack-card">
+        <div class="stack-cat-header">
+          <span class="stack-cat-icon">${cat.icon}</span>
+          <div>
+            <div class="stack-cat-name">${cat.label}</div>
+            <div class="stack-cat-desc">${cat.description}</div>
+          </div>
+        </div>
+        <div class="stack-tools-list">
+          ${tools.map(t => `
+            <div class="stack-tool">
+              <span class="stack-tool-name">${t.name}</span>
+              <span class="stack-tool-tier tier-${t.tier}">${t.tier}</span>
+              <span class="stack-tool-cost cost-${t.cost.length}">${t.cost}</span>
+              <span class="stack-tool-iso">${(t.isoControls||[]).slice(0,2).join(', ')}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ----------------------------------------------------------
+ * RENDER: Executive C-Level Summary
+ * ---------------------------------------------------------- */
+function renderExecutive() {
+  const m = _metrics;
+  const risks = _risks;
+  if (!m || !m.complianceRate === undefined) return;
+
+  const critical = risks.filter(r => r.riskCls === 'critical').length;
+  const high = risks.filter(r => r.riskCls === 'high').length;
+
+  const grade = m.complianceRate >= 80 ? 'A' : m.complianceRate >= 65 ? 'B' : m.complianceRate >= 45 ? 'C' : m.complianceRate >= 25 ? 'D' : 'F';
+  const gradeColor = { A: '#00ff41', B: '#7fff00', C: '#ffff00', D: '#ff8c00', F: '#ff0040' }[grade];
+
+  const execEl = document.getElementById('executiveSummary');
+  if (!execEl) return;
+  execEl.innerHTML = `
+    <div class="exec-score-row">
+      <div class="exec-score-card">
+        <div class="exec-grade" style="color:${gradeColor}">${grade}</div>
+        <div class="exec-compliance-pct">${m.complianceRate}% Conformidade</div>
+        <div class="exec-compliance-sub">ISO 27001:2022 — ${m.totalControls} controles avaliados</div>
+      </div>
+      <div class="exec-kpis">
+        <div class="exec-kpi exec-kpi-danger">
+          <div class="exec-kpi-val">${critical}</div>
+          <div class="exec-kpi-label">Riscos Críticos</div>
+        </div>
+        <div class="exec-kpi exec-kpi-warn">
+          <div class="exec-kpi-val">${high}</div>
+          <div class="exec-kpi-label">Riscos Altos</div>
+        </div>
+        <div class="exec-kpi exec-kpi-neutral">
+          <div class="exec-kpi-val">${m.nonCompliant}</div>
+          <div class="exec-kpi-label">Não Conformes</div>
+        </div>
+        <div class="exec-kpi exec-kpi-good">
+          <div class="exec-kpi-val">${m.compliant}</div>
+          <div class="exec-kpi-label">Conformes</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="exec-roadmap">
+      <h3 class="exec-section-title">🗓️ Roadmap de Remediação</h3>
+      <div class="exec-roadmap-phases">
+        <div class="exec-phase exec-phase-30">
+          <div class="exec-phase-label">Fase 1 — 30 Dias</div>
+          <div class="exec-phase-title">Quick Wins Críticos</div>
+          <ul class="exec-phase-items">
+            ${risks.filter(r => r.riskCls === 'critical').slice(0,4).map(r => `<li>${r.threat.replace(/[\u{1F300}-\u{1FFFF}]/gu,'').trim()}</li>`).join('') || '<li>Nenhum risco crítico identificado</li>'}
+          </ul>
+        </div>
+        <div class="exec-phase exec-phase-90">
+          <div class="exec-phase-label">Fase 2 — 90 Dias</div>
+          <div class="exec-phase-title">Riscos Altos + Controles Chave</div>
+          <ul class="exec-phase-items">
+            ${risks.filter(r => r.riskCls === 'high').slice(0,4).map(r => `<li>${r.threat.replace(/[\u{1F300}-\u{1FFFF}]/gu,'').trim()}</li>`).join('') || '<li>Implementar controles preventivos principais</li>'}
+          </ul>
+        </div>
+        <div class="exec-phase exec-phase-180">
+          <div class="exec-phase-label">Fase 3 — 180 Dias</div>
+          <div class="exec-phase-title">Maturidade &amp; Certificação</div>
+          <ul class="exec-phase-items">
+            <li>Implementar GRC automatizado (Vanta/Drata)</li>
+            <li>Treinar equipe em ISO 27001</li>
+            <li>Contratar auditoria externa para certificação</li>
+            <li>Estabelecer ciclo contínuo de revisão</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="exec-investment">
+      <h3 class="exec-section-title">💰 Investimento Estimado em Ferramentas</h3>
+      <table class="exec-invest-table">
+        <thead><tr><th>Porte</th><th>Ferramentas Essenciais</th><th>Custo Anual Est.</th><th>ROI Esperado</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="tier-badge tier-startup">Startup</span></td>
+            <td>Snyk + Vanta + HashiCorp Vault + Cloudflare</td>
+            <td>R$ 25.000 – 80.000/ano</td>
+            <td>Redução 60% custo de breach</td>
+          </tr>
+          <tr>
+            <td><span class="tier-badge tier-midmarket">Midmarket</span></td>
+            <td>Tenable + Okta + Elastic SIEM + Rapid7</td>
+            <td>R$ 150.000 – 500.000/ano</td>
+            <td>Conformidade SOC 2 + ISO 27001</td>
+          </tr>
+          <tr>
+            <td><span class="tier-badge tier-enterprise">Enterprise</span></td>
+            <td>CrowdStrike + Splunk + CyberArk + Wiz + OneTrust</td>
+            <td>R$ 1.000.000+/ano</td>
+            <td>Full ISMS + certificações múltiplas</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="exec-next-steps">
+      <h3 class="exec-section-title">✅ Próximos Passos</h3>
+      <ol class="exec-steps-list">
+        <li>Realizar uma avaliação de lacunas (gap assessment) formal frente à ISO 27001:2022</li>
+        <li>Nomear um responsável pelo SGSI (Information Security Officer)</li>
+        <li>Priorizar os ${critical} riscos críticos identificados nesta auditoria</li>
+        <li>Contratar uma ferramenta de GRC (Vanta/Drata para startups; OneTrust para enterprise)</li>
+        <li>Implementar programa de awareness e treinamento em segurança</li>
+        <li>Agendar auditoria interna e de certificação com organismo acreditado</li>
+      </ol>
+    </div>
+  `;
 }
 
 function renderTreatment(risks) {

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Supabase Guard — Defensive Audit Console</title>
-  <meta name="description" content="Auditoria defensiva para Supabase com validação de exposição em REST, RPC, GraphQL, Storage, Edge Functions e Realtime">
+  <title>Supabase Guard — Web Security Scanner</title>
+  <meta name="description" content="Scanner de segurança web defensivo: detecta exposição de dados, credenciais em código-fonte, vulnerabilidades de API, headers inseguros, injeções e muito mais.">
   <meta name="theme-color" content="#00d4ff">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -87,22 +87,21 @@
 
     <!-- Main Title -->
     <section class="hero">
-      <h2 class="hero-title">Supabase Exposure Scanner</h2>
+      <h2 class="hero-title">Web Security Scanner</h2>
       <p class="hero-desc">
-        Auditoria defensiva para Supabase com validação de exposição em REST, RPC,
-        GraphQL, Storage, Edge Functions e Realtime, evidência assinada e comparação GUEST vs USER.
+        Scanner defensivo de segurança web que analisa exposição de dados, vazamento de credenciais em código-fonte e arquivos .env, vulnerabilidades de API, configurações inseguras e muito mais. Compatível com qualquer site ou aplicação web.
       </p>
     </section>
 
     <!-- Input Section -->
     <section class="input-section">
       <div class="input-group">
-        <label for="projectUrl">URL do projeto Supabase</label>
+        <label for="projectUrl">URL do Site / Aplicação Web</label>
         <div class="input-row">
           <input 
             type="text" 
             id="projectUrl" 
-            placeholder="https://xyzproject.supabase.co"
+            placeholder="https://seu-site.com ou https://xyzproject.supabase.co"
             spellcheck="false"
           >
           <button id="btnAudit" class="btn-primary" onclick="startAudit()">
@@ -126,7 +125,7 @@
         </summary>
         <div class="advanced-content">
           <div class="input-group">
-            <label for="anonKey">Anon Key (opcional)</label>
+            <label for="anonKey">Anon Key Supabase (opcional)</label>
             <input type="text" id="anonKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." spellcheck="false">
           </div>
           <div class="check-grid">

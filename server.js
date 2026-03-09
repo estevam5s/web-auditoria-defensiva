@@ -64,6 +64,23 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/isos', express.static(path.join(__dirname, 'isos')));
+
+// ─── ISO Standards metadata endpoint ──────────────────────────────
+app.get('/api/iso/standards', (req, res) => {
+  const isoDir = path.join(__dirname, 'isos');
+  const standards = [
+    { id: '27001', file: '27001.pdf', title: 'ISO/IEC 27001:2022', topic: 'Information Security Management Systems', controls: 93 },
+    { id: '27002', file: '27002.pdf', title: 'ISO/IEC 27002:2022', topic: 'Information Security Controls', controls: 93 },
+    { id: '27005', file: '27005.pdf', title: 'ISO/IEC 27005:2022', topic: 'Information Security Risk Management', controls: null },
+    { id: '38500', file: '38500.pdf', title: 'ISO/IEC 38500:2015', topic: 'IT Governance', controls: 6 },
+  ].map(s => ({
+    ...s,
+    available: fs.existsSync(path.join(isoDir, s.file)),
+    downloadUrl: fs.existsSync(path.join(isoDir, s.file)) ? `/isos/${s.file}` : null
+  }));
+  res.json({ standards });
+});
 
 // ─── Endpoint de versão para o Service Worker ────────────────────
 // O SW polling chama este endpoint e invalida o cache local quando
