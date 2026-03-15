@@ -312,9 +312,16 @@ function handleResult(result) {
 }
 
 // ── Handle Audit Complete ────────────────────────────────────────
+let sessionAuditCount = 0;
+
 function handleComplete(results) {
   auditResults = results;
   currentAuditId = results.evidence?.auditId;
+
+  // Update footer session counter
+  sessionAuditCount++;
+  const footerCount = $('#footerAuditCount');
+  if (footerCount) footerCount.textContent = sessionAuditCount;
 
   appendLog('info', '─────', '─────────────────────────────────────');
   appendLog('info', 'DONE', `Auditoria concluída em ${results.duration}`);

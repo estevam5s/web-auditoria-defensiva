@@ -556,72 +556,139 @@
 
     <!-- Footer -->
     <footer class="footer">
-      <div class="footer-main">
-        <div">
-          <div class="footer-brand class="footer-logo">
-            <svg viewBox="0 0 100 100" width="32" height="32">
+      <div class="footer-glow-line"></div>
+
+      <div class="footer-grid">
+
+        <!-- Col 1: Brand & Status -->
+        <div class="footer-col footer-col-brand">
+          <div class="footer-logo">
+            <svg viewBox="0 0 100 100" width="36" height="36">
               <defs>
                 <linearGradient id="footerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" style="stop-color:#00ff9f"/>
                   <stop offset="100%" style="stop-color:#00cc33"/>
                 </linearGradient>
               </defs>
-              <path d="M50,8 C75,8 90,25 90,50 C90,75 75,92 50,92 C25,92 10,75 10,50 C10,25 25,8 50,8 Z" fill="none" stroke="url(#footerGrad)" stroke-width="3"/>
-              <path d="M35,50 L47,62 L68,38" fill="none" stroke="#00ff9f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M50,8 C75,8 90,25 90,50 C90,75 75,92 50,92 C25,92 10,75 10,50 C10,25 25,8 50,8 Z" fill="none" stroke="url(#footerGrad)" stroke-width="4"/>
+              <path d="M35,50 L47,62 L68,38" fill="none" stroke="#00ff9f" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <span>SUPABASE <strong>GUARD</strong></span>
+            <div>
+              <span class="footer-brand-name">SUPABASE <strong>GUARD</strong></span>
+              <span class="footer-brand-sub">DEFENSIVE AUDIT CONSOLE</span>
+            </div>
           </div>
-          <p class="footer-version">v3.2.0 — Defensive Audit Console</p>
-        </div>
-        
-        <div class="footer-tools">
-          <h4>Ferramentas de Análise</h4>
-          <div class="footer-tool-grid">
-            <span class="tool-tag">REST API</span>
-            <span class="tool-tag">RPC Functions</span>
-            <span class="tool-tag">GraphQL</span>
-            <span class="tool-tag">Storage</span>
-            <span class="tool-tag">Edge Functions</span>
-            <span class="tool-tag">Realtime</span>
-            <span class="tool-tag">Auth</span>
-            <span class="tool-tag">DDoS Check</span>
-            <span class="tool-tag">Brute Force</span>
-            <span class="tool-tag">Hydra Simulation</span>
-            <span class="tool-tag">Tailscale/VPN</span>
-            <span class="tool-tag">DoS Avançado</span>
-            <span class="tool-tag">Slowloris</span>
-            <span class="tool-tag">ReDoS</span>
-            <span class="tool-tag">SSL/TLS</span>
-            <span class="tool-tag">Security Headers</span>
-            <span class="tool-tag">Deep Scan</span>
+          <p class="footer-tagline">Scanner defensivo de segurança web. Detecta exposição de credenciais, vulnerabilidades de API, headers inseguros, vazamento de dados e muito mais.</p>
+          <div class="footer-version-badge">v3.3.0 — Stable</div>
+          <div class="footer-status-block">
+            <div class="footer-status-item">
+              <span class="status-dot online"></span>
+              <span>Servidor operacional</span>
+            </div>
+            <div class="footer-status-item">
+              <span class="status-dot latency"></span>
+              <span id="footerLatency">Calculando latência...</span>
+            </div>
           </div>
         </div>
-        
-        <div class="footer-status">
-          <h4>Status</h4>
-          <div class="status-item">
-            <span class="status-dot online"></span>
-            <span>Online</span>
-          </div>
-          <div class="status-item">
-            <span class="status-dot latency"></span>
-            <span id="footerLatency">Calculando...</span>
+
+        <!-- Col 2: Quick access -->
+        <div class="footer-col">
+          <h4 class="footer-col-title">⚡ Acesso Rápido</h4>
+          <nav class="footer-nav">
+            <a onclick="document.getElementById('projectUrl').focus();window.scrollTo({top:0,behavior:'smooth'})">🔍 Nova Auditoria</a>
+            <a onclick="showAIChat()">🤖 Chat com IA</a>
+            <a href="/learn">🎓 Academia de Segurança</a>
+            <a onclick="openBugBounty()">🐛 Bug Bounty Report</a>
+            <a onclick="toggleHistory()">📊 Histórico de Auditorias</a>
+            <a onclick="openChecklist ? openChecklist() : null">📋 Checklist de Segurança</a>
+            <a onclick="openScriptsPage ? openScriptsPage() : null">🐍 Scripts Python Blue Team</a>
+            <a onclick="openTerminal ? openTerminal() : null">🖥️ Terminal de Segurança</a>
+          </nav>
+        </div>
+
+        <!-- Col 3: Analysis modules -->
+        <div class="footer-col">
+          <h4 class="footer-col-title">🛡️ Módulos de Análise</h4>
+          <div class="footer-modules">
+            <span>REST API</span>
+            <span>RPC Functions</span>
+            <span>GraphQL</span>
+            <span>Storage</span>
+            <span>Edge Functions</span>
+            <span>Realtime</span>
+            <span>Auth</span>
+            <span>RLS Check</span>
+            <span>CORS</span>
+            <span>DDoS Check</span>
+            <span>Brute Force</span>
+            <span>Hydra Attack</span>
+            <span>Tailscale/VPN</span>
+            <span>DoS Avançado</span>
+            <span>Slowloris</span>
+            <span>ReDoS</span>
+            <span>SSL/TLS</span>
+            <span>Security Headers</span>
+            <span>Deep Source Scan</span>
+            <span>Hidden Routes</span>
+            <span>Git Exposure</span>
+            <span>Port Scan</span>
+            <span>Open Redirect</span>
+            <span>HTTP Smuggling</span>
+            <span>Bundle Key Scan</span>
+            <span>PII Detection</span>
+            <span>SaaS Customer Data</span>
+            <span>.env Exposure</span>
           </div>
         </div>
-      </div>
-      
+
+        <!-- Col 4: Info & Stats -->
+        <div class="footer-col">
+          <h4 class="footer-col-title">📋 Informações</h4>
+          <nav class="footer-nav">
+            <a onclick="showHowItWorks()">❓ Como a auditoria funciona</a>
+            <a onclick="showTerms()">📄 Termos de Uso</a>
+            <a onclick="showPrivacy()">🔒 Política de Privacidade</a>
+            <a onclick="showContact()">✉️ Contato & Suporte</a>
+          </nav>
+          <div class="footer-live-stats">
+            <div class="footer-stat-item">
+              <span id="footerAuditCount" class="footer-stat-number">—</span>
+              <span class="footer-stat-label">Auditorias na sessão</span>
+            </div>
+            <div class="footer-stat-item">
+              <span class="footer-stat-number">40+</span>
+              <span class="footer-stat-label">Verificações por scan</span>
+            </div>
+            <div class="footer-stat-item">
+              <span class="footer-stat-number">SHA-256</span>
+              <span class="footer-stat-label">Evidência assinada</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.footer-grid -->
+
+      <!-- Bottom bar -->
       <div class="footer-bottom">
-        <div class="footer-links">
-          <a href="#" onclick="showTerms()">Termos de Uso</a>
-          <span>•</span>
-          <a href="#" onclick="showHowItWorks()">Como a auditoria funciona</a>
-          <span>•</span>
-          <a href="#" onclick="showPrivacy()">Privacidade</a>
-          <span>•</span>
-          <a href="#" onclick="showContact()">Contato</a>
+        <div class="footer-bottom-left">
+          <p class="footer-copyright">© 2024–2026 Supabase Guard. Todos os direitos reservados.</p>
+          <div class="footer-legal-links">
+            <a onclick="showTerms()">Termos</a>
+            <span>•</span>
+            <a onclick="showPrivacy()">Privacidade</a>
+            <span>•</span>
+            <a onclick="showContact()">Contato</a>
+          </div>
         </div>
-        <p class="footer-copyright">© 2024-2026 Supabase Guard. Todos os direitos reservados.</p>
+        <div class="footer-bottom-right">
+          <span class="footer-tech-badge">Node.js + Express</span>
+          <span class="footer-tech-badge">SHA-256 Evidence</span>
+          <span class="footer-tech-badge">SSE Streaming</span>
+          <span class="footer-tech-badge">PWA Ready</span>
+        </div>
       </div>
+
     </footer>
   </div>
 
