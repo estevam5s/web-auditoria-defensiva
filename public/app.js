@@ -2691,6 +2691,102 @@ function renderOSINTResults(data) {
   switchOsintTab('social', document.querySelector('.osint-tab[data-tab="social"]'));
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// NEO CURSOR — Cursor do personagem Neo do Matrix (desktop apenas)
+// ═══════════════════════════════════════════════════════════════════
+(function initNeoCursor() {
+  // Só ativa em dispositivos com mouse real (hover + pointer fino)
+  // Tablets/celulares têm pointer:coarse ou hover:none → não ativam
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
+  // ── SVG do Neo — silhueta icônica: óculos verdes + trenchcoat preto ──
+  // Tamanho: 28×44px | Hotspot: (14, 0) = topo da cabeça = "ponteiro"
+  const neoSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="44" viewBox="0 0 28 44">
+  <!-- Halo sutil para visibilidade em fundo escuro -->
+  <ellipse cx="14" cy="6.5" rx="6" ry="6.5" fill="rgba(0,255,65,0.07)"/>
+  <!-- Cabeça -->
+  <ellipse cx="14" cy="6.5" rx="5" ry="5.5" fill="#111111" stroke="rgba(0,255,65,0.45)" stroke-width="0.7"/>
+  <!-- Óculos esquerdo (icônico!) -->
+  <rect x="7.5" y="5" width="4.8" height="2.6" rx="0.9" fill="#00ff41" opacity="0.96"/>
+  <!-- Óculos direito -->
+  <rect x="15.7" y="5" width="4.8" height="2.6" rx="0.9" fill="#00ff41" opacity="0.96"/>
+  <!-- Ponte dos óculos -->
+  <line x1="12.3" y1="6.3" x2="15.7" y2="6.3" stroke="#00ff41" stroke-width="0.55"/>
+  <!-- Pescoço -->
+  <rect x="11.5" y="12" width="5" height="3.5" fill="#111111"/>
+  <!-- Trenchcoat — silhueta larga e icônica -->
+  <path d="M2,15.5 L9,15 L9.5,28 L7,43 L13,43 L14,33 L15,33 L16,43 L22,43 L19.5,28 L20,15 L26,15.5 L24,14 L14,12.5 L4,14 Z"
+        fill="#0a0a0a" stroke="#161616" stroke-width="0.4" stroke-linejoin="round"/>
+  <!-- Gola / lapela V (detalhe verde sutil) -->
+  <path d="M9,15 L12.5,21.5 L14,19 L15.5,21.5 L20,15"
+        fill="none" stroke="rgba(0,255,65,0.22)" stroke-width="0.9" stroke-linejoin="round"/>
+  <!-- Sombra lateral esquerda (profundidade) -->
+  <path d="M2,15.5 L9,15 L9.5,28 L7,43 L5.5,43 Z" fill="#111111" opacity="0.5"/>
+  <!-- Sombra lateral direita -->
+  <path d="M26,15.5 L20,15 L19.5,28 L22,43 L23.5,43 Z" fill="#111111" opacity="0.5"/>
+  <!-- Cinto (linha horizontal sutil) -->
+  <line x1="3.5" y1="26" x2="24.5" y2="26" stroke="rgba(0,255,65,0.15)" stroke-width="0.8"/>
+</svg>`;
+
+  // Blob URL — evita qualquer problema de encoding em data URI
+  const blob    = new Blob([neoSVG], { type: 'image/svg+xml' });
+  const blobUrl = URL.createObjectURL(blob);
+
+  // Injeta CSS — cursor Neo em todos os elementos + exceção para inputs de texto
+  const style = document.createElement('style');
+  style.id = 'neo-cursor-style';
+  style.textContent = `
+    @media (hover: hover) and (pointer: fine) {
+      *, *::before, *::after {
+        cursor: url("${blobUrl}") 14 0, auto !important;
+      }
+      /* Preserva cursor de texto em campos de digitação */
+      input[type="text"],
+      input[type="email"],
+      input[type="password"],
+      input[type="search"],
+      input[type="url"],
+      input[type="number"],
+      input:not([type]),
+      textarea {
+        cursor: url("${blobUrl}") 14 0, text !important;
+      }
+    }
+    /* Ripple matrix ao clicar */
+    @keyframes neo-click-ripple {
+      0%   { transform: scale(0.2); opacity: 1;   box-shadow: 0 0 0   2px #00ff41; }
+      60%  { transform: scale(1.8); opacity: 0.6; box-shadow: 0 0 12px 3px rgba(0,255,65,0.5); }
+      100% { transform: scale(2.6); opacity: 0;   box-shadow: 0 0 20px 4px rgba(0,255,65,0); }
+    }
+    .neo-ripple {
+      position: fixed;
+      width: 32px;
+      height: 32px;
+      border: 2px solid #00ff41;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 2147483647;
+      transform-origin: center;
+      animation: neo-click-ripple 0.5s ease-out forwards;
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Matrix green ripple em cada clique — feedback visual do Neo
+  document.addEventListener('click', function (e) {
+    const size = 32;
+    const el   = document.createElement('div');
+    el.className = 'neo-ripple';
+    el.style.left = (e.clientX - size / 2) + 'px';
+    el.style.top  = (e.clientY - size / 2) + 'px';
+    document.body.appendChild(el);
+    // Remove do DOM assim que a animação terminar
+    el.addEventListener('animationend', () => el.remove(), { once: true });
+  }, { passive: true });
+
+  console.log('%c[Neo] There is no spoon. 🥄', 'color:#00ff41; font-family:monospace; font-weight:bold');
+})();
+
 // Register Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
