@@ -1175,7 +1175,10 @@ app.get('/darkweb/:id', (req, res) => {
 // ─── Dark Web Intelligence API ─────────────────────────────────────
 app.post('/api/darkweb', auditLimiter, async (req, res) => {
   const { auditId, auditData } = req.body;
-  const data = auditData || (auditId ? auditStore.get(auditId) : null);
+  let data = auditData || (auditId ? auditStore.get(auditId) : null);
+  if (!data && auditId) {
+    try { data = await getAuditById(auditId); } catch (_) {}
+  }
   if (!data) return res.status(404).json({ error: 'Auditoria não encontrada. Execute uma auditoria primeiro.' });
 
   try {
@@ -1189,8 +1192,11 @@ app.post('/api/darkweb', auditLimiter, async (req, res) => {
   }
 });
 
-app.get('/api/darkweb/classify/:id', (req, res) => {
-  const data = auditStore.get(req.params.id);
+app.get('/api/darkweb/classify/:id', async (req, res) => {
+  let data = auditStore.get(req.params.id);
+  if (!data) {
+    try { data = await getAuditById(req.params.id); } catch (_) {}
+  }
   if (!data) return res.status(404).json({ error: 'Not found' });
   const level = classifyThreat(data.score, { hibp: { domainBreaches: [] }, otx: { malwareCount: 0, pulseCount: 0 }, urlscan: { malicious: 0 }, virustotal: null });
   res.json({ level, score: data.score, projectUrl: data.projectUrl });
