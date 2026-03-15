@@ -684,17 +684,19 @@ function handleComplete(results) {
   const btnTerminal = $('#btnTerminal');
   const btnOSINT = $('#btnOSINT');
   const btnCredentials = $('#btnCredentials');
-  const btnDDoS = $('#btnDDoS');
-  if (btnChecklist) btnChecklist.style.display = '';
-  if (btnExport) btnExport.style.display = '';
-  if (btnISO) btnISO.style.display = '';
-  if (btnPython) btnPython.style.display = '';
-  if (btnBounty) btnBounty.style.display = '';
-  if (btnConsulting) btnConsulting.style.display = '';
-  if (btnTerminal) btnTerminal.style.display = '';
-  if (btnOSINT) btnOSINT.style.display = '';
+  const btnDDoS       = $('#btnDDoS');
+  const btnBruteforce = $('#btnBruteforce');
+  if (btnChecklist)   btnChecklist.style.display = '';
+  if (btnExport)      btnExport.style.display = '';
+  if (btnISO)         btnISO.style.display = '';
+  if (btnPython)      btnPython.style.display = '';
+  if (btnBounty)      btnBounty.style.display = '';
+  if (btnConsulting)  btnConsulting.style.display = '';
+  if (btnTerminal)    btnTerminal.style.display = '';
+  if (btnOSINT)       btnOSINT.style.display = '';
   if (btnCredentials) btnCredentials.style.display = '';
-  if (btnDDoS) btnDDoS.style.display = '';
+  if (btnDDoS)        btnDDoS.style.display = '';
+  if (btnBruteforce)  btnBruteforce.style.display = '';
 
   // Mostra botão Dark Web imediatamente (classificação atualiza label/cor assíncrono)
   const btnDW = $('#btnDarkWeb');
@@ -794,6 +796,13 @@ function openDDoS() {
   const id = currentAuditId || auditResults?.evidence?.auditId;
   if (!id) { alert('Execute uma auditoria primeiro para abrir o Teste DDoS.'); return; }
   window.open(`/ddos/${id}`, '_blank');
+}
+
+// ── Brute Force Resilience Test Page ────────────────────────────
+function openBruteforce() {
+  const id = currentAuditId || auditResults?.evidence?.auditId;
+  if (!id) { alert('Execute uma auditoria primeiro para abrir o Teste de Força Bruta.'); return; }
+  window.open(`/bruteforce/${id}`, '_blank');
 }
 
 // ── Security Terminal ──────────────────────────────────────────

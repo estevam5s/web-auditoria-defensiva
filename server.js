@@ -21,6 +21,7 @@ const { lightScrape } = require('./audit/scraper');
 const { runOSINT } = require('./audit/osint');
 const { runDarkWebScan, classifyThreat } = require('./audit/dark-web');
 const { createDDoSTest } = require('./audit/ddos-engine');
+const { createBruteforceTest, BUILTIN_WORDLIST, parseWordlist } = require('./audit/bruteforce-engine');
 
 const { generateSupabaseCatalog, generateCatalogHTML } = require('./audit/report-supabase-catalog');
 const { askGrok, askGrokStream, generateFixPrompt } = require('./audit/grok-ai');
@@ -1294,6 +1295,117 @@ app.get('/api/ddos/stream', async (req, res) => {
     send({ type: 'error', message: err.message });
     if (!res.writableEnded) res.end();
   }
+});
+
+// ─── Brute Force Resilience Test ──────────────────────────────────
+const bruteforceSessionStore = new Map();
+
+// Page
+app.get('/bruteforce/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'bruteforce.html'));
+});
+
+// Audit info + detected login routes
+app.get('/api/bruteforce/info/:id', async (req, res) => {
+  const data = await resolveAudit(req.params.id);
+  if (!data) return res.status(404).json({ success: false, error: 'Auditoria não encontrada.' });
+
+  // Extract login-related routes from audit results
+  const loginRoutes = [];
+  (data.results || []).forEach(r => {
+    if (r.route && (
+      r.route.includes('/auth') || r.route.includes('/login') ||
+      r.route.includes('/signin') || r.route.includes('/token')
+    )) loginRoutes.push(r.route);
+  });
+
+  // Always offer the Supabase auth endpoint for the scanned project
+  const base = (data.projectUrl || '').replace(/\/$/, '');
+  if (base.startsWith('http')) {
+    loginRoutes.unshift(`${base}/auth/v1/token?grant_type=password`);
+  }
+
+  res.json({
+    success:      true,
+    projectUrl:   data.projectUrl,
+    score:        data.score,
+    grade:        data.grade,
+    loginRoutes:  [...new Set(loginRoutes)].slice(0, 8),
+    wordlistSize: BUILTIN_WORDLIST.length,
+  });
+});
+
+// Prepare session — store config, return sessionId
+app.post('/api/bruteforce/prepare', express.json({ limit: '3mb' }), async (req, res) => {
+  const { auditId, loginUrl, wordlistType, wordlistContent, delayMs, stopOnSuccess } = req.body || {};
+  if (!loginUrl) return res.status(400).json({ error: 'loginUrl obrigatório.' });
+
+  const data = auditId ? await resolveAudit(auditId) : null;
+
+  let credentials;
+  if (wordlistType === 'custom' && wordlistContent) {
+    credentials = parseWordlist(wordlistContent);
+    if (!credentials.length) return res.status(400).json({ error: 'Wordlist vazia ou inválida.' });
+  } else {
+    credentials = [...BUILTIN_WORDLIST];
+  }
+
+  // Extract anonKey if available
+  let anonKey = null;
+  if (data?.catalogData?.anonKey) anonKey = data.catalogData.anonKey;
+
+  const sessionId = crypto.randomBytes(12).toString('hex');
+  bruteforceSessionStore.set(sessionId, {
+    loginUrl,
+    credentials,
+    anonKey,
+    delayMs:       Math.max(50, Math.min(2000, Number(delayMs) || 150)),
+    stopOnSuccess: stopOnSuccess !== false,
+    createdAt:     Date.now(),
+  });
+
+  // Prune old sessions (>10 min)
+  for (const [id, s] of bruteforceSessionStore) {
+    if (Date.now() - s.createdAt > 10 * 60 * 1000) bruteforceSessionStore.delete(id);
+  }
+
+  res.json({ success: true, sessionId, total: credentials.length });
+});
+
+// SSE stream — runs the attack
+app.get('/api/bruteforce/stream/:sessionId', async (req, res) => {
+  const session = bruteforceSessionStore.get(req.params.sessionId);
+  if (!session) return res.status(404).json({ error: 'Sessão não encontrada ou expirada.' });
+
+  bruteforceSessionStore.delete(req.params.sessionId); // consume once
+
+  res.setHeader('Content-Type',      'text/event-stream');
+  res.setHeader('Cache-Control',     'no-cache');
+  res.setHeader('Connection',        'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  const send = obj => { if (!res.writableEnded) res.write(`data: ${JSON.stringify(obj)}\n\n`); };
+
+  const abortCtrl = new AbortController();
+  req.on('close', () => abortCtrl.abort());
+
+  const { emitter, run } = createBruteforceTest({ ...session, signal: abortCtrl.signal });
+
+  emitter.on('start',        d => send({ type: 'start',        ...d }));
+  emitter.on('attempt',      d => send({ type: 'attempt',      ...d }));
+  emitter.on('hit_found',    d => send({ type: 'hit_found',    ...d }));
+  emitter.on('blocked_hard', d => send({ type: 'blocked_hard', ...d }));
+  emitter.on('aborted',      d => send({ type: 'aborted',      ...d }));
+  emitter.on('complete',     d => send({ type: 'complete',     ...d }));
+  emitter.on('error',       msg => send({ type: 'error', message: String(msg) }));
+
+  try {
+    await run();
+  } catch (e) {
+    send({ type: 'error', message: e.message });
+  }
+  if (!res.writableEnded) res.end();
 });
 
 // SPA fallback

@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teste de Força Bruta — Supabase Guard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #030308;
+      --surface:   #0a0a14;
+      --surface2:  #0f0f1e;
+      --border:    rgba(255,255,255,0.07);
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --accent:    #f97316;
+      --accent2:   #ef4444;
+      --green:     #22c55e;
+      --yellow:    #eab308;
+      --blue:      #3b82f6;
+      --purple:    #a855f7;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-sans: 'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 15px; scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Background grid ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(249,115,22,0.08) 1px, transparent 0);
+      background-size: 32px 32px;
+      pointer-events: none;
+    }
+
+    /* ── Scanlines overlay ── */
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px
+      );
+      pointer-events: none;
+    }
+
+    .wrap { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 0 24px 80px; }
+
+    /* ── Top Nav ── */
+    .top-nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 24px;
+      background: rgba(3,3,8,0.92);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .top-nav a { color: var(--muted); text-decoration: none; font-size: 0.8rem; font-family: var(--font-mono); transition: color .2s; }
+    .top-nav a:hover { color: var(--accent); }
+    .top-nav-breadcrumb { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); margin-left: 4px; }
+    .top-nav-breadcrumb .crumb-active { color: var(--accent); }
+    .top-nav-status {
+      margin-left: auto; display: flex; align-items: center; gap: 8px;
+      font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent);
+    }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+      animation: pulse-dot 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse-dot { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .5; transform: scale(1.4); } }
+
+    /* ── Page Header ── */
+    .page-header {
+      position: relative; overflow: hidden;
+      background: linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(249,115,22,0.08) 50%, rgba(3,3,8,0) 100%);
+      border-bottom: 1px solid rgba(239,68,22,0.2);
+      padding: 40px 24px;
+      margin-bottom: 32px;
+    }
+    .page-header-grid {
+      position: absolute; inset: 0;
+      background-image: linear-gradient(rgba(249,115,22,0.06) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(249,115,22,0.06) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    .page-header-inner { position: relative; display: flex; align-items: center; gap: 24px; max-width: 1280px; margin: 0 auto; }
+    .header-icon-wrap { position: relative; flex-shrink: 0; }
+    .header-icon-ring {
+      position: absolute; inset: -6px; border-radius: 50%;
+      border: 2px solid transparent;
+      border-top-color: var(--accent2);
+      border-right-color: var(--accent);
+      animation: spin 3s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .header-icon {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: linear-gradient(135deg, rgba(239,68,68,0.2), rgba(249,115,22,0.15));
+      border: 1px solid rgba(239,68,68,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+    }
+    .header-text { flex: 1; }
+    .header-title { font-size: 1.8rem; font-weight: 800; background: linear-gradient(90deg, #ef4444, #f97316, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .header-subtitle { font-size: 0.88rem; color: var(--muted); font-family: var(--font-mono); margin-top: 6px; }
+    .header-target { margin-top: 8px; font-family: var(--font-mono); font-size: 0.82rem; color: var(--accent); }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 0.75rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--accent); font-family: var(--font-mono); margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-title::before { content: '//'; opacity: .5; }
+
+    /* ── States ── */
+    .state { display: none; }
+    .state.active { display: block; }
+
+    /* ═══════════ CONFIG STATE ═══════════ */
+
+    /* URL cards */
+    .url-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; margin-bottom: 12px; }
+    .url-card {
+      cursor: pointer; padding: 14px 16px; border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      transition: border-color .2s, background .2s;
+      font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .url-card:hover { border-color: var(--accent); background: rgba(249,115,22,0.06); }
+    .url-card.selected { border-color: var(--accent); background: rgba(249,115,22,0.1); color: var(--accent); }
+    .url-card-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; opacity: 0.5; }
+    .url-card.selected .url-card-dot { opacity: 1; }
+    .url-card-text { flex: 1; word-break: break-all; }
+    .url-card-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(249,115,22,0.15); color: var(--accent); flex-shrink: 0; }
+
+    /* Manual URL input */
+    .url-input-wrap { position: relative; }
+    .url-input {
+      width: 100%; padding: 12px 16px; padding-right: 44px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-family: var(--font-mono); font-size: 0.85rem;
+      transition: border-color .2s;
+      outline: none;
+    }
+    .url-input:focus { border-color: var(--accent); }
+    .url-input::placeholder { color: var(--muted); }
+
+    /* Wordlist tabs */
+    .wl-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+    .wl-tab {
+      padding: 8px 18px; border-radius: 6px; cursor: pointer;
+      font-size: 0.82rem; font-weight: 600; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); font-family: var(--font-sans);
+      transition: all .2s;
+    }
+    .wl-tab.active { background: rgba(249,115,22,0.15); border-color: var(--accent); color: var(--accent); }
+    .wl-panel { display: none; }
+    .wl-panel.active { display: block; }
+
+    /* Builtin wordlist info */
+    .wl-builtin-info {
+      display: flex; align-items: center; gap: 16px; padding: 16px;
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    }
+    .wl-builtin-icon { font-size: 32px; }
+    .wl-builtin-label { font-weight: 600; font-size: 0.92rem; }
+    .wl-builtin-desc { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+    .wl-builtin-count { margin-left: auto; font-family: var(--font-mono); font-size: 1.5rem; font-weight: 700; color: var(--accent); text-align: right; }
+    .wl-builtin-count small { display: block; font-size: 0.7rem; color: var(--muted); }
+
+    /* Drop zone */
+    .dropzone {
+      border: 2px dashed rgba(249,115,22,0.35);
+      border-radius: 10px; padding: 40px 20px;
+      text-align: center; cursor: pointer;
+      background: rgba(249,115,22,0.03);
+      transition: border-color .2s, background .2s;
+    }
+    .dropzone:hover, .dropzone.drag-over {
+      border-color: var(--accent);
+      background: rgba(249,115,22,0.08);
+    }
+    .dropzone-icon { font-size: 40px; margin-bottom: 12px; }
+    .dropzone-label { font-weight: 600; margin-bottom: 6px; }
+    .dropzone-hint { font-size: 0.8rem; color: var(--muted); font-family: var(--font-mono); }
+    .dropzone input[type="file"] { display: none; }
+    .wl-file-loaded {
+      display: none; align-items: center; gap: 12px; padding: 12px 16px;
+      background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25); border-radius: 8px;
+      margin-top: 12px; font-family: var(--font-mono); font-size: 0.82rem;
+    }
+    .wl-file-loaded.visible { display: flex; }
+    .wl-file-loaded .file-name { color: var(--green); font-weight: 600; }
+    .wl-file-loaded .file-count { margin-left: auto; color: var(--green); }
+
+    /* Format hint */
+    .format-hint {
+      margin-top: 10px; padding: 10px 14px;
+      background: var(--surface2); border-radius: 6px; border-left: 3px solid rgba(59,130,246,0.5);
+      font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted);
+    }
+    .format-hint code { color: var(--blue); }
+
+    /* Settings sliders */
+    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media(max-width:640px) { .settings-grid { grid-template-columns: 1fr; } }
+    .setting-item label { font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 8px; }
+    .setting-item label span { color: var(--accent); font-family: var(--font-mono); font-weight: 600; }
+    .slider { width: 100%; accent-color: var(--accent); }
+    .toggle-wrap { display: flex; align-items: center; gap: 12px; }
+    .toggle { position: relative; width: 44px; height: 24px; cursor: pointer; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0; border-radius: 24px;
+      background: var(--surface2); border: 1px solid var(--border);
+      transition: .2s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute;
+      width: 18px; height: 18px; left: 2px; bottom: 2px; border-radius: 50%;
+      background: var(--muted); transition: .2s;
+    }
+    input:checked + .toggle-slider { background: rgba(249,115,22,0.25); border-color: var(--accent); }
+    input:checked + .toggle-slider::before { transform: translateX(20px); background: var(--accent); }
+
+    /* Disclaimer */
+    .disclaimer {
+      padding: 14px 18px; border-radius: 8px; margin-bottom: 20px;
+      background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2);
+      font-size: 0.8rem; color: #fca5a5; line-height: 1.6;
+    }
+    .disclaimer strong { color: var(--accent2); }
+
+    /* Start button */
+    .btn-start {
+      width: 100%; padding: 18px; border-radius: 10px; border: none; cursor: pointer;
+      font-size: 1rem; font-weight: 700; font-family: var(--font-sans); letter-spacing: .05em;
+      background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+      color: white; transition: opacity .2s, transform .15s;
+      box-shadow: 0 4px 24px rgba(239,68,68,0.35);
+    }
+    .btn-start:hover:not(:disabled) { opacity: .9; transform: translateY(-1px); }
+    .btn-start:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ═══════════ RUNNING STATE ═══════════ */
+
+    .running-header {
+      display: flex; align-items: center; gap: 16px;
+      padding: 16px 20px; margin-bottom: 24px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    }
+    .running-spinner {
+      width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+      border: 3px solid rgba(249,115,22,0.2);
+      border-top-color: var(--accent);
+      animation: spin 1s linear infinite;
+    }
+    .running-label { font-weight: 700; font-size: 1rem; }
+    .running-sub { font-size: 0.8rem; color: var(--muted); font-family: var(--font-mono); }
+    .running-stop {
+      margin-left: auto; padding: 8px 18px; border-radius: 6px; border: 1px solid var(--accent2);
+      background: rgba(239,68,68,0.1); color: var(--accent2); cursor: pointer; font-weight: 600;
+      font-family: var(--font-sans); font-size: 0.85rem; transition: background .2s;
+    }
+    .running-stop:hover { background: rgba(239,68,68,0.2); }
+
+    /* Progress bar */
+    .progress-bar-wrap { height: 6px; background: var(--surface2); border-radius: 3px; margin-bottom: 24px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #ef4444, #f97316); transition: width .4s; width: 0%; }
+
+    /* 2-column layout */
+    .running-grid { display: grid; grid-template-columns: 340px 1fr; gap: 20px; }
+    @media(max-width:900px) { .running-grid { grid-template-columns: 1fr; } }
+
+    /* Stats panel */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .stat-box {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px;
+      text-align: center;
+    }
+    .stat-box-val { font-size: 1.6rem; font-weight: 700; font-family: var(--font-mono); line-height: 1; }
+    .stat-box-lbl { font-size: 0.7rem; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: .08em; }
+    .stat-attempts { color: var(--text); }
+    .stat-hits     { color: var(--accent2); }
+    .stat-blocked  { color: var(--yellow); }
+    .stat-latency  { color: var(--blue); }
+
+    /* Last attempt */
+    .last-attempt {
+      padding: 10px 14px; border-radius: 8px; margin-top: 10px;
+      background: var(--surface2); border: 1px solid var(--border);
+      font-family: var(--font-mono); font-size: 0.75rem;
+    }
+    .last-attempt-lbl { color: var(--muted); font-size: 0.65rem; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px; }
+    .la-user { color: var(--text); word-break: break-all; }
+    .la-pass { color: var(--accent); word-break: break-all; }
+    .la-status { margin-top: 4px; }
+
+    /* Terminal */
+    .terminal {
+      background: #060610; border: 1px solid rgba(249,115,22,0.2); border-radius: 10px; overflow: hidden;
+    }
+    .terminal-header {
+      display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+      background: rgba(249,115,22,0.06); border-bottom: 1px solid rgba(249,115,22,0.15);
+    }
+    .terminal-dots { display: flex; gap: 6px; }
+    .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .terminal-dot:nth-child(1) { background: #ef4444; }
+    .terminal-dot:nth-child(2) { background: #eab308; }
+    .terminal-dot:nth-child(3) { background: #22c55e; }
+    .terminal-title { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); margin-left: 8px; }
+    .terminal-body {
+      height: 480px; overflow-y: auto; padding: 14px;
+      font-family: var(--font-mono); font-size: 0.78rem; line-height: 1.7;
+      scroll-behavior: smooth;
+    }
+    .terminal-body::-webkit-scrollbar { width: 4px; }
+    .terminal-body::-webkit-scrollbar-track { background: transparent; }
+    .terminal-body::-webkit-scrollbar-thumb { background: rgba(249,115,22,0.3); border-radius: 2px; }
+    .log-line { display: flex; gap: 8px; align-items: flex-start; }
+    .log-ts { color: var(--muted); flex-shrink: 0; font-size: 0.7rem; padding-top: 1px; }
+    .log-msg { word-break: break-all; flex: 1; }
+    .log-fail    .log-msg { color: #64748b; }
+    .log-success .log-msg { color: #22c55e; font-weight: 700; }
+    .log-blocked .log-msg { color: #eab308; }
+    .log-waf     .log-msg { color: #a855f7; }
+    .log-info    .log-msg { color: #3b82f6; }
+    .log-warn    .log-msg { color: #f97316; }
+    .log-error   .log-msg { color: #ef4444; }
+    .log-system  .log-msg { color: var(--muted); font-style: italic; }
+
+    /* ═══════════ REPORT STATE ═══════════ */
+
+    .report-grade-banner {
+      text-align: center; padding: 40px 24px; border-radius: 14px; margin-bottom: 24px;
+      border: 1px solid;
+    }
+    .grade-big { font-size: 5rem; font-weight: 900; font-family: var(--font-mono); line-height: 1; }
+    .grade-label { font-size: 1.1rem; font-weight: 700; margin-top: 8px; letter-spacing: .06em; text-transform: uppercase; }
+    .grade-score { font-family: var(--font-mono); font-size: 1rem; margin-top: 4px; opacity: .7; }
+    .grade-summary { font-size: 0.9rem; max-width: 600px; margin: 16px auto 0; line-height: 1.6; opacity: .85; }
+
+    /* Hit alert */
+    .hit-alert {
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.4); border-radius: 10px;
+      padding: 20px; margin-bottom: 20px;
+    }
+    .hit-alert-title { font-size: 1rem; font-weight: 700; color: var(--accent2); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .hit-row {
+      display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 6px;
+      background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+      font-family: var(--font-mono); font-size: 0.82rem; margin-top: 8px;
+    }
+    .hit-row .h-user { color: var(--text); }
+    .hit-row .h-colon { color: var(--muted); }
+    .hit-row .h-pass { color: var(--accent2); font-weight: 700; }
+    .hit-row .h-status { margin-left: auto; padding: 2px 8px; border-radius: 4px; background: rgba(34,197,94,0.15); color: var(--green); font-size: 0.72rem; }
+
+    /* Stats row */
+    .report-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+    @media(max-width:640px) { .report-stats { grid-template-columns: 1fr 1fr; } }
+    .rstat {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center;
+    }
+    .rstat-val { font-size: 1.8rem; font-weight: 700; font-family: var(--font-mono); }
+    .rstat-lbl { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-top: 4px; }
+
+    /* Reco cards */
+    .reco-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media(max-width:700px) { .reco-grid { grid-template-columns: 1fr; } }
+    .reco-card {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 16px;
+    }
+    .reco-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .reco-icon { font-size: 20px; }
+    .reco-title { font-weight: 600; font-size: 0.88rem; }
+    .reco-priority {
+      margin-left: auto; font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700;
+      padding: 2px 7px; border-radius: 4px;
+    }
+    .p0 { background: rgba(239,68,68,0.2); color: #ef4444; }
+    .p1 { background: rgba(249,115,22,0.2); color: #f97316; }
+    .p2 { background: rgba(234,179,8,0.2); color: #eab308; }
+    .p3 { background: rgba(100,116,139,0.2); color: #94a3b8; }
+    .reco-body { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+
+    /* Evidence footer */
+    .evidence-footer {
+      margin-top: 24px; padding: 16px 20px; border-radius: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted);
+      display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    }
+    .evidence-footer span { color: var(--text); }
+
+    /* Print */
+    @media print {
+      body::before, body::after { display: none; }
+      .top-nav, .running-state, .btn-start, .running-stop, #stateConfig { display: none !important; }
+      .state.active { display: block !important; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a href="/" class="top-nav-back">← Painel</a>
+  <div class="top-nav-breadcrumb">Supabase Guard / <span class="crumb-active">Teste de Força Bruta</span></div>
+  <div class="top-nav-status"><span class="status-dot"></span><span id="navStatusText">AGUARDANDO</span></div>
+</nav>
+
+<div class="page-header">
+  <div class="page-header-grid"></div>
+  <div class="page-header-inner">
+    <div class="header-icon-wrap">
+      <div class="header-icon-ring"></div>
+      <div class="header-icon">🔓</div>
+    </div>
+    <div class="header-text">
+      <div class="header-title">Teste de Força Bruta</div>
+      <div class="header-subtitle">// Brute Force Resilience Test — Authorized Security Assessment</div>
+      <div class="header-target" id="headerTarget">Carregando...</div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ════════════ CONFIG STATE ════════════ -->
+  <div class="state active" id="stateConfig">
+
+    <!-- Login URL -->
+    <div class="card">
+      <div class="card-title">🎯 Endpoint de Login Alvo</div>
+
+      <div class="url-grid" id="urlGrid">
+        <!-- Populated by JS -->
+      </div>
+
+      <div style="margin-top:12px">
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:6px;font-family:var(--font-mono)">Ou informe manualmente:</div>
+        <div class="url-input-wrap">
+          <input class="url-input" id="manualUrl" type="url"
+            placeholder="https://seu-projeto.supabase.co/auth/v1/token?grant_type=password"
+            oninput="handleManualUrl(this.value)" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Wordlist -->
+    <div class="card">
+      <div class="card-title">📋 Wordlist de Credenciais</div>
+
+      <div class="wl-tabs">
+        <button class="wl-tab active" onclick="switchWordlistTab('builtin', this)">Lista Padrão</button>
+        <button class="wl-tab" onclick="switchWordlistTab('custom', this)">Upload Personalizado</button>
+      </div>
+
+      <!-- Builtin -->
+      <div class="wl-panel active" id="wlBuiltin">
+        <div class="wl-builtin-info">
+          <div class="wl-builtin-icon">🗂️</div>
+          <div>
+            <div class="wl-builtin-label">Wordlist de Pentest Integrada</div>
+            <div class="wl-builtin-desc">
+              Inclui credenciais comuns, variações de admin, senhas do OWASP Top-10,
+              pares específicos para Supabase e sondas de SQL/NoSQL Injection.
+            </div>
+          </div>
+          <div class="wl-builtin-count" id="builtinCount">
+            —
+            <small>entradas</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom upload -->
+      <div class="wl-panel" id="wlCustom">
+        <label class="dropzone" id="dropzone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+          <div class="dropzone-icon">📂</div>
+          <div class="dropzone-label">Arraste o arquivo wordlist.txt aqui</div>
+          <div class="dropzone-hint">ou clique para selecionar — formato: usuario:senha ou apenas senha</div>
+          <input type="file" id="fileInput" accept=".txt,text/plain" onchange="handleFileSelect(this)">
+        </label>
+
+        <div class="wl-file-loaded" id="fileLoaded">
+          <span>✅</span>
+          <span class="file-name" id="fileName">—</span>
+          <span class="file-count" id="fileCount">— entradas</span>
+          <button style="margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem" onclick="clearFile()">✕</button>
+        </div>
+
+        <div class="format-hint">
+          Formatos aceitos:<br>
+          <code>usuario@exemplo.com:senha</code> — par email:senha<br>
+          <code>admin:senha123</code> — par usuário:senha<br>
+          <code>senha123</code> — apenas senha (usa e-mail padrão detectado)<br>
+          Máximo: <code>1.000</code> entradas • Linhas com <code>#</code> são comentários
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="card">
+      <div class="card-title">⚙️ Configurações do Ataque</div>
+      <div class="settings-grid">
+        <div class="setting-item">
+          <label>Delay entre tentativas: <span id="delayVal">150</span>ms</label>
+          <input type="range" class="slider" id="delaySlider" min="50" max="1000" value="150" step="50"
+            oninput="document.getElementById('delayVal').textContent=this.value">
+        </div>
+        <div class="setting-item">
+          <label>Parar ao encontrar credencial válida</label>
+          <div class="toggle-wrap">
+            <label class="toggle">
+              <input type="checkbox" id="stopOnSuccess" checked>
+              <span class="toggle-slider"></span>
+            </label>
+            <span id="stopLabel" style="font-size:.82rem;color:var(--muted)">Ativado — eficiência máxima</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      <strong>⚠️ Aviso de Uso Autorizado:</strong> Este teste deve ser executado <strong>somente</strong> em sistemas
+      que você possui ou tem permissão explícita para testar. O uso não autorizado é ilegal e pode acarretar
+      responsabilidade civil e criminal. Ao iniciar, você declara ter autorização para realizar este teste.
+    </div>
+
+    <button class="btn-start" id="btnStart" onclick="startAttack()" disabled>
+      🔓 Iniciar Teste de Força Bruta
+    </button>
+
+  </div><!-- /stateConfig -->
+
+  <!-- ════════════ RUNNING STATE ════════════ -->
+  <div class="state" id="stateRunning">
+
+    <div class="running-header">
+      <div class="running-spinner" id="runSpinner"></div>
+      <div>
+        <div class="running-label" id="runLabel">Iniciando ataque...</div>
+        <div class="running-sub" id="runSub">Conectando ao endpoint</div>
+      </div>
+      <button class="running-stop" onclick="stopAttack()">⏹ Parar</button>
+    </div>
+
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+
+    <div class="running-grid">
+      <!-- Stats -->
+      <div>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-box-val stat-attempts" id="statAttempts">0</div>
+            <div class="stat-box-lbl">Tentativas</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-val stat-hits" id="statHits">0</div>
+            <div class="stat-box-lbl">Acertos 🚨</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-val stat-blocked" id="statBlocked">0</div>
+            <div class="stat-box-lbl">Bloqueados</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-val stat-latency" id="statLatency">—</div>
+            <div class="stat-box-lbl">Lat. média (ms)</div>
+          </div>
+        </div>
+
+        <div class="last-attempt card" id="lastAttemptBox">
+          <div class="last-attempt-lbl">Última tentativa</div>
+          <div class="la-user" id="laUser">—</div>
+          <div class="la-pass" id="laPass">—</div>
+          <div class="la-status" id="laStatus"></div>
+        </div>
+
+        <!-- Block rate meter -->
+        <div class="card" style="margin-top:0">
+          <div class="card-title">🛡️ Taxa de Bloqueio</div>
+          <div style="font-family:var(--font-mono);font-size:2rem;font-weight:700;color:var(--yellow)" id="blockRate">0%</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:4px">Tentativas bloqueadas pelo servidor</div>
+          <div style="height:6px;background:var(--surface2);border-radius:3px;margin-top:10px;overflow:hidden">
+            <div id="blockRateFill" style="height:100%;border-radius:3px;background:var(--yellow);width:0%;transition:width .5s"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Terminal -->
+      <div class="terminal">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <div class="terminal-dot"></div>
+            <div class="terminal-dot"></div>
+            <div class="terminal-dot"></div>
+          </div>
+          <div class="terminal-title">bruteforce@supabase-guard:~$</div>
+        </div>
+        <div class="terminal-body" id="termBody"></div>
+      </div>
+    </div>
+
+  </div><!-- /stateRunning -->
+
+  <!-- ════════════ REPORT STATE ════════════ -->
+  <div class="state" id="stateReport">
+
+    <div class="report-grade-banner" id="reportBanner"></div>
+
+    <div id="hitAlertWrap"></div>
+
+    <div class="report-stats" id="reportStats"></div>
+
+    <div class="card">
+      <div class="card-title">📋 Recomendações de Segurança</div>
+      <div class="reco-grid" id="recoGrid"></div>
+    </div>
+
+    <div class="evidence-footer" id="reportEvidence"></div>
+
+    <div style="margin-top:20px;display:flex;gap:12px">
+      <button onclick="window.print()" style="padding:10px 22px;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--text);cursor:pointer;font-family:var(--font-sans)">
+        🖨️ Imprimir Relatório
+      </button>
+      <button onclick="showState('config')" style="padding:10px 22px;border-radius:8px;background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.3);color:var(--accent);cursor:pointer;font-family:var(--font-sans)">
+        🔄 Novo Teste
+      </button>
+    </div>
+
+  </div><!-- /stateReport -->
+
+</div><!-- /wrap -->
+
+<script>
+/* ───────────────────────── State ───────────────────────────────── */
+let auditId       = null;
+let selectedUrl   = '';
+let wordlistType  = 'builtin';
+let customWordlist = '';
+let eventSource   = null;
+let stopRequested = false;
+
+// Live counters
+let liveAttempts = 0, liveHits = 0, liveBlocked = 0, latSum = 0, latCount = 0;
+
+/* ───────────────────────── Init ─────────────────────────────────── */
+window.addEventListener('DOMContentLoaded', async () => {
+  auditId = location.pathname.split('/').pop();
+  try {
+    const res  = await fetch(`/api/bruteforce/info/${auditId}`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Erro ao carregar');
+
+    document.getElementById('headerTarget').textContent = data.projectUrl || 'Alvo desconhecido';
+    document.getElementById('builtinCount').innerHTML = `${data.wordlistSize}<small>entradas</small>`;
+
+    buildUrlGrid(data.loginRoutes || []);
+  } catch (e) {
+    document.getElementById('headerTarget').textContent = 'Erro ao carregar auditoria';
+    log('error', `Erro: ${e.message}`);
+  }
+
+  document.getElementById('stopOnSuccess').addEventListener('change', e => {
+    document.getElementById('stopLabel').textContent = e.target.checked
+      ? 'Ativado — eficiência máxima'
+      : 'Desativado — testa toda a lista';
+  });
+});
+
+/* ───────────────────────── URL Grid ─────────────────────────────── */
+function buildUrlGrid(routes) {
+  const grid = document.getElementById('urlGrid');
+  grid.innerHTML = '';
+
+  if (!routes.length) {
+    grid.innerHTML = `<div style="font-size:.82rem;color:var(--muted);font-family:var(--font-mono);padding:8px 0">
+      Nenhuma rota de login detectada automaticamente. Informe a URL manualmente abaixo.
+    </div>`;
+    return;
+  }
+
+  routes.forEach((url, i) => {
+    const card = document.createElement('div');
+    card.className = 'url-card';
+    const isSupabase = url.includes('/auth/v1/');
+    card.innerHTML = `
+      <div class="url-card-dot"></div>
+      <div class="url-card-text">${url}</div>
+      ${isSupabase ? '<span class="url-card-badge">Supabase</span>' : ''}
+    `;
+    card.addEventListener('click', () => selectUrl(url, card));
+    grid.appendChild(card);
+    if (i === 0) selectUrl(url, card); // auto-select first
+  });
+}
+
+function selectUrl(url, card) {
+  document.querySelectorAll('.url-card').forEach(c => c.classList.remove('selected'));
+  if (card) card.classList.add('selected');
+  selectedUrl = url;
+  document.getElementById('manualUrl').value = '';
+  validateForm();
+}
+
+function handleManualUrl(val) {
+  document.querySelectorAll('.url-card').forEach(c => c.classList.remove('selected'));
+  selectedUrl = val.trim();
+  validateForm();
+}
+
+/* ───────────────────────── Wordlist Tabs ─────────────────────────── */
+function switchWordlistTab(tab, btn) {
+  document.querySelectorAll('.wl-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.wl-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(tab === 'builtin' ? 'wlBuiltin' : 'wlCustom').classList.add('active');
+  wordlistType = tab;
+  validateForm();
+}
+
+/* ───────────────────────── File Upload ──────────────────────────── */
+function handleDragOver(e) { e.preventDefault(); document.getElementById('dropzone').classList.add('drag-over'); }
+function handleDragLeave() { document.getElementById('dropzone').classList.remove('drag-over'); }
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropzone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+}
+function handleFileSelect(input) { if (input.files[0]) processFile(input.files[0]); }
+
+function processFile(file) {
+  if (!file.name.endsWith('.txt') && file.type !== 'text/plain') {
+    alert('Por favor selecione um arquivo .txt');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    customWordlist = e.target.result;
+    const lines = customWordlist.split('\n').filter(l => l.trim() && !l.trim().startsWith('#'));
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileCount').textContent = `${Math.min(lines.length, 1000)} entradas`;
+    document.getElementById('fileLoaded').classList.add('visible');
+    validateForm();
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function clearFile() {
+  customWordlist = '';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('fileLoaded').classList.remove('visible');
+  validateForm();
+}
+
+/* ───────────────────────── Validation ──────────────────────────── */
+function validateForm() {
+  const hasUrl = selectedUrl.length > 6;
+  const hasWl  = wordlistType === 'builtin' || (wordlistType === 'custom' && customWordlist.length > 0);
+  document.getElementById('btnStart').disabled = !(hasUrl && hasWl);
+}
+
+/* ───────────────────────── State management ────────────────────── */
+function showState(name) {
+  document.querySelectorAll('.state').forEach(s => s.classList.remove('active'));
+  document.getElementById(`state${name.charAt(0).toUpperCase() + name.slice(1)}`).classList.add('active');
+}
+
+/* ───────────────────────── Terminal log ─────────────────────────── */
+function ts() {
+  return new Date().toLocaleTimeString('pt-BR', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function log(type, msg) {
+  const body = document.getElementById('termBody');
+  if (!body) return;
+  const line = document.createElement('div');
+  line.className = `log-line log-${type}`;
+  line.innerHTML = `<span class="log-ts">[${ts()}]</span><span class="log-msg">${escHtml(msg)}</span>`;
+  body.appendChild(line);
+  body.scrollTop = body.scrollHeight;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ───────────────────────── Start Attack ─────────────────────────── */
+async function startAttack() {
+  if (!selectedUrl) return;
+  stopRequested = false;
+
+  // Reset counters
+  liveAttempts = liveHits = liveBlocked = latSum = latCount = 0;
+  updateStats();
+
+  // Clear terminal
+  document.getElementById('termBody').innerHTML = '';
+  document.getElementById('progressFill').style.width = '0%';
+
+  showState('running');
+  document.getElementById('navStatusText').textContent = 'ATACANDO';
+
+  log('info', `╔══════════════════════════════════════════════╗`);
+  log('info', `  SUPABASE GUARD — BRUTE FORCE RESILIENCE TEST`);
+  log('info', `╚══════════════════════════════════════════════╝`);
+  log('system', `Alvo: ${selectedUrl}`);
+  log('system', `Wordlist: ${wordlistType === 'builtin' ? 'Padrão integrada' : 'Arquivo personalizado'}`);
+  log('system', `Delay: ${document.getElementById('delaySlider').value}ms por tentativa`);
+  log('system', `────────────────────────────────────────────────`);
+
+  try {
+    const prepRes = await fetch('/api/bruteforce/prepare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        auditId,
+        loginUrl: selectedUrl,
+        wordlistType,
+        wordlistContent: wordlistType === 'custom' ? customWordlist : '',
+        delayMs: parseInt(document.getElementById('delaySlider').value),
+        stopOnSuccess: document.getElementById('stopOnSuccess').checked,
+      }),
+    });
+
+    const prepData = await prepRes.json();
+    if (!prepData.success) throw new Error(prepData.error || 'Erro ao preparar sessão');
+
+    log('system', `Sessão iniciada — ${prepData.total} credenciais a testar`);
+    log('system', `Session ID: ${prepData.sessionId}`);
+    log('system', `────────────────────────────────────────────────`);
+
+    document.getElementById('runLabel').textContent = 'Ataque em progresso...';
+    document.getElementById('runSub').textContent = `${prepData.total} credenciais • ${selectedUrl}`;
+
+    // Open SSE stream
+    eventSource = new EventSource(`/api/bruteforce/stream/${prepData.sessionId}`);
+    eventSource.onmessage = e => handleEvent(JSON.parse(e.data));
+    eventSource.onerror = () => {
+      log('error', 'Conexão SSE encerrada');
+      eventSource.close();
+    };
+
+  } catch (err) {
+    log('error', `Falha ao iniciar: ${err.message}`);
+    showState('config');
+  }
+}
+
+/* ───────────────────────── Stop Attack ─────────────────────────── */
+function stopAttack() {
+  stopRequested = true;
+  if (eventSource) { eventSource.close(); eventSource = null; }
+  log('warn', '⏹ Teste interrompido pelo usuário.');
+  document.getElementById('navStatusText').textContent = 'INTERROMPIDO';
+  setTimeout(() => showState('config'), 1500);
+}
+
+/* ───────────────────────── Event Handler ───────────────────────── */
+function handleEvent(evt) {
+  if (stopRequested) return;
+
+  switch (evt.type) {
+
+    case 'start':
+      log('info', `► Iniciando — endpoint: ${evt.endpointType} • delay: ${evt.delayMs}ms`);
+      break;
+
+    case 'attempt': {
+      liveAttempts = evt.index + 1;
+      if (evt.success) liveHits++;
+      if (evt.blocked) liveBlocked++;
+      if (evt.ok && evt.lat) { latSum += evt.lat; latCount++; }
+
+      const prog = Math.round((liveAttempts / evt.total) * 100);
+      document.getElementById('progressFill').style.width = prog + '%';
+      document.getElementById('runLabel').textContent = `Tentativa ${liveAttempts} / ${evt.total}`;
+
+      // Last attempt box
+      document.getElementById('laUser').textContent = `👤 ${evt.user}`;
+      document.getElementById('laPass').textContent = `🔑 ${evt.pass}`;
+
+      let statusHtml = '';
+      if (evt.success) {
+        statusHtml = `<span style="color:var(--green);font-weight:700">✅ STATUS ${evt.status} — CREDENCIAL VÁLIDA!</span>`;
+      } else if (evt.blocked && evt.waf) {
+        statusHtml = `<span style="color:#a855f7">🛡️ ${evt.status} — WAF/Firewall</span>`;
+      } else if (evt.blocked) {
+        statusHtml = `<span style="color:var(--yellow)">⚠️ ${evt.status} — Bloqueado (Rate Limit)</span>`;
+      } else if (evt.ok) {
+        statusHtml = `<span style="color:var(--muted)">${evt.status || 'ERR'} — Falhou</span>`;
+      } else {
+        statusHtml = `<span style="color:var(--muted)">CONN ERROR — ${evt.error || '?'}</span>`;
+      }
+      document.getElementById('laStatus').innerHTML = statusHtml;
+
+      // Terminal log
+      let logType = 'fail';
+      let logMsg  = `[${String(evt.status || 'ERR').padStart(3)}] ${evt.user}:${evt.pass}`;
+      if (evt.success)           { logType = 'success'; logMsg += ' ◄◄◄ CREDENCIAL VÁLIDA! ◄◄◄'; }
+      else if (evt.waf)          { logType = 'waf';     logMsg += ' [WAF/Cloudflare]'; }
+      else if (evt.blocked)      { logType = 'blocked'; logMsg += ' [RATE LIMITED]'; }
+      else if (!evt.ok)          { logType = 'error';   logMsg = `[ERR] ${evt.user}:${evt.pass} — ${evt.error}`; }
+
+      log(logType, logMsg);
+      updateStats();
+      break;
+    }
+
+    case 'hit_found':
+      log('success', `🚨🚨🚨 CREDENCIAL ENCONTRADA! ${evt.user}:${evt.pass} (HTTP ${evt.status})`);
+      document.getElementById('navStatusText').textContent = 'CREDENCIAL ENCONTRADA!';
+      break;
+
+    case 'blocked_hard':
+      log('warn', `🛡️ ${evt.message}`);
+      log('info', `Encerrando teste antecipadamente — proteção confirmada.`);
+      break;
+
+    case 'aborted':
+      log('system', `Teste abortado após ${evt.done} tentativas.`);
+      break;
+
+    case 'complete':
+      if (eventSource) { eventSource.close(); eventSource = null; }
+      log('system', `────────────────────────────────────────────────`);
+      log('info', `✓ Teste concluído — ${evt.stats.total} tentativas | ${evt.stats.success} acerto(s) | ${evt.stats.blocked} bloqueado(s)`);
+      log('info', `  Latência média: ${evt.stats.meanLat}ms | WAF triggers: ${evt.stats.waf}`);
+      log('info', `  Score de segurança: ${evt.security.grade} (${evt.security.score}/100) — ${evt.security.label}`);
+      document.getElementById('navStatusText').textContent = 'CONCLUÍDO';
+
+      // Stop spinner
+      document.getElementById('runSpinner').style.borderTopColor = '#22c55e';
+      document.getElementById('runLabel').textContent = 'Teste concluído';
+
+      setTimeout(() => renderReport(evt), 1800);
+      break;
+
+    case 'error':
+      log('error', `Erro: ${evt.message}`);
+      break;
+  }
+}
+
+/* ───────────────────────── Update Stats ─────────────────────────── */
+function updateStats() {
+  document.getElementById('statAttempts').textContent = liveAttempts;
+  document.getElementById('statHits').textContent     = liveHits;
+  document.getElementById('statBlocked').textContent  = liveBlocked;
+  document.getElementById('statLatency').textContent  = latCount ? Math.round(latSum / latCount) : '—';
+
+  const rate = liveAttempts ? Math.round((liveBlocked / liveAttempts) * 100) : 0;
+  document.getElementById('blockRate').textContent = rate + '%';
+  document.getElementById('blockRateFill').style.width = rate + '%';
+  const rateColor = rate >= 70 ? 'var(--green)' : rate >= 30 ? 'var(--yellow)' : 'var(--accent2)';
+  document.getElementById('blockRate').style.color = rateColor;
+  document.getElementById('blockRateFill').style.background = rateColor;
+}
+
+/* ───────────────────────── Render Report ────────────────────────── */
+function renderReport(data) {
+  const { hits, security, recommendations, stats, target, timestamp } = data;
+
+  // Grade banner
+  const banner = document.getElementById('reportBanner');
+  banner.style.background = `linear-gradient(135deg, ${security.color}15, ${security.color}08)`;
+  banner.style.borderColor = security.color + '40';
+  banner.innerHTML = `
+    <div class="grade-big" style="color:${security.color}">${security.grade}</div>
+    <div class="grade-label" style="color:${security.color}">${security.label}</div>
+    <div class="grade-score">${security.score} / 100 pontos</div>
+    <div class="grade-summary">${escHtml(security.summary)}</div>
+  `;
+
+  // Hit alert
+  const hitWrap = document.getElementById('hitAlertWrap');
+  if (hits.length > 0) {
+    hitWrap.innerHTML = `
+      <div class="hit-alert">
+        <div class="hit-alert-title">🚨 Credenciais Válidas Encontradas (${hits.length})</div>
+        ${hits.map(h => `
+          <div class="hit-row">
+            <span class="h-user">${escHtml(h.user)}</span>
+            <span class="h-colon">:</span>
+            <span class="h-pass">${escHtml(h.pass)}</span>
+            <span class="h-status">HTTP ${h.status}</span>
+          </div>
+        `).join('')}
+        <div style="margin-top:12px;font-size:.8rem;color:#fca5a5">
+          ⚠️ Altere estas senhas imediatamente, invalide todos os tokens de sessão ativos e ative MFA.
+        </div>
+      </div>
+    `;
+  } else {
+    hitWrap.innerHTML = '';
+  }
+
+  // Stats
+  document.getElementById('reportStats').innerHTML = `
+    <div class="rstat"><div class="rstat-val" style="color:var(--text)">${stats.total}</div><div class="rstat-lbl">Total testado</div></div>
+    <div class="rstat"><div class="rstat-val" style="color:${hits.length ? 'var(--accent2)' : 'var(--green)'}">${stats.success}</div><div class="rstat-lbl">Acertos</div></div>
+    <div class="rstat"><div class="rstat-val" style="color:var(--yellow)">${stats.blocked}</div><div class="rstat-lbl">Bloqueados</div></div>
+    <div class="rstat"><div class="rstat-val" style="color:var(--blue)">${stats.meanLat}ms</div><div class="rstat-lbl">Latência média</div></div>
+  `;
+
+  // Recommendations
+  document.getElementById('recoGrid').innerHTML = recommendations.map(r => `
+    <div class="reco-card">
+      <div class="reco-card-header">
+        <span class="reco-icon">${r.icon}</span>
+        <span class="reco-title">${escHtml(r.title)}</span>
+        <span class="reco-priority ${r.priority.toLowerCase()}">${r.priority}</span>
+      </div>
+      <div class="reco-body">${escHtml(r.body)}</div>
+    </div>
+  `).join('');
+
+  // Evidence footer
+  document.getElementById('reportEvidence').innerHTML = `
+    🛡️ Supabase Guard &nbsp;|&nbsp;
+    Alvo: <span>${escHtml(target)}</span> &nbsp;|&nbsp;
+    Tentativas: <span>${stats.total}</span> &nbsp;|&nbsp;
+    Gerado em: <span>${new Date(timestamp).toLocaleString('pt-BR')}</span>
+  `;
+
+  showState('report');
+}
+</script>
+</body>
+</html>
