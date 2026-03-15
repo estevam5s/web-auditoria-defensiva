@@ -19,12 +19,14 @@ const { generatePDFReport } = require('./audit/report-pdf');
 const { generateHTMLReport } = require('./audit/report-html');
 const { lightScrape } = require('./audit/scraper');
 const { runOSINT } = require('./audit/osint');
+const { runDarkWebScan, classifyThreat } = require('./audit/dark-web');
 
 const { generateSupabaseCatalog, generateCatalogHTML } = require('./audit/report-supabase-catalog');
 const { askGrok, askGrokStream, generateFixPrompt } = require('./audit/grok-ai');
 const { saveAuditToSupabase, getAuditHistory, getAuditById, supabaseFetch, getVulnerabilitiesByAudit } = require('./audit/supabase-db');
 const { analyzeGitHistory, checkForExposedSecrets } = require('./audit/git-analyzer');
 const { generateChecklistHTML } = require('./audit/checklist-generator');
+const { generateConsultingReport } = require('./audit/report-consulting');
 const { generatePythonScripts } = require('./audit/python-scripts-generator');
 const fetch = require('node-fetch');
 
@@ -778,6 +780,53 @@ app.get('/api/checklist/:id/export', (req, res) => {
 
 // ─── Bug Bounty Report Routes ─────────────────────────────────────
 
+// ─── Consulting Proposal ──────────────────────────────────────────
+app.get('/consulting/:id', async (req, res) => {
+  const { id } = req.params;
+
+  let auditData = auditStore.get(id);
+  if (!auditData) {
+    try { auditData = await getAuditById(id); } catch (_) { /* not in DB */ }
+  }
+  if (!auditData) {
+    return res.status(404).send(`<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Auditoria não encontrada</title>
+<style>body{font-family:system-ui;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f5f7fa;color:#1f2937}
+.box{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:40px;text-align:center;max-width:400px}
+h1{color:#dc2626;margin-bottom:8px}p{color:#6b7280}</style>
+</head><body><div class="box">
+<h1>Auditoria não encontrada</h1>
+<p>Nenhuma auditoria com ID <code>${id.replace(/[^a-zA-Z0-9-]/g, '')}</code> foi encontrada.</p>
+<p>Execute uma auditoria primeiro e acesse este relatório através do painel principal.</p>
+</div></body></html>`);
+  }
+
+  function safePrice(val, fallback) {
+    const n = parseInt(val, 10);
+    return (Number.isFinite(n) && n > 0 && n <= 999999) ? n : fallback;
+  }
+
+  const q = req.query;
+  const consultingConfig = {
+    name:    process.env.CONSULTANT_NAME    || 'Consultor de Segurança',
+    email:   process.env.CONSULTANT_EMAIL   || '',
+    phone:   process.env.CONSULTANT_PHONE   || '',
+    company: process.env.CONSULTANT_COMPANY || '',
+    prices: {
+      rls:     safePrice(q.price_rls,     parseInt(process.env.CONSULTING_PRICE_RLS)     || 3500),
+      auth:    safePrice(q.price_auth,    parseInt(process.env.CONSULTING_PRICE_AUTH)    || 2800),
+      env:     safePrice(q.price_env,     parseInt(process.env.CONSULTING_PRICE_ENV)     || 2000),
+      headers: safePrice(q.price_headers, parseInt(process.env.CONSULTING_PRICE_HEADERS) || 1500),
+      pentest: safePrice(q.price_pentest, parseInt(process.env.CONSULTING_PRICE_PENTEST) || 8000),
+      hourly:  safePrice(q.price_hourly,  parseInt(process.env.CONSULTING_PRICE_HOURLY)  || 350),
+    }
+  };
+
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(generateConsultingReport(auditData, consultingConfig));
+});
+
 // Serve the bug bounty reporting page
 app.get('/bugbounty/:id', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'bugbounty.html'));
@@ -1082,6 +1131,35 @@ app.post('/api/footprint', osintLimiter, async (req, res) => {
 
   clearInterval(pingInterval);
   res.end();
+});
+
+// ─── Dark Web Intelligence Page ────────────────────────────────────
+app.get('/darkweb/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'darkweb.html'));
+});
+
+// ─── Dark Web Intelligence API ─────────────────────────────────────
+app.post('/api/darkweb', auditLimiter, async (req, res) => {
+  const { auditId, auditData } = req.body;
+  const data = auditData || (auditId ? auditStore.get(auditId) : null);
+  if (!data) return res.status(404).json({ error: 'Auditoria não encontrada. Execute uma auditoria primeiro.' });
+
+  try {
+    console.log(`[DarkWeb] Starting scan for: ${data.projectUrl}`);
+    const intel = await runDarkWebScan(data);
+    console.log(`[DarkWeb] Done. Threat level: ${intel.threatLevel} | Risk: ${intel.riskScore}`);
+    res.json({ success: true, intel });
+  } catch (err) {
+    console.error('[DarkWeb] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/darkweb/classify/:id', (req, res) => {
+  const data = auditStore.get(req.params.id);
+  if (!data) return res.status(404).json({ error: 'Not found' });
+  const level = classifyThreat(data.score, { hibp: { domainBreaches: [] }, otx: { malwareCount: 0, pulseCount: 0 }, urlscan: { malicious: 0 }, virustotal: null });
+  res.json({ level, score: data.score, projectUrl: data.projectUrl });
 });
 
 // SPA fallback

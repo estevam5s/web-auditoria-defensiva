@@ -96,7 +96,6 @@ tr:nth-child(even) td{background:#f9fafb}
 .ctrl-item{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px}
 .total-row td{background:#1a2744!important;color:#fff!important;font-weight:700;border-bottom:none}
 .empty-ok{background:#f0fdf4;border:1px solid #16a34a;border-radius:6px;padding:14px 18px;color:#15803d;font-weight:600;margin-bottom:16px}
-.empty-warn{background:#fef3c7;border:1px solid #ca8a04;border-radius:6px;padding:14px 18px;color:#92400e;margin-bottom:16px}
 .group-hdr{display:flex;align-items:center;gap:10px;margin-top:24px;margin-bottom:8px}
 .footer-wrap{background:#f5f7fa;border-top:3px solid #1a2744;padding:30px 40px;font-size:13px}
 .footer-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
@@ -222,7 +221,7 @@ function buildVulnerabilities(results) {
 
     for (const r of items) {
       const sc = SEV_COLORS[r.severity] || '#6b7280';
-      const sl = SEV_LABELS[r.severity] || (r.severity || '').toUpperCase();
+      const sl = SEV_LABELS[r.severity] || esc((r.severity || '').toUpperCase());
       const statusColor = r.status === 'FAIL' ? '#dc2626' : '#ea580c';
       html += `<tr>
         <td>${esc(r.check || '')}</td>
@@ -268,7 +267,8 @@ function buildServices(results, prices) {
   let total = 0;
   let rows = '';
   for (const s of activeServices) {
-    const value = s.price(prices);
+    const raw = s.price(prices);
+    const value = (typeof raw === 'number' && isFinite(raw) && raw >= 0) ? raw : 0;
     total += value;
     const estimateLabel = s.key === 'pentest' ? '24h' :
       s.key === 'ssl'    ? '6h'  :
@@ -345,7 +345,7 @@ function buildNextSteps(results) {
     (SEV_ORDER[a.severity] ?? 5) - (SEV_ORDER[b.severity] ?? 5)
   );
 
-  const items = sorted.slice(0, 10).map((r, i) => {
+  const items = sorted.slice(0, 10).map(r => {
     const sc = SEV_COLORS[r.severity] || '#6b7280';
     const sl = SEV_LABELS[r.severity] || '';
     return `<li style="margin-bottom:12px">
@@ -400,7 +400,7 @@ function buildFooter(evidence, cfg, generatedDate) {
 // ── Main generator ─────────────────────────────────────────────────
 function generateConsultingReport(auditData, consultingConfig) {
   const results     = auditData.results     || [];
-  const score       = auditData.score       ?? 0;
+  const score       = Number(auditData.score ?? 0) || 0;
   const grade       = auditData.grade       || {};
   const productionReady = auditData.productionReady || {};
   const evidence    = auditData.evidence    || {};
