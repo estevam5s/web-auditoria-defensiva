@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DDoS Resilience Test — Supabase Guard</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --dark:    #030308;
+      --card:    #0a0a12;
+      --card2:   #0d0d1a;
+      --border:  rgba(255,255,255,.07);
+      --accent:  #00d4ff;
+      --green:   #22c55e;
+      --yellow:  #eab308;
+      --orange:  #f97316;
+      --red:     #ef4444;
+      --purple:  #a855f7;
+      --text:    #c8c8d4;
+      --dim:     #4a4a60;
+      --mono:   'JetBrains Mono', monospace;
+      --sans:   'Inter', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--dark);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Scanlines */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.025) 2px, rgba(0,0,0,.025) 4px);
+    }
+    /* Grid dots */
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: radial-gradient(circle, rgba(0,212,255,.05) 1px, transparent 1px);
+      background-size: 32px 32px;
+      opacity: .6;
+    }
+
+    /* ── Layout ────────────────────────────────────────────────── */
+    .wrap { position: relative; z-index: 1; max-width: 1300px; margin: 0 auto; padding: 0 1.5rem 5rem; }
+
+    /* ── Nav ───────────────────────────────────────────────────── */
+    .top-nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; gap: 1rem;
+      padding: .7rem 1.5rem;
+      background: rgba(3,3,8,.9);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0,212,255,.12);
+      margin: 0 -1.5rem;
+      box-shadow: 0 2px 20px rgba(0,0,0,.4);
+    }
+    .nav-back { display:flex;align-items:center;gap:.4rem;font-family:var(--mono);font-size:.72rem;color:var(--accent);text-decoration:none;opacity:.7;transition:opacity .2s;flex-shrink:0; }
+    .nav-back:hover { opacity:1; }
+    .nav-brand { flex:1; font-family:var(--mono); font-size:.72rem; color:var(--dim); display:flex;align-items:center;gap:.5rem; }
+    .nav-brand strong { color:#c8c8d4; }
+    .nav-target { font-family:var(--mono);font-size:.7rem;color:var(--accent);opacity:.8;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+
+    /* ── Loading ───────────────────────────────────────────────── */
+    #loadingScreen {
+      position:fixed;inset:0;background:var(--dark);z-index:9999;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;
+    }
+    .load-spinner {
+      width:48px;height:48px;border-radius:50%;
+      border:2px solid rgba(0,212,255,.15);
+      border-top-color:var(--accent);
+      animation:spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .load-text { font-family:var(--mono);font-size:.78rem;color:var(--accent);letter-spacing:.1em;opacity:.8; }
+
+    /* ── Error ─────────────────────────────────────────────────── */
+    #errorScreen {
+      display:none;flex-direction:column;align-items:center;justify-content:center;
+      min-height:70vh;gap:1rem;padding:2rem;text-align:center;
+    }
+    .err-icon { font-size:3rem; }
+    .err-title { font-size:1.1rem;font-weight:700;color:#fff; }
+    .err-msg { font-size:.85rem;color:rgba(255,255,255,.4);max-width:420px;line-height:1.7; }
+    .err-back { display:inline-flex;align-items:center;gap:6px;padding:8px 20px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.25);border-radius:8px;color:var(--accent);font-size:.8rem;text-decoration:none;font-family:var(--mono);margin-top:.5rem; }
+
+    /* ════════════════════════════════════════════════════════════
+       READY SCREEN
+       ════════════════════════════════════════════════════════════ */
+    #readyScreen { display:none;padding-top:2rem; }
+
+    .ready-header {
+      position:relative;overflow:hidden;
+      padding:3rem 2rem;margin:.5rem -1.5rem 2rem;
+      background:linear-gradient(135deg,rgba(239,68,68,.06) 0%,rgba(0,0,0,0) 50%,rgba(0,212,255,.04) 100%);
+      border:1px solid rgba(239,68,68,.14);border-radius:16px;
+    }
+    .ready-header-grid {
+      position:absolute;inset:0;pointer-events:none;
+      background-image:linear-gradient(rgba(239,68,68,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(239,68,68,.04) 1px,transparent 1px);
+      background-size:40px 40px;
+    }
+    .ready-header-glow {
+      position:absolute;top:-80px;right:0;width:500px;height:500px;pointer-events:none;
+      background:radial-gradient(circle,rgba(239,68,68,.07) 0%,transparent 65%);
+    }
+    .ready-header-inner { position:relative;z-index:1;display:flex;align-items:center;gap:2rem; }
+    .ready-icon {
+      width:80px;height:80px;border-radius:50%;flex-shrink:0;position:relative;
+      display:flex;align-items:center;justify-content:center;font-size:2.2rem;
+      background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
+      box-shadow:0 0 40px rgba(239,68,68,.15);
+    }
+    .ready-icon::before {
+      content:'';position:absolute;inset:-4px;border-radius:50%;
+      border:1px solid rgba(239,68,68,.2);animation:ring-rot 8s linear infinite;
+    }
+    @keyframes ring-rot { to { transform:rotate(360deg); } }
+    .ready-info { flex:1; }
+    .ready-eyebrow { font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;margin-bottom:.5rem; }
+    .ready-title { font-family:var(--mono);font-size:clamp(1.2rem,3vw,1.9rem);font-weight:700;color:#f0f0f8;margin-bottom:.6rem;text-shadow:0 0 40px rgba(239,68,68,.15); }
+    .ready-title span { color:var(--red);text-shadow:0 0 20px rgba(239,68,68,.4); }
+    .ready-target {
+      display:inline-flex;align-items:center;gap:.5rem;
+      font-family:var(--mono);font-size:.82rem;color:var(--accent);
+      background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.15);
+      border-radius:6px;padding:.3rem .8rem;margin-bottom:.7rem;word-break:break-all;
+    }
+    .ready-meta { display:flex;align-items:center;gap:1rem;flex-wrap:wrap; }
+    .ready-chip {
+      display:inline-flex;align-items:center;gap:.35rem;
+      font-size:.72rem;color:var(--dim);
+      background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:6px;padding:.2rem .6rem;
+    }
+    .score-badge-mini {
+      font-family:var(--mono);font-size:.72rem;padding:.2rem .65rem;border:1px solid;border-radius:20px;
+    }
+
+    /* Phase cards */
+    .profiles-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.9rem;margin-bottom:1.75rem; }
+    .profile-card {
+      background:var(--card);border:1px solid var(--border);border-radius:12px;
+      padding:1.1rem;transition:border-color .2s,box-shadow .2s;cursor:default;
+    }
+    .profile-card:hover { box-shadow:0 8px 30px rgba(0,0,0,.3); }
+    .pc-head { display:flex;align-items:center;gap:.6rem;margin-bottom:.7rem; }
+    .pc-icon { font-size:1.3rem; }
+    .pc-name { font-family:var(--mono);font-size:.75rem;font-weight:600;color:#d8d8e8;flex:1; }
+    .pc-meta { display:flex;flex-direction:column;gap:.25rem; }
+    .pc-row { display:flex;justify-content:space-between;font-size:.72rem; }
+    .pc-key { color:var(--dim); }
+    .pc-val { font-family:var(--mono);color:#a0a0c0; }
+    .pc-desc { font-size:.68rem;color:var(--dim);margin-top:.4rem;line-height:1.5; }
+    .pc-bar {
+      height:2px;border-radius:2px;margin-top:.7rem;
+      background:linear-gradient(90deg,var(--c,#00d4ff),transparent);
+      opacity:.6;
+    }
+
+    /* Disclaimer */
+    .disclaimer {
+      display:flex;align-items:flex-start;gap:.75rem;
+      padding:1rem 1.25rem;margin-bottom:1.5rem;
+      background:rgba(234,179,8,.06);border:1px solid rgba(234,179,8,.2);border-radius:10px;
+      font-size:.8rem;color:rgba(234,179,8,.9);line-height:1.6;
+    }
+    .disclaimer-icon { font-size:1.2rem;flex-shrink:0;margin-top:.05rem; }
+
+    /* Total estimate */
+    .total-estimate {
+      display:flex;align-items:center;justify-content:space-between;
+      padding:.85rem 1.25rem;margin-bottom:1.5rem;
+      background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.12);border-radius:10px;
+    }
+    .te-label { font-size:.78rem;color:var(--dim); }
+    .te-val { font-family:var(--mono);font-size:.85rem;color:var(--accent); }
+
+    /* Start button */
+    .start-btn {
+      display:flex;align-items:center;justify-content:center;gap:.75rem;
+      width:100%;padding:1rem;
+      background:linear-gradient(135deg,rgba(239,68,68,.15),rgba(249,115,22,.1));
+      border:1px solid rgba(239,68,68,.4);border-radius:12px;
+      color:#f0f0f8;font-family:var(--mono);font-size:.9rem;font-weight:700;
+      letter-spacing:.06em;cursor:pointer;
+      transition:background .2s,box-shadow .2s,transform .15s;
+      box-shadow:0 0 30px rgba(239,68,68,.1);
+    }
+    .start-btn:hover {
+      background:linear-gradient(135deg,rgba(239,68,68,.25),rgba(249,115,22,.15));
+      box-shadow:0 0 40px rgba(239,68,68,.25),0 8px 30px rgba(0,0,0,.3);
+      transform:translateY(-2px);
+    }
+    .start-btn:active { transform:translateY(0); }
+
+    /* ════════════════════════════════════════════════════════════
+       RUNNING SCREEN
+       ════════════════════════════════════════════════════════════ */
+    #runningScreen { display:none;padding-top:1.5rem; }
+
+    /* Overall progress */
+    .run-header {
+      padding:1.25rem 1.5rem;margin:.5rem -1.5rem 1.5rem;
+      background:var(--card);border:1px solid var(--border);border-radius:12px;
+    }
+    .run-phase-row { display:flex;align-items:center;gap:1rem;margin-bottom:1rem;flex-wrap:wrap; }
+    .run-phase-icon { font-size:1.4rem;flex-shrink:0; }
+    .run-phase-name { font-family:var(--mono);font-size:.95rem;font-weight:600;color:#e8e8f8;flex:1; }
+    .run-phase-badge {
+      font-family:var(--mono);font-size:.7rem;padding:.2rem .65rem;
+      border:1px solid;border-radius:20px;
+    }
+    .run-progress-wrap { position:relative;height:6px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden; }
+    .run-progress-bar {
+      height:100%;border-radius:4px;transition:width .9s linear;
+      background:linear-gradient(90deg,var(--bar-color,#00d4ff),rgba(255,255,255,.1));
+      box-shadow:0 0 12px var(--bar-color,#00d4ff);
+    }
+    .run-progress-labels { display:flex;justify-content:space-between;margin-top:.4rem;font-family:var(--mono);font-size:.65rem;color:var(--dim); }
+
+    /* Phase dots */
+    .phase-dots { display:flex;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap; }
+    .phase-dot {
+      display:flex;align-items:center;gap:.4rem;
+      font-family:var(--mono);font-size:.65rem;
+      padding:.25rem .6rem;border-radius:20px;
+      background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--dim);
+      transition:all .3s;
+    }
+    .phase-dot.active { color:#f0f0f8; }
+    .phase-dot.done { opacity:.5; }
+
+    /* Two-column layout */
+    .run-grid { display:grid;grid-template-columns:320px 1fr;gap:1.25rem; }
+    @media(max-width:900px) { .run-grid { grid-template-columns:1fr; } }
+
+    /* Metrics panel */
+    .metrics-panel { display:flex;flex-direction:column;gap:.8rem; }
+    .metrics-top { display:grid;grid-template-columns:1fr 1fr;gap:.8rem; }
+    .metric-card {
+      background:var(--card);border:1px solid var(--border);border-radius:12px;
+      padding:1rem;text-align:center;transition:border-color .3s;
+    }
+    .mc-label { font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:.3rem; }
+    .mc-value { font-family:var(--mono);font-size:1.8rem;font-weight:700;color:#f0f0f8;line-height:1.1;transition:color .3s; }
+    .mc-sub   { font-family:var(--mono);font-size:.65rem;color:var(--dim);margin-top:.2rem; }
+
+    /* Latency row */
+    .latency-card {
+      background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem;
+    }
+    .lat-title { font-family:var(--mono);font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:.7rem; }
+    .lat-row { display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem; }
+    .lat-key { font-size:.72rem;color:var(--dim); }
+    .lat-val { font-family:var(--mono);font-size:.8rem;color:#c8c8d4; }
+
+    /* Status codes */
+    .status-card {
+      background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem;
+    }
+    .status-title { font-family:var(--mono);font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:.7rem; }
+    .status-row { display:flex;align-items:center;gap:.6rem;margin-bottom:.3rem; }
+    .status-code { font-family:var(--mono);font-size:.75rem;min-width:38px; }
+    .status-track { flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden; }
+    .status-fill { height:100%;border-radius:3px;transition:width .4s; }
+    .status-count { font-family:var(--mono);font-size:.65rem;color:var(--dim);min-width:35px;text-align:right; }
+
+    /* Mini RPS chart */
+    .chart-card {
+      background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem;
+    }
+    .chart-title { font-family:var(--mono);font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:.6rem; }
+    .mini-bars { display:flex;align-items:flex-end;gap:3px;height:48px; }
+    .mini-bar { flex:1;min-width:6px;border-radius:2px 2px 0 0;transition:height .3s,background .3s; }
+
+    /* ── Terminal ──────────────────────────────────────────────── */
+    .terminal-panel {
+      background:#050508;border:1px solid rgba(0,212,255,.12);border-radius:12px;
+      overflow:hidden;display:flex;flex-direction:column;
+      min-height:480px;max-height:600px;
+    }
+    .term-header {
+      display:flex;align-items:center;gap:.5rem;
+      padding:.55rem 1rem;
+      background:rgba(0,212,255,.05);border-bottom:1px solid rgba(0,212,255,.1);
+      flex-shrink:0;
+    }
+    .term-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
+    .term-dot.r { background:#ef4444; } .term-dot.y { background:#eab308; } .term-dot.g { background:#22c55e; }
+    .term-title { font-family:var(--mono);font-size:.7rem;color:rgba(0,212,255,.6);margin-left:.3rem; }
+    .term-body {
+      flex:1;overflow-y:auto;padding:.75rem 1rem;
+      font-family:var(--mono);font-size:.73rem;line-height:1.7;
+      scrollbar-width:thin;scrollbar-color:rgba(0,212,255,.15) transparent;
+    }
+    .term-body::-webkit-scrollbar { width:5px; }
+    .term-body::-webkit-scrollbar-thumb { background:rgba(0,212,255,.15);border-radius:3px; }
+    .log-line { display:flex;gap:.6rem;margin-bottom:.1rem; }
+    .log-ts { color:rgba(0,212,255,.3);flex-shrink:0;min-width:58px; }
+    .log-text { flex:1; }
+    .log-c-accent  { color:var(--accent); }
+    .log-c-green   { color:var(--green);  }
+    .log-c-yellow  { color:var(--yellow); }
+    .log-c-orange  { color:var(--orange); }
+    .log-c-red     { color:var(--red);    }
+    .log-c-dim     { color:var(--dim);    }
+    .log-c-white   { color:#e8e8f8;       }
+    .log-c-purple  { color:var(--purple); }
+    .term-cursor { display:inline-block;width:8px;height:.9em;background:var(--accent);vertical-align:text-bottom;animation:blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity:0; } }
+
+    /* ════════════════════════════════════════════════════════════
+       REPORT SCREEN
+       ════════════════════════════════════════════════════════════ */
+    #reportScreen { display:none;padding-top:2rem; }
+    .report-transition { animation:fadeUp .6s ease forwards; opacity:0; }
+    @keyframes fadeUp { to { opacity:1;transform:translateY(0); } from { transform:translateY(20px); } }
+
+    /* Grade banner */
+    .grade-banner {
+      position:relative;overflow:hidden;
+      display:flex;align-items:center;gap:2.5rem;flex-wrap:wrap;
+      padding:2.5rem;margin:.5rem -1.5rem 2rem;
+      border:1px solid;border-radius:16px;
+    }
+    .grade-banner::before {
+      content:'';position:absolute;inset:0;pointer-events:none;
+      background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);
+      background-size:40px 40px;
+    }
+    .grade-circle {
+      width:110px;height:110px;border-radius:50%;flex-shrink:0;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      border:2px solid;position:relative;
+    }
+    .grade-letter { font-family:var(--mono);font-size:2.8rem;font-weight:700;line-height:1; }
+    .grade-label  { font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;opacity:.7;margin-top:.1rem; }
+    .grade-info { flex:1; }
+    .grade-eyebrow { font-family:var(--mono);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;margin-bottom:.4rem;opacity:.6; }
+    .grade-score-line { font-family:var(--mono);font-size:2rem;font-weight:700;margin-bottom:.4rem; }
+    .grade-summary { font-size:.82rem;line-height:1.6;max-width:520px;opacity:.8; }
+    .grade-stats { display:flex;gap:1.5rem;flex-wrap:wrap;margin-top:1rem; }
+    .gs-item { display:flex;flex-direction:column;gap:.2rem; }
+    .gs-key { font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;opacity:.5; }
+    .gs-val { font-family:var(--mono);font-size:1rem;font-weight:600; }
+
+    /* Phase table */
+    .rpt-section { margin-bottom:2.5rem; }
+    .rpt-section-header {
+      display:flex;align-items:center;gap:.75rem;
+      padding:.8rem 1.1rem;margin-bottom:1rem;
+      background:var(--card);border:1px solid var(--border);
+      border-left:3px solid var(--accent);border-radius:0 8px 8px 0;
+    }
+    .rpt-section-header h2 { font-family:var(--mono);font-size:.88rem;font-weight:600;color:#e0e0f0;flex:1;letter-spacing:.04em; }
+    .rpt-icon { font-size:1.1rem; }
+
+    .phase-table-wrap { background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden; }
+    .phase-table { width:100%;border-collapse:collapse; }
+    .phase-table th {
+      font-family:var(--mono);font-size:.65rem;letter-spacing:.09em;text-transform:uppercase;
+      color:var(--dim);padding:.75rem 1rem;text-align:left;
+      background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);
+    }
+    .phase-table td { padding:.75rem 1rem;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle; }
+    .phase-table tr:last-child td { border-bottom:none; }
+    .phase-table tr:hover td { background:rgba(255,255,255,.02); }
+    .pt-phase { display:flex;align-items:center;gap:.5rem; }
+    .pt-icon  { font-size:1rem;flex-shrink:0; }
+    .pt-name  { font-family:var(--mono);font-size:.78rem;font-weight:500;color:#d8d8e8; }
+    .pt-conc  { font-family:var(--mono);font-size:.72rem;color:var(--dim); }
+    .pt-num   { font-family:var(--mono);font-size:.8rem;color:#c8c8d4; }
+    .pt-num.good { color:var(--green); }
+    .pt-num.warn { color:var(--yellow); }
+    .pt-num.bad  { color:var(--orange); }
+    .pt-num.crit { color:var(--red); }
+    .er-badge {
+      font-family:var(--mono);font-size:.65rem;font-weight:700;
+      padding:.15rem .5rem;border-radius:4px;border:1px solid;
+    }
+    .status-ok   { color:var(--green);  border-color:rgba(34,197,94,.3);  background:rgba(34,197,94,.1);  }
+    .status-warn { color:var(--yellow); border-color:rgba(234,179,8,.3);  background:rgba(234,179,8,.1);  }
+    .status-bad  { color:var(--orange); border-color:rgba(249,115,22,.3); background:rgba(249,115,22,.1); }
+    .status-crit { color:var(--red);    border-color:rgba(239,68,68,.3);  background:rgba(239,68,68,.1);  }
+
+    /* Latency heatmap bars */
+    .lat-heatmap { display:flex;flex-direction:column;gap:.5rem; }
+    .lh-row { display:grid;grid-template-columns:80px 1fr 70px;align-items:center;gap:.75rem; }
+    .lh-label { font-size:.72rem;color:var(--dim); }
+    .lh-track { height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden; }
+    .lh-fill { height:100%;border-radius:4px;transition:width .6s ease; }
+    .lh-val { font-family:var(--mono);font-size:.75rem;color:#c8c8d4;text-align:right; }
+
+    /* Recommendations */
+    .rec-list { display:flex;flex-direction:column;gap:.75rem; }
+    .rec-item {
+      display:flex;align-items:flex-start;gap:1rem;
+      background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.1rem;
+      transition:border-color .2s;
+    }
+    .rec-item:hover { border-color:rgba(255,255,255,.12); }
+    .rec-priority {
+      font-family:var(--mono);font-size:.65rem;font-weight:700;
+      padding:.2rem .55rem;border-radius:4px;border:1px solid;flex-shrink:0;margin-top:.1rem;
+    }
+    .pri-p1 { color:var(--red);    border-color:rgba(239,68,68,.35);  background:rgba(239,68,68,.1);  }
+    .pri-p2 { color:var(--orange); border-color:rgba(249,115,22,.35); background:rgba(249,115,22,.1); }
+    .pri-p3 { color:var(--yellow); border-color:rgba(234,179,8,.35);  background:rgba(234,179,8,.1);  }
+    .rec-icon { font-size:1.2rem;flex-shrink:0; }
+    .rec-body { flex:1; }
+    .rec-title { font-family:var(--mono);font-size:.8rem;font-weight:600;color:#d8d8e8;margin-bottom:.3rem; }
+    .rec-text  { font-size:.78rem;color:var(--dim);line-height:1.6; }
+
+    /* Footer */
+    .rpt-footer {
+      margin-top:3rem;padding:1.5rem;
+      background:rgba(8,8,16,.6);border:1px solid var(--border);border-radius:12px;
+      display:flex;flex-wrap:wrap;gap:.5rem 2rem;
+      font-family:var(--mono);font-size:.67rem;color:rgba(255,255,255,.25);
+    }
+
+    /* Print button */
+    .print-btn {
+      position:fixed;top:4rem;right:1.5rem;z-index:200;
+      display:inline-flex;align-items:center;gap:.5rem;
+      padding:.5rem 1rem;background:rgba(0,212,255,.07);
+      border:1px solid rgba(0,212,255,.25);border-radius:8px;
+      color:var(--accent);font-family:var(--mono);font-size:.72rem;
+      cursor:pointer;transition:background .2s;backdrop-filter:blur(14px);
+      display:none;
+    }
+    .print-btn.visible { display:inline-flex; }
+    .print-btn:hover { background:rgba(0,212,255,.14); }
+
+    /* Responsive */
+    @media(max-width:640px) {
+      .ready-header-inner { flex-direction:column;gap:1rem; }
+      .profiles-grid { grid-template-columns:1fr 1fr; }
+      .metrics-top { grid-template-columns:1fr 1fr; }
+      .grade-banner { flex-direction:column;gap:1.5rem;padding:1.5rem; }
+      .lh-row { grid-template-columns:55px 1fr 55px; }
+    }
+
+    /* Print */
+    @media print {
+      body { background:#fff;color:#111; }
+      body::before, body::after { display:none; }
+      .top-nav, .print-btn, #readyScreen, #loadingScreen, #errorScreen, #runningScreen { display:none !important; }
+      .grade-banner { background:#f8f8f8 !important;border-color:#ddd !important; }
+      .phase-table-wrap, .rec-item { background:#fafafa !important;border-color:#ddd !important; }
+      .rpt-section-header { background:#f0f0f0 !important;border-color:#ddd !important; }
+      * { color-adjust:exact; -webkit-print-color-adjust:exact; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loadingScreen">
+  <div class="load-spinner"></div>
+  <div class="load-text">CARREGANDO INFORMAÇÕES DO ALVO…</div>
+</div>
+
+<!-- Error -->
+<div id="errorScreen" style="display:none">
+  <div class="err-icon">⚠️</div>
+  <div class="err-title">Erro ao carregar o teste</div>
+  <div class="err-msg" id="errMsg">Erro desconhecido.</div>
+  <a href="/" class="err-back">← Voltar ao painel</a>
+</div>
+
+<!-- Nav (always visible after load) -->
+<nav class="top-nav" id="topNav" style="display:none">
+  <a href="javascript:history.back()" class="nav-back">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    Voltar
+  </a>
+  <div class="nav-brand"><strong>SUPABASE GUARD</strong> · DDoS Resilience Test</div>
+  <div class="nav-target" id="navTarget">—</div>
+</nav>
+
+<button class="print-btn no-print" id="printBtn" onclick="window.print()">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+  Exportar PDF
+</button>
+
+<div class="wrap">
+
+  <!-- ════════ READY SCREEN ════════ -->
+  <div id="readyScreen">
+    <div class="ready-header">
+      <div class="ready-header-grid"></div>
+      <div class="ready-header-glow"></div>
+      <div class="ready-header-inner">
+        <div class="ready-icon">💥</div>
+        <div class="ready-info">
+          <div class="ready-eyebrow">Teste de Resiliência · DDoS Simulation</div>
+          <h1 class="ready-title">Teste de Resistência a<br><span>Ataques DDoS</span></h1>
+          <div class="ready-target" id="readyTargetUrl">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10"/></svg>
+            <span id="readyUrl">—</span>
+          </div>
+          <div class="ready-meta">
+            <div class="ready-chip" id="readyScore">—</div>
+            <div class="ready-chip">5 fases progressivas</div>
+            <div class="ready-chip" id="readyDuration">~73s estimado</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="profiles-grid" id="profilesGrid"></div>
+
+    <div class="total-estimate">
+      <span class="te-label">Duração total estimada (incluindo pausas entre fases)</span>
+      <span class="te-val" id="teVal">— segundos</span>
+    </div>
+
+    <div class="disclaimer">
+      <span class="disclaimer-icon">⚠️</span>
+      <span>Este teste realiza <strong>requisições HTTP reais</strong> ao servidor alvo. Execute apenas em sistemas que você tem <strong>autorização expressa</strong> para testar. Ao clicar em "Iniciar Teste", você confirma ter autorização do proprietário do sistema.</span>
+    </div>
+
+    <button class="start-btn" id="startBtn" onclick="startTest()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      INICIAR TESTE DE RESILIÊNCIA DDoS
+    </button>
+  </div>
+
+  <!-- ════════ RUNNING SCREEN ════════ -->
+  <div id="runningScreen">
+
+    <div class="run-header">
+      <div class="phase-dots" id="phaseDots"></div>
+      <div class="run-phase-row">
+        <span class="run-phase-icon" id="runPhaseIcon">🔭</span>
+        <span class="run-phase-name" id="runPhaseName">Inicializando…</span>
+        <span class="run-phase-badge" id="runPhaseBadge" style="color:#00d4ff;border-color:#00d4ff44">AGUARDANDO</span>
+      </div>
+      <div class="run-progress-wrap">
+        <div class="run-progress-bar" id="runProgressBar" style="width:0%;--bar-color:#00d4ff"></div>
+      </div>
+      <div class="run-progress-labels">
+        <span id="runElapsed">0s</span>
+        <span id="runPhaseCounter">Fase 0/5</span>
+        <span id="runDurationLeft">—</span>
+      </div>
+    </div>
+
+    <div class="run-grid">
+      <!-- Metrics -->
+      <div class="metrics-panel">
+        <div class="metrics-top">
+          <div class="metric-card">
+            <div class="mc-label">Req / s</div>
+            <div class="mc-value" id="mcRPS">0</div>
+            <div class="mc-sub">último segundo</div>
+          </div>
+          <div class="metric-card">
+            <div class="mc-label">Erros</div>
+            <div class="mc-value" id="mcErrors">0</div>
+            <div class="mc-sub">último segundo</div>
+          </div>
+          <div class="metric-card">
+            <div class="mc-label">Total Req</div>
+            <div class="mc-value" id="mcTotal">0</div>
+            <div class="mc-sub">esta fase</div>
+          </div>
+          <div class="metric-card">
+            <div class="mc-label">Concorrência</div>
+            <div class="mc-value" id="mcConc">—</div>
+            <div class="mc-sub">conexões</div>
+          </div>
+        </div>
+
+        <div class="latency-card">
+          <div class="lat-title">Latência de Resposta</div>
+          <div class="lat-row"><span class="lat-key">Média</span><span class="lat-val" id="latMean">—</span></div>
+          <div class="lat-row"><span class="lat-key">p50</span>  <span class="lat-val" id="latP50">—</span></div>
+          <div class="lat-row"><span class="lat-key">p95</span>  <span class="lat-val" id="latP95">—</span></div>
+          <div class="lat-row"><span class="lat-key">p99</span>  <span class="lat-val" id="latP99">—</span></div>
+        </div>
+
+        <div class="status-card">
+          <div class="status-title">Distribuição de Status HTTP</div>
+          <div id="statusBars">
+            <div style="font-family:var(--mono);font-size:.7rem;color:var(--dim)">Aguardando dados…</div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-title">RPS — Últimos 20 segundos</div>
+          <div class="mini-bars" id="miniChart"></div>
+        </div>
+      </div>
+
+      <!-- Terminal -->
+      <div class="terminal-panel">
+        <div class="term-header">
+          <span class="term-dot r"></span>
+          <span class="term-dot y"></span>
+          <span class="term-dot g"></span>
+          <span class="term-title">ddos-resilience-test.log</span>
+        </div>
+        <div class="term-body" id="termBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ REPORT SCREEN ════════ -->
+  <div id="reportScreen">
+
+    <!-- Grade banner -->
+    <div class="grade-banner report-transition" id="gradeBanner" style="border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.04)">
+      <div class="grade-circle" id="gradeCircle">
+        <div class="grade-letter" id="gradeLetter">A</div>
+        <div class="grade-label" id="gradeLabel">Forte</div>
+      </div>
+      <div class="grade-info">
+        <div class="grade-eyebrow">RELATÓRIO DE RESILIÊNCIA DDOS</div>
+        <div class="grade-score-line" id="gradeScoreLine">Score: 87/100</div>
+        <div class="grade-summary" id="gradeSummary">—</div>
+        <div class="grade-stats" id="gradeStats"></div>
+      </div>
+    </div>
+
+    <!-- Phase breakdown -->
+    <div class="rpt-section report-transition" style="animation-delay:.1s">
+      <div class="rpt-section-header">
+        <span class="rpt-icon">📊</span>
+        <h2>Resultado por Fase de Teste</h2>
+      </div>
+      <div class="phase-table-wrap">
+        <table class="phase-table">
+          <thead>
+            <tr>
+              <th>Fase</th>
+              <th>RPS</th>
+              <th>p50</th>
+              <th>p99</th>
+              <th>Erros</th>
+              <th>Total Req</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="phaseTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Latency heatmap -->
+    <div class="rpt-section report-transition" style="animation-delay:.2s">
+      <div class="rpt-section-header">
+        <span class="rpt-icon">⏱️</span>
+        <h2>Perfil de Latência por Fase (p99)</h2>
+      </div>
+      <div class="latency-card">
+        <div class="lat-heatmap" id="latHeatmap"></div>
+      </div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="rpt-section report-transition" style="animation-delay:.3s">
+      <div class="rpt-section-header">
+        <span class="rpt-icon">🛡️</span>
+        <h2>Plano de Reforço de Resiliência</h2>
+      </div>
+      <div class="rec-list" id="recList"></div>
+    </div>
+
+    <!-- Evidence footer -->
+    <div class="rpt-footer" id="rptFooter"></div>
+  </div>
+
+</div><!-- /.wrap -->
+
+<script>
+'use strict';
+
+// ── Helpers ──────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const esc = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fmtMs = ms => ms >= 1000 ? (ms/1000).toFixed(1)+'s' : ms+'ms';
+const fmtNum = n => (n||0).toLocaleString('pt-BR');
+
+function statusColor(code) {
+  code = +code;
+  if (code >= 500) return '#ef4444';
+  if (code >= 400) return '#f97316';
+  if (code >= 300) return '#eab308';
+  if (code >= 200) return '#22c55e';
+  return '#00d4ff';
+}
+
+function erBadgeClass(rate) {
+  if (rate > 30) return 'status-crit';
+  if (rate > 10) return 'status-bad';
+  if (rate > 3)  return 'status-warn';
+  return 'status-ok';
+}
+
+function latClass(ms) {
+  if (ms > 5000) return 'crit';
+  if (ms > 2000) return 'bad';
+  if (ms > 800)  return 'warn';
+  return 'good';
+}
+
+// ── State ────────────────────────────────────────────────────────
+let auditId, targetUrl, scoreInfo;
+let phases = [];
+let currentPhaseKey = null;
+let phaseIndex = 0;
+let totalPhases = 5;
+let overallElapsed = 0;
+let overallDuration = 73;
+let startTs = null;
+let rpsHistory = [];
+let allProfiles = [];
+
+// ── Init ─────────────────────────────────────────────────────────
+async function init() {
+  auditId = location.pathname.split('/').filter(Boolean).pop();
+  if (!auditId) { showError('Nenhum ID de auditoria na URL.'); return; }
+
+  try {
+    const res = await fetch(`/api/ddos/info/${auditId}`);
+    const info = await res.json();
+    if (!info.success) { showError(info.error || 'Auditoria não encontrada.'); return; }
+
+    targetUrl = info.projectUrl || '—';
+    scoreInfo  = info;
+
+    $('loadingScreen').style.display = 'none';
+    $('topNav').style.display = 'flex';
+
+    $('navTarget').textContent = targetUrl;
+    $('readyUrl').textContent  = targetUrl;
+
+    // Score badge
+    const g = info.grade;
+    if (g) {
+      const color = g.color || '#00d4ff';
+      $('readyScore').innerHTML = `<span style="color:${color};font-family:var(--mono);font-weight:700">${g.grade}</span>&nbsp;Score: ${info.score}/100`;
+    }
+
+    renderProfileCards();
+    $('readyScreen').style.display = 'block';
+
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+function renderProfileCards() {
+  const defs = [
+    { key:'calibration', name:'Calibração Inicial',  concurrent:5,   duration:8,  color:'#00d4ff', icon:'🔭', desc:'Baseline de performance sem pressão' },
+    { key:'light',       name:'Carga Leve',           concurrent:20,  duration:12, color:'#22c55e', icon:'🟢', desc:'Tráfego normal de produção' },
+    { key:'moderate',    name:'Estresse Moderado',    concurrent:75,  duration:15, color:'#eab308', icon:'🟡', desc:'Pico de tráfego esperado' },
+    { key:'heavy',       name:'Ataque Pesado',        concurrent:200, duration:15, color:'#f97316', icon:'🟠', desc:'Ataque DDoS de média intensidade' },
+    { key:'burst',       name:'Rajada Extrema',       concurrent:400, duration:8,  color:'#ef4444', icon:'🔴', desc:'Pico extremo / ataque volumétrico' },
+  ];
+  allProfiles = defs;
+
+  const totalDur = defs.reduce((a,p) => a + p.duration, 0) + (defs.length - 1) * 2;
+  overallDuration = totalDur;
+  $('teVal').textContent = `~${totalDur} segundos`;
+  $('readyDuration').textContent = `~${totalDur}s estimado`;
+  totalPhases = defs.length;
+
+  $('profilesGrid').innerHTML = defs.map(p => `
+    <div class="profile-card" style="border-color:${p.color}22;">
+      <div class="pc-head">
+        <span class="pc-icon">${p.icon}</span>
+        <span class="pc-name" style="color:${p.color}">${p.name}</span>
+      </div>
+      <div class="pc-meta">
+        <div class="pc-row"><span class="pc-key">Concorrência</span><span class="pc-val">${p.concurrent} conn</span></div>
+        <div class="pc-row"><span class="pc-key">Duração</span><span class="pc-val">${p.duration}s</span></div>
+      </div>
+      <div class="pc-desc">${p.desc}</div>
+      <div class="pc-bar" style="--c:${p.color};width:${Math.round((p.concurrent/400)*100)}%"></div>
+    </div>`).join('');
+
+  // Phase dots for running screen
+  $('phaseDots').innerHTML = defs.map(p => `
+    <div class="phase-dot" id="dot-${p.key}" style="border-color:${p.color}22">
+      <span>${p.icon}</span><span style="color:${p.color}">${p.name}</span>
+    </div>`).join('');
+}
+
+// ── Start test ────────────────────────────────────────────────────
+function startTest() {
+  $('readyScreen').style.display  = 'none';
+  $('runningScreen').style.display = 'block';
+  startTs = Date.now();
+
+  const es = new EventSource(`/api/ddos/stream?auditId=${encodeURIComponent(auditId)}`);
+
+  es.onmessage = e => {
+    try { handleEvent(JSON.parse(e.data)); } catch(_) {}
+  };
+  es.onerror = () => {
+    if (phases.length === 0) showError('Conexão SSE perdida. Tente novamente.');
+    es.close();
+  };
+}
+
+// ── Event handlers ────────────────────────────────────────────────
+function handleEvent(ev) {
+  switch (ev.type) {
+    case 'start':          onStart(ev);         break;
+    case 'phase_start':    onPhaseStart(ev);    break;
+    case 'tick':           onTick(ev);          break;
+    case 'phase_complete': onPhaseComplete(ev); break;
+    case 'complete':       onComplete(ev);      break;
+    case 'error':          showError(ev.message); break;
+  }
+}
+
+function onStart(ev) {
+  log(`⚡ Teste iniciado — Alvo: <span class="log-c-accent">${esc(ev.target)}</span>`, 'white');
+  log(`📋 ${ev.profiles.length} fases programadas — Duração total estimada: ~${ev.totalDuration}s`, 'dim');
+  ev.profiles.forEach(p => {
+    log(`  ${p.icon} <span style="color:${p.color}">${esc(p.name)}</span> — ${p.concurrent} conexões × ${p.duration}s`, 'dim');
+  });
+  log('─'.repeat(52), 'dim');
+}
+
+function onPhaseStart(ev) {
+  currentPhaseKey = ev.phase;
+  phaseIndex = ev.index;
+  rpsHistory = [];
+
+  // Update phase dots
+  document.querySelectorAll('.phase-dot').forEach(d => d.classList.remove('active'));
+  const dot = $(`dot-${ev.phase}`);
+  if (dot) dot.classList.add('active');
+
+  // Update header
+  $('runPhaseIcon').textContent = ev.icon;
+  $('runPhaseName').textContent = ev.name;
+  $('runPhaseBadge').textContent = 'EM ANDAMENTO';
+  $('runPhaseBadge').style.color = ev.color;
+  $('runPhaseBadge').style.borderColor = ev.color + '55';
+  $('runProgressBar').style.setProperty('--bar-color', ev.color);
+  $('runPhaseCounter').textContent = `Fase ${ev.index + 1}/${ev.total}`;
+  $('mcConc').textContent = ev.concurrent;
+
+  log('', 'dim');
+  log(`▶ FASE ${ev.index + 1}/${ev.total}: <span style="color:${ev.color};font-weight:700">${esc(ev.name)}</span>`, 'white');
+  log(`  🔗 ${ev.concurrent} conexões simultâneas — Duração: ${ev.duration}s`, 'dim');
+}
+
+function onTick(ev) {
+  overallElapsed = Math.round((Date.now() - startTs) / 1000);
+
+  // Progress bar (within current phase)
+  const pct = Math.min(100, Math.round((ev.elapsed / ev.duration) * 100));
+  $('runProgressBar').style.width = pct + '%';
+  $('runElapsed').textContent = `${ev.elapsed}s`;
+  $('runDurationLeft').textContent = `${ev.duration - ev.elapsed}s restantes`;
+
+  // Metric cards
+  $('mcRPS').textContent   = fmtNum(ev.rps);
+  $('mcErrors').textContent = fmtNum(ev.errors);
+  $('mcTotal').textContent  = fmtNum(ev.total);
+
+  // Color RPS
+  const rpsEl = $('mcRPS');
+  rpsEl.style.color = ev.rps > 200 ? '#22c55e' : ev.rps > 80 ? '#eab308' : ev.rps > 20 ? '#f97316' : '#ef4444';
+
+  // Color errors
+  $('mcErrors').style.color = ev.errors > 50 ? '#ef4444' : ev.errors > 10 ? '#f97316' : ev.errors > 0 ? '#eab308' : '#c8c8d4';
+
+  // Latency
+  $('latMean').textContent = fmtMs(ev.lats.mean);
+  $('latP50').textContent  = fmtMs(ev.lats.p50);
+  $('latP95').textContent  = fmtMs(ev.lats.p95);
+  $('latP99').textContent  = fmtMs(ev.lats.p99);
+  const p99el = $('latP99');
+  p99el.style.color = ev.lats.p99 > 5000 ? '#ef4444' : ev.lats.p99 > 2000 ? '#f97316' : ev.lats.p99 > 800 ? '#eab308' : '#22c55e';
+
+  // Status bars
+  renderStatusBars(ev.statuses);
+
+  // Mini chart
+  rpsHistory.push(ev.rps);
+  if (rpsHistory.length > 20) rpsHistory.shift();
+  renderMiniChart();
+
+  // Terminal log (every 2 ticks to avoid spam, or always for notable events)
+  const hasErrors = ev.errors > 0;
+  const every2 = ev.elapsed % 2 === 0;
+  if (every2 || hasErrors) {
+    const p99color = ev.lats.p99 > 3000 ? 'red' : ev.lats.p99 > 1000 ? 'orange' : ev.lats.p99 > 400 ? 'yellow' : 'green';
+    const errTxt   = ev.errors > 0 ? ` <span class="log-c-${ev.errors > 20 ? 'red' : 'orange'}">✗${ev.errors}err</span>` : '';
+    log(
+      `[${String(ev.elapsed).padStart(2,'0')}s] rps:<span class="log-c-accent">${ev.rps}</span>` +
+      ` p99:<span class="log-c-${p99color}">${fmtMs(ev.lats.p99)}</span>` +
+      ` total:<span class="log-c-white">${fmtNum(ev.total)}</span>${errTxt}`,
+      'dim'
+    );
+  }
+}
+
+function onPhaseComplete(ev) {
+  const r = ev.result;
+  const dot = $(`dot-${ev.phase}`);
+  if (dot) { dot.classList.remove('active'); dot.classList.add('done'); }
+
+  phases.push(r);
+  $('runPhaseBadge').textContent = 'CONCLUÍDA';
+  $('runPhaseBadge').style.color = '#22c55e';
+  $('runProgressBar').style.width = '100%';
+
+  const color = r.errorRate > 20 ? 'red' : r.errorRate > 5 ? 'orange' : 'green';
+  log('', 'dim');
+  log(`✅ Fase concluída: <span style="color:${r.color}">${esc(r.name)}</span>`, 'white');
+  log(`  📊 RPS médio: <span class="log-c-accent">${r.rps}</span>  |  p99: <span class="log-c-${color}">${fmtMs(r.latency.p99)}</span>  |  Erros: <span class="log-c-${color}">${r.errorRate}%</span>`, 'dim');
+  log(`  📦 Total: ${fmtNum(r.total)} requisições (${r.success} ok, ${r.errors} falha)`, 'dim');
+  log('─'.repeat(52), 'dim');
+}
+
+function onComplete(ev) {
+  log('', 'dim');
+  log('🏁 <span class="log-c-green" style="font-weight:700">TESTE CONCLUÍDO</span>', 'white');
+  log(`   Resiliência DDoS: <span style="color:${ev.resilience.color};font-weight:700">${ev.resilience.grade} — ${ev.resilience.label} (${ev.resilience.score}/100)</span>`, 'dim');
+
+  setTimeout(() => {
+    $('runningScreen').style.display = 'none';
+    $('reportScreen').style.display  = 'block';
+    $('printBtn').classList.add('visible');
+    renderReport(ev);
+  }, 1500);
+}
+
+// ── Render helpers ───────────────────────────────────────────────
+function renderStatusBars(statuses) {
+  if (!statuses || !Object.keys(statuses).length) return;
+  const total = Object.values(statuses).reduce((a, b) => a + b, 0) || 1;
+  const sorted = Object.entries(statuses).sort((a, b) => +a[0] - +b[0]);
+  $('statusBars').innerHTML = sorted.map(([code, count]) => {
+    const pct = Math.round((count / total) * 100);
+    const c   = statusColor(code);
+    return `<div class="status-row">
+      <span class="status-code" style="color:${c}">${code}</span>
+      <div class="status-track"><div class="status-fill" style="width:${pct}%;background:${c}"></div></div>
+      <span class="status-count">${fmtNum(count)}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderMiniChart() {
+  const max = Math.max(...rpsHistory, 1);
+  $('miniChart').innerHTML = rpsHistory.map((rps, i) => {
+    const h = Math.max(4, Math.round((rps / max) * 48));
+    const pct = rps / max;
+    const bg = pct > .8 ? '#22c55e' : pct > .5 ? '#eab308' : pct > .2 ? '#f97316' : '#ef4444';
+    const opacity = 0.4 + (i / rpsHistory.length) * 0.6;
+    return `<div class="mini-bar" style="height:${h}px;background:${bg};opacity:${opacity.toFixed(2)}"></div>`;
+  }).join('');
+}
+
+// ── Terminal log ─────────────────────────────────────────────────
+let logCount = 0;
+function log(html, cls = '') {
+  const body = $('termBody');
+  const ts   = startTs ? new Date(Date.now() - startTs).toISOString().substr(11,8) : new Date().toISOString().substr(11,8);
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML = `<span class="log-ts">${ts}</span><span class="log-text log-c-${cls || 'text'}">${html}</span>`;
+  body.appendChild(line);
+  logCount++;
+  if (logCount > 500) body.removeChild(body.firstChild);
+  body.scrollTop = body.scrollHeight;
+}
+
+// ── Report renderer ──────────────────────────────────────────────
+function renderReport(ev) {
+  const res = ev.resilience;
+
+  // Grade banner
+  const banner = $('gradeBanner');
+  banner.style.background = res.color + '09';
+  banner.style.borderColor = res.color + '44';
+  $('gradeCircle').style.borderColor = res.color;
+  $('gradeCircle').style.color = res.color;
+  $('gradeCircle').style.boxShadow = `0 0 40px ${res.color}25`;
+  $('gradeLetter').textContent = res.grade;
+  $('gradeLabel').textContent  = res.label;
+  $('gradeScoreLine').textContent = `Score: ${res.score}/100`;
+  $('gradeScoreLine').style.color = res.color;
+  $('gradeSummary').textContent = res.summary;
+
+  // Grade stats
+  const totalReqs  = ev.phases.reduce((a,p) => a+p.total, 0);
+  const totalErrs  = ev.phases.reduce((a,p) => a+p.errors, 0);
+  const avgRPS     = ev.phases.length ? Math.round(ev.phases.reduce((a,p) => a+p.rps, 0) / ev.phases.length) : 0;
+  const heavyPhase = ev.phases.find(p => p.profile === 'heavy');
+  $('gradeStats').innerHTML = [
+    { key:'Total Req', val: fmtNum(totalReqs) },
+    { key:'Total Erros', val: fmtNum(totalErrs) },
+    { key:'RPS Médio', val: avgRPS },
+    { key:'p99 Pesado', val: heavyPhase ? fmtMs(heavyPhase.latency.p99) : '—' },
+  ].map(i => `<div class="gs-item"><span class="gs-key">${i.key}</span><span class="gs-val" style="color:${res.color}">${i.val}</span></div>`).join('');
+
+  // Phase table
+  $('phaseTableBody').innerHTML = ev.phases.map(p => {
+    const erCls = erBadgeClass(p.errorRate);
+    return `<tr>
+      <td><div class="pt-phase">
+        <span class="pt-icon">${p.icon}</span>
+        <div><div class="pt-name">${esc(p.name)}</div><div class="pt-conc">${p.concurrent} conc.</div></div>
+      </div></td>
+      <td><span class="pt-num ${latClass(p.latency.mean)}">${p.rps}</span></td>
+      <td><span class="pt-num ${latClass(p.latency.p50)}">${fmtMs(p.latency.p50)}</span></td>
+      <td><span class="pt-num ${latClass(p.latency.p99)}">${fmtMs(p.latency.p99)}</span></td>
+      <td><span class="er-badge ${erCls}">${p.errorRate}%</span></td>
+      <td><span class="pt-num">${fmtNum(p.total)}</span></td>
+      <td><span class="er-badge ${erCls}">${p.errorRate > 30 ? '❌ Crítico' : p.errorRate > 10 ? '⚠️ Degradado' : p.errorRate > 3 ? '⚠️ Leve' : '✅ OK'}</span></td>
+    </tr>`;
+  }).join('');
+
+  // Latency heatmap
+  const maxP99 = Math.max(...ev.phases.map(p => p.latency.p99), 1);
+  $('latHeatmap').innerHTML = ev.phases.map(p => {
+    const pct = Math.round((p.latency.p99 / maxP99) * 100);
+    const c   = p.latency.p99 > 5000 ? '#ef4444' : p.latency.p99 > 2000 ? '#f97316' : p.latency.p99 > 800 ? '#eab308' : '#22c55e';
+    return `<div class="lh-row">
+      <span class="lh-label">${p.icon} ${esc(p.name.split(' ')[0])}</span>
+      <div class="lh-track"><div class="lh-fill" style="width:${pct}%;background:${c}"></div></div>
+      <span class="lh-val">${fmtMs(p.latency.p99)}</span>
+    </div>`;
+  }).join('');
+
+  // Recommendations
+  $('recList').innerHTML = ev.recommendations.map(r => `
+    <div class="rec-item">
+      <span class="rec-priority pri-${r.priority.toLowerCase()}">${r.priority}</span>
+      <span class="rec-icon">${r.icon}</span>
+      <div class="rec-body">
+        <div class="rec-title">${esc(r.title)}</div>
+        <div class="rec-text">${esc(r.body)}</div>
+      </div>
+    </div>`).join('');
+
+  // Footer
+  $('rptFooter').innerHTML = [
+    '💥 Supabase Guard — DDoS Resilience Test',
+    `Alvo: ${esc(ev.target)}`,
+    `Score: ${res.score}/100 · ${res.grade} ${res.label}`,
+    `Gerado: ${new Date(ev.timestamp).toLocaleString('pt-BR', {timeZone:'America/Sao_Paulo'})}`,
+  ].map(t => `<span>${t}</span>`).join('');
+}
+
+// ── Error ─────────────────────────────────────────────────────────
+function showError(msg) {
+  $('loadingScreen').style.display = 'none';
+  $('readyScreen').style.display   = 'none';
+  $('runningScreen').style.display = 'none';
+  $('reportScreen').style.display  = 'none';
+  $('errorScreen').style.display   = 'flex';
+  $('errMsg').textContent = msg || 'Erro desconhecido.';
+}
+
+init();
+</script>
+</body>
+</html>

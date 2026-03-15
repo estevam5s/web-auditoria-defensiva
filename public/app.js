@@ -684,6 +684,7 @@ function handleComplete(results) {
   const btnTerminal = $('#btnTerminal');
   const btnOSINT = $('#btnOSINT');
   const btnCredentials = $('#btnCredentials');
+  const btnDDoS = $('#btnDDoS');
   if (btnChecklist) btnChecklist.style.display = '';
   if (btnExport) btnExport.style.display = '';
   if (btnISO) btnISO.style.display = '';
@@ -693,6 +694,7 @@ function handleComplete(results) {
   if (btnTerminal) btnTerminal.style.display = '';
   if (btnOSINT) btnOSINT.style.display = '';
   if (btnCredentials) btnCredentials.style.display = '';
+  if (btnDDoS) btnDDoS.style.display = '';
 
   // Mostra botão Dark Web imediatamente (classificação atualiza label/cor assíncrono)
   const btnDW = $('#btnDarkWeb');
@@ -785,6 +787,13 @@ function openCredentials() {
   const id = currentAuditId || auditResults?.evidence?.auditId;
   if (!id) { alert('Execute uma auditoria primeiro para ver as credenciais expostas.'); return; }
   window.open(`/credentials/${id}`, '_blank');
+}
+
+// ── DDoS Resilience Test Page ───────────────────────────────────
+function openDDoS() {
+  const id = currentAuditId || auditResults?.evidence?.auditId;
+  if (!id) { alert('Execute uma auditoria primeiro para abrir o Teste DDoS.'); return; }
+  window.open(`/ddos/${id}`, '_blank');
 }
 
 // ── Security Terminal ──────────────────────────────────────────

@@ -20,6 +20,7 @@ const { generateHTMLReport } = require('./audit/report-html');
 const { lightScrape } = require('./audit/scraper');
 const { runOSINT } = require('./audit/osint');
 const { runDarkWebScan, classifyThreat } = require('./audit/dark-web');
+const { createDDoSTest } = require('./audit/ddos-engine');
 
 const { generateSupabaseCatalog, generateCatalogHTML } = require('./audit/report-supabase-catalog');
 const { askGrok, askGrokStream, generateFixPrompt } = require('./audit/grok-ai');
@@ -1230,6 +1231,69 @@ app.get('/api/darkweb/classify/:id', async (req, res) => {
   if (!data) return res.status(404).json({ error: 'Not found' });
   const level = classifyThreat(data.score, { hibp: { domainBreaches: [] }, otx: { malwareCount: 0, pulseCount: 0 }, urlscan: { malicious: 0 }, virustotal: null });
   res.json({ level, score: data.score, projectUrl: data.projectUrl });
+});
+
+// ─── DDoS Resilience Test — Page ──────────────────────────────────
+app.get('/ddos/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'ddos.html'));
+});
+
+// ─── DDoS Resilience Test — Audit Info ────────────────────────────
+app.get('/api/ddos/info/:id', async (req, res) => {
+  const data = await resolveAudit(req.params.id);
+  if (!data) return res.status(404).json({ success: false, error: 'Auditoria não encontrada.' });
+  res.json({
+    success:    true,
+    projectUrl: data.projectUrl,
+    score:      data.score,
+    grade:      data.grade,
+  });
+});
+
+// ─── DDoS Resilience Test — SSE Stream ────────────────────────────
+// No rate limiter here — long-running SSE, one connection per audit
+app.get('/api/ddos/stream', async (req, res) => {
+  const { auditId, profiles } = req.query;
+
+  const data = auditId ? await resolveAudit(auditId) : null;
+  if (!data) {
+    res.status(404).json({ error: 'Auditoria não encontrada.' });
+    return;
+  }
+
+  // SSE headers
+  res.setHeader('Content-Type',  'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection',    'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  const send = obj => {
+    if (!res.writableEnded) res.write(`data: ${JSON.stringify(obj)}\n\n`);
+  };
+
+  const profileList = profiles
+    ? profiles.split(',').map(p => p.trim()).filter(Boolean)
+    : undefined;
+
+  const { emitter, run } = createDDoSTest(data, { profiles: profileList });
+
+  emitter.on('start',          d => send({ type: 'start',          ...d }));
+  emitter.on('phase_start',    d => send({ type: 'phase_start',    ...d }));
+  emitter.on('tick',           d => send({ type: 'tick',           ...d }));
+  emitter.on('phase_complete', d => send({ type: 'phase_complete', ...d }));
+  emitter.on('complete',       d => send({ type: 'complete',       ...d }));
+  emitter.on('error',         msg => send({ type: 'error', message: typeof msg === 'string' ? msg : msg.message }));
+
+  req.on('close', () => { /* client disconnected — workers will finish naturally */ });
+
+  try {
+    await run();
+    if (!res.writableEnded) res.end();
+  } catch (err) {
+    send({ type: 'error', message: err.message });
+    if (!res.writableEnded) res.end();
+  }
 });
 
 // SPA fallback

@@ -1493,6 +1493,16 @@ body.has-actions-sidebar.asb-collapsed {
   background: rgba(245,158,11,0.08);
 }
 
+.asb-btn-ddos {
+  color: #ef4444;
+}
+
+.asb-btn-ddos:hover {
+  color: #f87171;
+  border-left-color: #ef4444;
+  background: rgba(239,68,68,0.08);
+}
+
 .asb-icon {
   width: 20px;
   height: 20px;
