@@ -27,6 +27,7 @@ const { saveAuditToSupabase, getAuditHistory, getAuditById, supabaseFetch, getVu
 const { analyzeGitHistory, checkForExposedSecrets } = require('./audit/git-analyzer');
 const { generateChecklistHTML } = require('./audit/checklist-generator');
 const { generateConsultingReport } = require('./audit/report-consulting');
+const { generateCredentialsReport } = require('./audit/report-credentials');
 const { generatePythonScripts } = require('./audit/python-scripts-generator');
 const fetch = require('node-fetch');
 
@@ -823,8 +824,41 @@ h1{color:#dc2626;margin-bottom:8px}p{color:#6b7280}</style>
     }
   };
 
+  // Run dark web scan with a 25s timeout so the report still loads if APIs are slow
+  let darkWebIntel = null;
+  try {
+    const timeout = new Promise(resolve => setTimeout(() => resolve(null), 25000));
+    darkWebIntel = await Promise.race([runDarkWebScan(auditData), timeout]);
+  } catch (_) { /* dark web scan is optional — never block the consulting report */ }
+
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.send(generateConsultingReport(auditData, consultingConfig));
+  res.send(generateConsultingReport(auditData, consultingConfig, darkWebIntel));
+});
+
+// ─── Credentials & Sensitive Data Exposure Report ──────────────────
+app.get('/credentials/:id', async (req, res) => {
+  const { id } = req.params;
+
+  let auditData = auditStore.get(id);
+  if (!auditData) {
+    try { auditData = await getAuditById(id); } catch (_) {}
+  }
+  if (!auditData) {
+    return res.status(404).send(`<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Auditoria não encontrada</title>
+<style>body{font-family:system-ui;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#030308;color:#c8c8d4}
+.box{background:#0a0a12;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:40px;text-align:center;max-width:420px}
+h1{color:#ef4444;margin-bottom:8px}p{color:#6b7280}a{color:#00d4ff;text-decoration:none}</style>
+</head><body><div class="box">
+<h1>🔑 Auditoria não encontrada</h1>
+<p>ID <code>${id.replace(/[^a-zA-Z0-9-]/g, '')}</code> não encontrado.</p>
+<p style="margin-top:12px"><a href="/">← Voltar ao Início</a></p>
+</div></body></html>`);
+  }
+
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(generateCredentialsReport(auditData));
 });
 
 // Serve the bug bounty reporting page

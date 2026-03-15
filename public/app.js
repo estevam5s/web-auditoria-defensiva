@@ -683,6 +683,7 @@ function handleComplete(results) {
   const btnConsulting = $('#btnConsulting');
   const btnTerminal = $('#btnTerminal');
   const btnOSINT = $('#btnOSINT');
+  const btnCredentials = $('#btnCredentials');
   if (btnChecklist) btnChecklist.style.display = '';
   if (btnExport) btnExport.style.display = '';
   if (btnISO) btnISO.style.display = '';
@@ -691,39 +692,46 @@ function handleComplete(results) {
   if (btnConsulting) btnConsulting.style.display = '';
   if (btnTerminal) btnTerminal.style.display = '';
   if (btnOSINT) btnOSINT.style.display = '';
+  if (btnCredentials) btnCredentials.style.display = '';
 
-  // Reveal Dark Web intelligence button dynamically based on threat classification
+  // Mostra botão Dark Web imediatamente (classificação atualiza label/cor assíncrono)
+  const btnDW = $('#btnDarkWeb');
+  if (btnDW) btnDW.style.display = '';
   classifyAndShowDarkWebBtn(id);
 }
 
-// ── Dark Web button — dynamic threat classification ──────────────
+// ── Dark Web button — sempre visível, cor dinâmica por nível ─────
 async function classifyAndShowDarkWebBtn(auditId) {
+  const btn   = $('#btnDarkWeb');
+  const icon  = $('#btnDarkWebIcon');
+  const label = $('#btnDarkWebLabel');
+  if (!btn) return;
+
+  // Sempre mostra o botão com estado padrão primeiro
+  btn.style.display = '';
+
   if (!auditId) return;
   try {
     const res = await fetch(`/api/darkweb/classify/${encodeURIComponent(auditId)}`);
     if (!res.ok) return;
     const { level } = await res.json();
-    if (!level) return; // null = clean site (score > 85, no threats) — hide button
 
-    const btn   = $('#btnDarkWeb');
-    const icon  = $('#btnDarkWebIcon');
-    const label = $('#btnDarkWebLabel');
-    if (!btn) return;
-
+    // Configurações por nível — incluindo 'clean' (site seguro)
     const CONFIG = {
-      DARK_WEB:    { cls: 'asb-btn-darkweb',    icon: '🕸️', text: 'Dark Web Intel',    title: 'Dados em risco na Dark Web' },
-      DEEP_WEB:    { cls: 'asb-btn-deepweb',    icon: '🔮', text: 'Deep Web Intel',    title: 'Dados em risco na Deep Web' },
-      SURFACE_WEB: { cls: 'asb-btn-surfaceweb', icon: '🌐', text: 'Surface Web Intel', title: 'Exposição na Surface Web' },
+      DARK_WEB:    { cls: 'asb-btn-darkweb',    icon: '🕸️',  text: 'Dark Web Intel',    title: 'Dados em risco na Dark Web — Clique para analisar' },
+      DEEP_WEB:    { cls: 'asb-btn-deepweb',    icon: '🔮',  text: 'Deep Web Intel',    title: 'Dados em risco na Deep Web — Clique para analisar' },
+      SURFACE_WEB: { cls: 'asb-btn-surfaceweb', icon: '🌐',  text: 'Surface Web Intel', title: 'Exposição na Surface Web — Clique para analisar' },
+      null:        { cls: 'asb-btn-clean',       icon: '🛡️',  text: 'Dark/Deep/Surface', title: 'Inteligência Dark/Deep/Surface Web — Site aparentemente limpo' },
     };
-    const cfg = CONFIG[level] || CONFIG.SURFACE_WEB;
 
+    const cfg = CONFIG[level] || CONFIG[null];
+    // Remove classes anteriores para não acumular
+    ['asb-btn-darkweb','asb-btn-deepweb','asb-btn-surfaceweb','asb-btn-clean'].forEach(c => btn.classList.remove(c));
     btn.classList.add(cfg.cls);
     btn.title = cfg.title;
     if (icon)  icon.textContent  = cfg.icon;
     if (label) label.textContent = cfg.text;
-
-    btn.style.display = '';
-  } catch (_) { /* silently ignore — button stays hidden */ }
+  } catch (_) { /* se falhar, botão já está visível com estado padrão */ }
 }
 
 // ── Actions Sidebar Toggle ───────────────────────────────────────
@@ -770,6 +778,13 @@ function openConsulting() {
   const id = currentAuditId || auditResults?.evidence?.auditId;
   if (!id) { alert('Execute uma auditoria primeiro para gerar a proposta de consultoria.'); return; }
   window.open(`/consulting/${id}`, '_blank');
+}
+
+// ── Credentials Exposure Page ──────────────────────────────────
+function openCredentials() {
+  const id = currentAuditId || auditResults?.evidence?.auditId;
+  if (!id) { alert('Execute uma auditoria primeiro para ver as credenciais expostas.'); return; }
+  window.open(`/credentials/${id}`, '_blank');
 }
 
 // ── Security Terminal ──────────────────────────────────────────
@@ -2744,64 +2759,37 @@ function renderOSINTResults(data) {
 // NEO CURSOR — Cursor do personagem Neo do Matrix (desktop apenas)
 // ═══════════════════════════════════════════════════════════════════
 (function initNeoCursor() {
-  // Só ativa em dispositivos com mouse real (hover + pointer fino)
-  // Tablets/celulares têm pointer:coarse ou hover:none → não ativam
+  // Só ativa em dispositivos com mouse real
   if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
 
-  // ── SVG do Neo — silhueta icônica: óculos verdes + trenchcoat preto ──
-  // Tamanho: 28×44px | Hotspot: (14, 0) = topo da cabeça = "ponteiro"
-  const neoSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="44" viewBox="0 0 28 44">
-  <!-- Halo sutil para visibilidade em fundo escuro -->
-  <ellipse cx="14" cy="6.5" rx="6" ry="6.5" fill="rgba(0,255,65,0.07)"/>
-  <!-- Cabeça -->
-  <ellipse cx="14" cy="6.5" rx="5" ry="5.5" fill="#111111" stroke="rgba(0,255,65,0.45)" stroke-width="0.7"/>
-  <!-- Óculos esquerdo (icônico!) -->
-  <rect x="7.5" y="5" width="4.8" height="2.6" rx="0.9" fill="#00ff41" opacity="0.96"/>
-  <!-- Óculos direito -->
-  <rect x="15.7" y="5" width="4.8" height="2.6" rx="0.9" fill="#00ff41" opacity="0.96"/>
-  <!-- Ponte dos óculos -->
-  <line x1="12.3" y1="6.3" x2="15.7" y2="6.3" stroke="#00ff41" stroke-width="0.55"/>
-  <!-- Pescoço -->
-  <rect x="11.5" y="12" width="5" height="3.5" fill="#111111"/>
-  <!-- Trenchcoat — silhueta larga e icônica -->
-  <path d="M2,15.5 L9,15 L9.5,28 L7,43 L13,43 L14,33 L15,33 L16,43 L22,43 L19.5,28 L20,15 L26,15.5 L24,14 L14,12.5 L4,14 Z"
-        fill="#0a0a0a" stroke="#161616" stroke-width="0.4" stroke-linejoin="round"/>
-  <!-- Gola / lapela V (detalhe verde sutil) -->
-  <path d="M9,15 L12.5,21.5 L14,19 L15.5,21.5 L20,15"
-        fill="none" stroke="rgba(0,255,65,0.22)" stroke-width="0.9" stroke-linejoin="round"/>
-  <!-- Sombra lateral esquerda (profundidade) -->
-  <path d="M2,15.5 L9,15 L9.5,28 L7,43 L5.5,43 Z" fill="#111111" opacity="0.5"/>
-  <!-- Sombra lateral direita -->
-  <path d="M26,15.5 L20,15 L19.5,28 L22,43 L23.5,43 Z" fill="#111111" opacity="0.5"/>
-  <!-- Cinto (linha horizontal sutil) -->
-  <line x1="3.5" y1="26" x2="24.5" y2="26" stroke="rgba(0,255,65,0.15)" stroke-width="0.8"/>
-</svg>`;
+  // SVG sem comentários (comentários causam falha de parsing em cursores)
+  // Tamanho 32x50px para maior visibilidade | Hotspot: (16, 0) = topo da cabeça
+  const neoSVG = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="50" viewBox="0 0 32 50">'
+    + '<ellipse cx="16" cy="7.5" rx="7.5" ry="7.5" fill="#0a0a0a" stroke="#00ff41" stroke-width="1.2"/>'
+    + '<rect x="8" y="5.5" width="5.5" height="3.2" rx="1.1" fill="#00ff41"/>'
+    + '<rect x="18.5" y="5.5" width="5.5" height="3.2" rx="1.1" fill="#00ff41"/>'
+    + '<line x1="13.5" y1="7.1" x2="18.5" y2="7.1" stroke="#00ff41" stroke-width="0.8"/>'
+    + '<rect x="13" y="15" width="6" height="4" fill="#0a0a0a"/>'
+    + '<path d="M2,18 L10,17 L10.5,32 L8,49 L15,49 L16,38 L17,38 L18,49 L25,49 L22.5,32 L23,17 L30,18 L28,16 L16,14 L4,16 Z" fill="#0d0d0d" stroke="#1a1a1a" stroke-width="0.6"/>'
+    + '<path d="M10,17 L13.5,24 L16,21 L18.5,24 L23,17" fill="none" stroke="#00ff4133" stroke-width="1.2"/>'
+    + '</svg>';
 
-  // Blob URL — evita qualquer problema de encoding em data URI
-  const blob    = new Blob([neoSVG], { type: 'image/svg+xml' });
-  const blobUrl = URL.createObjectURL(blob);
+  // encodeURIComponent é estável — não expira como blob URLs
+  const dataUri = 'data:image/svg+xml,' + encodeURIComponent(neoSVG);
 
-  // Injeta CSS — cursor Neo em todos os elementos + exceção para inputs de texto
   const style = document.createElement('style');
   style.id = 'neo-cursor-style';
   style.textContent = `
     @media (hover: hover) and (pointer: fine) {
       *, *::before, *::after {
-        cursor: url("${blobUrl}") 14 0, auto !important;
+        cursor: url("${dataUri}") 16 0, auto !important;
       }
-      /* Preserva cursor de texto em campos de digitação */
-      input[type="text"],
-      input[type="email"],
-      input[type="password"],
-      input[type="search"],
-      input[type="url"],
-      input[type="number"],
-      input:not([type]),
-      textarea {
-        cursor: url("${blobUrl}") 14 0, text !important;
+      input[type="text"], input[type="email"], input[type="password"],
+      input[type="search"], input[type="url"], input[type="number"],
+      input:not([type]), textarea, [contenteditable] {
+        cursor: url("${dataUri}") 16 0, text !important;
       }
     }
-    /* Ripple matrix ao clicar */
     @keyframes neo-click-ripple {
       0%   { transform: scale(0.2); opacity: 1;   box-shadow: 0 0 0   2px #00ff41; }
       60%  { transform: scale(1.8); opacity: 0.6; box-shadow: 0 0 12px 3px rgba(0,255,65,0.5); }
