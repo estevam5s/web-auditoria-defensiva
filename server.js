@@ -35,6 +35,47 @@ const app = express();
 const PORT = process.env.PORT || 2998;
 const APP_VERSION = '3.3.0';
 
+// ─── Map Supabase DB row → auditData format ──────────────────────
+// getAuditById returns { success, data: <snake_case DB row> }.
+// All report routes expect camelCase fields (projectUrl, results, etc.).
+function mapDbRowToAuditData(row) {
+  const gradeColors = { 'A+':'#22c55e','A':'#22c55e','A-':'#86efac','B+':'#84cc16','B':'#a3e635','B-':'#bef264','C+':'#eab308','C':'#fbbf24','C-':'#fcd34d','D':'#f97316','F':'#ef4444' };
+  return {
+    projectUrl:  row.project_url,
+    projectRef:  row.project_ref  || null,
+    score:       row.score        || 0,
+    grade:       { grade: row.grade || 'F', label: row.grade_label || row.grade || 'F', color: gradeColors[row.grade] || '#ef4444' },
+    results:     Array.isArray(row.results_json) ? row.results_json : [],
+    catalogData: row.catalog_data_json || {},
+    duration:    row.duration     || null,
+    totalChecks: row.total_checks || 0,
+    passed:      row.passed_count || 0,
+    failed:      row.failed_count || 0,
+    warnings:    row.warnings_count || 0,
+    errors:      row.errors_count   || 0,
+    info:        row.info_count     || 0,
+    evidence: {
+      auditId:   row.audit_id,
+      sha256:    row.evidence_sha256    || null,
+      timestamp: row.evidence_timestamp || new Date().toISOString(),
+    },
+  };
+}
+
+// Helper: fetch audit from store or DB, returning a normalised auditData object.
+async function resolveAudit(id) {
+  let data = auditStore.get(id);
+  if (!data) {
+    try {
+      const dbResult = await getAuditById(id);
+      if (dbResult.success && dbResult.data) {
+        data = mapDbRowToAuditData(dbResult.data);
+      }
+    } catch (_) {}
+  }
+  return data || null;
+}
+
 // ─── Build hash: estável por versão, muda apenas em novo deploy ──
 // Usa só APP_VERSION + npm_package_version (sem Date.now).
 // Em produção, defina BUILD_HASH via variável de ambiente no CI/CD.
@@ -785,10 +826,7 @@ app.get('/api/checklist/:id/export', (req, res) => {
 app.get('/consulting/:id', async (req, res) => {
   const { id } = req.params;
 
-  let auditData = auditStore.get(id);
-  if (!auditData) {
-    try { auditData = await getAuditById(id); } catch (_) { /* not in DB */ }
-  }
+  const auditData = await resolveAudit(id);
   if (!auditData) {
     return res.status(404).send(`<!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="UTF-8">
@@ -839,10 +877,7 @@ h1{color:#dc2626;margin-bottom:8px}p{color:#6b7280}</style>
 app.get('/credentials/:id', async (req, res) => {
   const { id } = req.params;
 
-  let auditData = auditStore.get(id);
-  if (!auditData) {
-    try { auditData = await getAuditById(id); } catch (_) {}
-  }
+  const auditData = await resolveAudit(id);
   if (!auditData) {
     return res.status(404).send(`<!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="UTF-8">
@@ -1175,15 +1210,13 @@ app.get('/darkweb/:id', (req, res) => {
 // ─── Dark Web Intelligence API ─────────────────────────────────────
 app.post('/api/darkweb', auditLimiter, async (req, res) => {
   const { auditId, auditData } = req.body;
-  let data = auditData || (auditId ? auditStore.get(auditId) : null);
-  if (!data && auditId) {
-    try { data = await getAuditById(auditId); } catch (_) {}
-  }
+  const data = auditData || (auditId ? await resolveAudit(auditId) : null);
   if (!data) return res.status(404).json({ error: 'Auditoria não encontrada. Execute uma auditoria primeiro.' });
 
   try {
     console.log(`[DarkWeb] Starting scan for: ${data.projectUrl}`);
-    const intel = await runDarkWebScan(data);
+    const timeout30s = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 30000));
+    const intel = await Promise.race([runDarkWebScan(data), timeout30s]);
     console.log(`[DarkWeb] Done. Threat level: ${intel.threatLevel} | Risk: ${intel.riskScore}`);
     res.json({ success: true, intel });
   } catch (err) {
@@ -1193,10 +1226,7 @@ app.post('/api/darkweb', auditLimiter, async (req, res) => {
 });
 
 app.get('/api/darkweb/classify/:id', async (req, res) => {
-  let data = auditStore.get(req.params.id);
-  if (!data) {
-    try { data = await getAuditById(req.params.id); } catch (_) {}
-  }
+  const data = await resolveAudit(req.params.id);
   if (!data) return res.status(404).json({ error: 'Not found' });
   const level = classifyThreat(data.score, { hibp: { domainBreaches: [] }, otx: { malwareCount: 0, pulseCount: 0 }, urlscan: { malicious: 0 }, virustotal: null });
   res.json({ level, score: data.score, projectUrl: data.projectUrl });
