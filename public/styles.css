@@ -188,17 +188,21 @@ body {
 }
 
 .shield-icon {
-  width: 42px;
-  height: 42px;
-  color: var(--accent);
-  filter: drop-shadow(0 0 8px var(--accent-glow));
-  animation: pulse-glow 2s ease-in-out infinite;
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0;
+  animation: shield-pulse 3s ease-in-out infinite;
 }
 
-@keyframes pulse-glow {
-  0%, 100% { filter: drop-shadow(0 0 8px rgba(0,255,65,0.3)); }
-  50% { filter: drop-shadow(0 0 16px rgba(0,255,65,0.6)); }
+@keyframes shield-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 6px rgba(0,212,255,0.4)) drop-shadow(0 0 12px rgba(0,255,159,0.2));
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgba(0,212,255,0.7)) drop-shadow(0 0 20px rgba(0,255,159,0.35)) drop-shadow(0 0 30px rgba(168,85,247,0.2));
+  }
 }
+
 
 .header h1 {
   font-family: var(--font-mono);
