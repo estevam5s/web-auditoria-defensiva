@@ -3856,6 +3856,51 @@ body.has-actions-sidebar.asb-collapsed {
   background: linear-gradient(135deg, rgba(0,212,255,0.16), rgba(168,85,247,0.16)) !important;
 }
 
+/* ── Dark Web / Deep Web / Surface Web threat button ── */
+.asb-btn-darkweb {
+  color: #ef4444 !important;
+  background: rgba(239,68,68,0.07) !important;
+  border-top: 1px solid rgba(239,68,68,0.25) !important;
+  border-left: 2px solid rgba(239,68,68,0.5) !important;
+  margin-top: 4px;
+  animation: dw-pulse 2.5s ease-in-out infinite;
+}
+.asb-btn-darkweb:hover {
+  color: #f87171 !important;
+  background: rgba(239,68,68,0.16) !important;
+  border-left-color: #ef4444 !important;
+}
+@keyframes dw-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+  50%       { box-shadow: 0 0 8px 1px rgba(239,68,68,0.25); }
+}
+
+.asb-btn-deepweb {
+  color: #a855f7 !important;
+  background: rgba(168,85,247,0.07) !important;
+  border-top: 1px solid rgba(168,85,247,0.25) !important;
+  border-left: 2px solid rgba(168,85,247,0.5) !important;
+  margin-top: 4px;
+}
+.asb-btn-deepweb:hover {
+  color: #c084fc !important;
+  background: rgba(168,85,247,0.16) !important;
+  border-left-color: #a855f7 !important;
+}
+
+.asb-btn-surfaceweb {
+  color: #f59e0b !important;
+  background: rgba(245,158,11,0.07) !important;
+  border-top: 1px solid rgba(245,158,11,0.25) !important;
+  border-left: 2px solid rgba(245,158,11,0.5) !important;
+  margin-top: 4px;
+}
+.asb-btn-surfaceweb:hover {
+  color: #fbbf24 !important;
+  background: rgba(245,158,11,0.16) !important;
+  border-left-color: #f59e0b !important;
+}
+
 .osint-empty {
   font-size: 0.8rem;
   color: var(--text-muted);

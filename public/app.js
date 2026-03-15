@@ -691,6 +691,39 @@ function handleComplete(results) {
   if (btnConsulting) btnConsulting.style.display = '';
   if (btnTerminal) btnTerminal.style.display = '';
   if (btnOSINT) btnOSINT.style.display = '';
+
+  // Reveal Dark Web intelligence button dynamically based on threat classification
+  classifyAndShowDarkWebBtn(id);
+}
+
+// ── Dark Web button — dynamic threat classification ──────────────
+async function classifyAndShowDarkWebBtn(auditId) {
+  if (!auditId) return;
+  try {
+    const res = await fetch(`/api/darkweb/classify/${encodeURIComponent(auditId)}`);
+    if (!res.ok) return;
+    const { level } = await res.json();
+    if (!level) return; // null = clean site (score > 85, no threats) — hide button
+
+    const btn   = $('#btnDarkWeb');
+    const icon  = $('#btnDarkWebIcon');
+    const label = $('#btnDarkWebLabel');
+    if (!btn) return;
+
+    const CONFIG = {
+      DARK_WEB:    { cls: 'asb-btn-darkweb',    icon: '🕸️', text: 'Dark Web Intel',    title: 'Dados em risco na Dark Web' },
+      DEEP_WEB:    { cls: 'asb-btn-deepweb',    icon: '🔮', text: 'Deep Web Intel',    title: 'Dados em risco na Deep Web' },
+      SURFACE_WEB: { cls: 'asb-btn-surfaceweb', icon: '🌐', text: 'Surface Web Intel', title: 'Exposição na Surface Web' },
+    };
+    const cfg = CONFIG[level] || CONFIG.SURFACE_WEB;
+
+    btn.classList.add(cfg.cls);
+    btn.title = cfg.title;
+    if (icon)  icon.textContent  = cfg.icon;
+    if (label) label.textContent = cfg.text;
+
+    btn.style.display = '';
+  } catch (_) { /* silently ignore — button stays hidden */ }
 }
 
 // ── Actions Sidebar Toggle ───────────────────────────────────────
@@ -723,6 +756,13 @@ function openBugBounty() {
   } else {
     window.open('/bugbounty', '_blank');
   }
+}
+
+// ── Dark Web / Deep Web Intelligence Page ─────────────────────
+function openDarkWeb() {
+  const id = currentAuditId || auditResults?.evidence?.auditId;
+  if (!id) { alert('Execute uma auditoria primeiro para abrir a inteligência Dark Web.'); return; }
+  window.open(`/darkweb/${id}`, '_blank');
 }
 
 // ── Consulting Proposal Page ───────────────────────────────────
