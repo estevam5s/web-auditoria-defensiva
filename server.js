@@ -332,20 +332,24 @@ app.post('/api/report/html/view', async (req, res) => {
 
 // ─── Site Source Code Scraper (ZIP) ───────────────────────────────
 app.post('/api/scrape', async (req, res) => {
-  const { url } = req.body;
+  const { url, auditId } = req.body;
   if (!url) return res.status(400).json({ error: 'URL required' });
 
   let targetUrl = url.trim().replace(/\/+$/, '');
   if (!targetUrl.startsWith('http')) targetUrl = 'https://' + targetUrl;
 
+  // Optionally embed audit results inside the ZIP
+  const auditData = auditId ? auditStore.get(auditId) : null;
+
   try {
-    const filename = `source-${targetUrl.replace(/https?:\/\//, '').replace(/[^a-zA-Z0-9]/g, '-')}.zip`;
+    const domain   = targetUrl.replace(/https?:\/\//, '').replace(/[^a-zA-Z0-9.-]/g, '-').slice(0, 40);
+    const filename = `${domain}-source.zip`;
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
     await lightScrape(targetUrl, res, (msg) => {
       console.log(`[Scraper] ${msg}`);
-    });
+    }, auditData || null);
   } catch (err) {
     console.error('Scrape error:', err);
     if (!res.headersSent) res.status(500).json({ error: err.message });

@@ -323,6 +323,16 @@ function handleComplete(results) {
   const footerCount = $('#footerAuditCount');
   if (footerCount) footerCount.textContent = sessionAuditCount;
 
+  // Show actions sidebar
+  const actionsSidebar = document.getElementById('actionsSidebar');
+  if (actionsSidebar) {
+    actionsSidebar.style.display = 'flex';
+    document.body.classList.add('has-actions-sidebar');
+    if (document.body.classList.contains('asb-collapsed')) {
+      document.body.classList.remove('asb-collapsed');
+    }
+  }
+
   appendLog('info', '─────', '─────────────────────────────────────');
   appendLog('info', 'DONE', `Auditoria concluída em ${results.duration}`);
   appendLog('info', 'SCORE', `${results.score}/100 (${results.grade.grade} — ${results.grade.label})`);
@@ -351,6 +361,14 @@ function handleComplete(results) {
   if (btnPython) btnPython.style.display = '';
   if (btnBounty) btnBounty.style.display = '';
   if (btnTerminal) btnTerminal.style.display = '';
+}
+
+// ── Actions Sidebar Toggle ───────────────────────────────────────
+function toggleActionsSidebar() {
+  const sidebar = document.getElementById('actionsSidebar');
+  if (!sidebar) return;
+  sidebar.classList.toggle('asb-collapsed');
+  document.body.classList.toggle('asb-collapsed');
 }
 
 // ── ISO Compliance Page ──────────────────────────────────────────
@@ -383,6 +401,28 @@ function openTerminal() {
   if (!id) { alert('Execute uma auditoria primeiro para abrir o Terminal de Segurança.'); return; }
   window.open(`/terminal/${id}`, '_blank');
 }
+
+// ── 3D Card tilt on mouse move ────────────────────────────────────
+(function init3DHero() {
+  const wrap = document.getElementById('hero3DWrap');
+  const card = document.getElementById('hero3DCard');
+  if (!wrap || !card) return;
+
+  wrap.addEventListener('mousemove', (e) => {
+    const rect = wrap.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dx = (e.clientX - cx) / (rect.width / 2);
+    const dy = (e.clientY - cy) / (rect.height / 2);
+    card.style.transform = `rotateY(${dx * 12}deg) rotateX(${-dy * 8}deg) translateZ(10px)`;
+  });
+
+  wrap.addEventListener('mouseleave', () => {
+    card.style.transition = 'transform 0.6s ease';
+    card.style.transform = 'rotateY(0deg) rotateX(0deg) translateZ(0)';
+    setTimeout(() => { card.style.transition = 'transform 0.1s ease'; }, 600);
+  });
+})();
 
 // ── Score Card ───────────────────────────────────────────────────
 function showScoreCard(results) {

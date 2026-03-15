@@ -127,13 +127,304 @@
       </div>
     </header>
 
-    <!-- Main Title -->
-    <section class="hero">
-      <h2 class="hero-title">Web Security Scanner</h2>
-      <p class="hero-desc">
-        Scanner defensivo de segurança web que analisa exposição de dados, vazamento de credenciais em código-fonte e arquivos .env, vulnerabilidades de API, configurações inseguras e muito mais. Compatível com qualquer site ou aplicação web.
-      </p>
+    <!-- ═══ 3D HERO SECTION ══════════════════════════════════════════ -->
+    <section class="hero-3d" id="hero3DSection">
+      <div class="hero-3d-inner">
+
+        <!-- Left: headline + stats + CTA -->
+        <div class="hero-text">
+          <div class="hero-eyebrow">
+            <span class="hero-eyebrow-dot"></span>
+            DEFENSIVE SECURITY SCANNER v3.3.0
+          </div>
+          <h2 class="hero-title-3d">
+            Audite qualquer site.<br>
+            <span class="hero-title-accent">Encontre o que outros perdem.</span>
+          </h2>
+          <p class="hero-desc-3d">
+            Scanner defensivo de segurança web com mais de 40 verificações automatizadas. Detecta credenciais expostas, falhas de API, vazamento de dados, injeções, configurações inseguras e muito mais — em tempo real, com evidência SHA-256.
+          </p>
+          <div class="hero-stats-row">
+            <div class="hero-stat-item">
+              <span class="hero-stat-num">40+</span>
+              <span class="hero-stat-lbl">Verificações</span>
+            </div>
+            <div class="hero-stat-sep"></div>
+            <div class="hero-stat-item">
+              <span class="hero-stat-num">SHA-256</span>
+              <span class="hero-stat-lbl">Evidência</span>
+            </div>
+            <div class="hero-stat-sep"></div>
+            <div class="hero-stat-item">
+              <span class="hero-stat-num">Real-time</span>
+              <span class="hero-stat-lbl">Streaming SSE</span>
+            </div>
+            <div class="hero-stat-sep"></div>
+            <div class="hero-stat-item">
+              <span class="hero-stat-num">PWA</span>
+              <span class="hero-stat-lbl">Instalável</span>
+            </div>
+          </div>
+          <div class="hero-cta-row">
+            <button class="btn-hero-cta" onclick="document.querySelector('.input-section').scrollIntoView({behavior:'smooth'});setTimeout(()=>document.getElementById('projectUrl').focus(),400)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              Iniciar Auditoria
+            </button>
+            <a class="btn-hero-secondary" href="/learn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              Ver Academia
+            </a>
+          </div>
+        </div>
+
+        <!-- Right: 3D floating mock dashboard -->
+        <div class="hero-3d-wrap" id="hero3DWrap">
+          <div class="hero-3d-card" id="hero3DCard">
+            <!-- Mock scan header -->
+            <div class="mock-header">
+              <div class="mock-dots">
+                <span style="background:#ff5f57"></span>
+                <span style="background:#febc2e"></span>
+                <span style="background:#28c840"></span>
+              </div>
+              <span class="mock-title">audit://target-site.com</span>
+              <span class="mock-status-badge">● SCANNING</span>
+            </div>
+            <!-- Mock score -->
+            <div class="mock-score-row">
+              <div class="mock-score-circle">
+                <svg viewBox="0 0 60 60" width="60" height="60">
+                  <circle cx="30" cy="30" r="26" fill="none" stroke="#1a1a2e" stroke-width="5"/>
+                  <circle cx="30" cy="30" r="26" fill="none" stroke="#00ff9f" stroke-width="5"
+                    stroke-dasharray="163" stroke-dashoffset="33" stroke-linecap="round"
+                    transform="rotate(-90 30 30)"/>
+                </svg>
+                <div class="mock-score-val">80</div>
+              </div>
+              <div class="mock-score-info">
+                <div class="mock-score-grade">Grade B+</div>
+                <div class="mock-score-sub">3 falhas críticas detectadas</div>
+                <div class="mock-check-row"><span class="mock-pass">✓ 28 aprovados</span><span class="mock-fail">✗ 3 falhos</span><span class="mock-warn">⚠ 5 alertas</span></div>
+              </div>
+            </div>
+            <!-- Mock findings list -->
+            <div class="mock-findings">
+              <div class="mock-finding fail">
+                <span class="mock-sev">CRÍTICO</span>
+                <span class="mock-find-text">Arquivo .env exposto publicamente</span>
+              </div>
+              <div class="mock-finding fail">
+                <span class="mock-sev">CRÍTICO</span>
+                <span class="mock-find-text">Service Key vazada no bundle JS</span>
+              </div>
+              <div class="mock-finding warn">
+                <span class="mock-sev warn">ALERTA</span>
+                <span class="mock-find-text">RLS não configurado em 4 tabelas</span>
+              </div>
+              <div class="mock-finding pass">
+                <span class="mock-sev pass">OK</span>
+                <span class="mock-find-text">Headers de segurança configurados</span>
+              </div>
+              <div class="mock-finding warn">
+                <span class="mock-sev warn">ALERTA</span>
+                <span class="mock-find-text">CORS permite origens wildcard</span>
+              </div>
+            </div>
+            <!-- Mock progress bar -->
+            <div class="mock-progress-wrap">
+              <div class="mock-progress-bar"></div>
+            </div>
+            <!-- Floating badges -->
+            <div class="mock-float-badge mock-float-1">🔑 API Key Found</div>
+            <div class="mock-float-badge mock-float-2">⚠ RLS Disabled</div>
+            <div class="mock-float-badge mock-float-3">✓ SSL Valid</div>
+          </div>
+          <!-- Glow rings behind card -->
+          <div class="hero-glow-ring hero-glow-ring-1"></div>
+          <div class="hero-glow-ring hero-glow-ring-2"></div>
+        </div>
+
+      </div>
     </section>
+
+    <!-- ═══ O QUE ELE DETECTA ══════════════════════════════════════════ -->
+    <section class="info-section" id="infoDetecta">
+      <div class="info-section-header">
+        <span class="info-tag">O QUE ELE CAPTURA</span>
+        <h3 class="info-title">Tudo que a auditoria analisa</h3>
+        <p class="info-subtitle">40+ verificações automáticas organizadas em categorias de segurança</p>
+      </div>
+      <div class="captures-grid">
+        <div class="capture-card">
+          <div class="capture-icon" style="color:#ff4466;background:rgba(255,68,102,0.1);border-color:rgba(255,68,102,0.2)">🔑</div>
+          <h4>Credenciais Expostas</h4>
+          <ul>
+            <li>Arquivos .env públicos com conteúdo completo</li>
+            <li>Service Keys e tokens no bundle JS</li>
+            <li>Anon Keys expostas no código-fonte</li>
+            <li>Segredos em comentários HTML</li>
+            <li>Senhas em variáveis de ambiente visíveis</li>
+          </ul>
+        </div>
+        <div class="capture-card">
+          <div class="capture-icon" style="color:#ff8c00;background:rgba(255,140,0,0.1);border-color:rgba(255,140,0,0.2)">🛡️</div>
+          <h4>Vulnerabilidades de API</h4>
+          <ul>
+            <li>REST API sem autenticação</li>
+            <li>RPC functions executáveis sem token</li>
+            <li>GraphQL introspection aberta</li>
+            <li>Edge Functions com acesso livre</li>
+            <li>Endpoints que vazam dados internos</li>
+          </ul>
+        </div>
+        <div class="capture-card">
+          <div class="capture-icon" style="color:#ffff00;background:rgba(255,255,0,0.08);border-color:rgba(255,255,0,0.15)">🔒</div>
+          <h4>Controle de Acesso</h4>
+          <ul>
+            <li>Row Level Security (RLS) desativado</li>
+            <li>Tabelas acessíveis sem autenticação</li>
+            <li>Storage buckets públicos indevidos</li>
+            <li>Dados de clientes expostos (PII)</li>
+            <li>Permissões de função excessivas</li>
+          </ul>
+        </div>
+        <div class="capture-card">
+          <div class="capture-icon" style="color:#00d4ff;background:rgba(0,212,255,0.1);border-color:rgba(0,212,255,0.2)">🌐</div>
+          <h4>Headers & Configurações</h4>
+          <ul>
+            <li>Headers de segurança ausentes</li>
+            <li>CORS configurado incorretamente</li>
+            <li>Content-Security-Policy fraco</li>
+            <li>HSTS não implementado</li>
+            <li>Clickjacking sem proteção</li>
+          </ul>
+        </div>
+        <div class="capture-card">
+          <div class="capture-icon" style="color:#a855f7;background:rgba(168,85,247,0.1);border-color:rgba(168,85,247,0.2)">⚡</div>
+          <h4>Ataques & Resiliência</h4>
+          <ul>
+            <li>DDoS e DoS (Slowloris, ReDoS)</li>
+            <li>Brute Force sem rate limiting</li>
+            <li>Simulação de ataque Hydra</li>
+            <li>Port Scan em serviços expostos</li>
+            <li>HTTP Request Smuggling</li>
+          </ul>
+        </div>
+        <div class="capture-card">
+          <div class="capture-icon" style="color:#00ff9f;background:rgba(0,255,159,0.1);border-color:rgba(0,255,159,0.2)">🔍</div>
+          <h4>Código-Fonte & Rotas</h4>
+          <ul>
+            <li>Análise profunda de JS/bundles</li>
+            <li>Rotas ocultas e endpoints secretos</li>
+            <li>Git exposure (.git acessível)</li>
+            <li>Open Redirect vulnerável</li>
+            <li>Comentários com dados sensíveis</li>
+          </ul>
+        </div>
+        <div class="capture-card">
+          <div class="capture-icon" style="color:#00bfff;background:rgba(0,191,255,0.1);border-color:rgba(0,191,255,0.2)">🔐</div>
+          <h4>SSL/TLS & Certificados</h4>
+          <ul>
+            <li>Validade e configuração SSL</li>
+            <li>Protocolos obsoletos (TLS 1.0/1.1)</li>
+            <li>Cipher suites inseguros</li>
+            <li>Certificados autoassinados</li>
+            <li>Mixed content HTTP/HTTPS</li>
+          </ul>
+        </div>
+        <div class="capture-card">
+          <div class="capture-icon" style="color:#ff6b35;background:rgba(255,107,53,0.1);border-color:rgba(255,107,53,0.2)">🕵️</div>
+          <h4>Dados Sensíveis & PII</h4>
+          <ul>
+            <li>CPF, CNPJ, cartões em APIs abertas</li>
+            <li>E-mails e telefones expostos</li>
+            <li>Endereços e chaves Pix visíveis</li>
+            <li>Dados de clientes SaaS expostos</li>
+            <li>Informações médicas ou financeiras</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ COMO FUNCIONA ══════════════════════════════════════════════ -->
+    <section class="info-section" id="infoComoFunciona">
+      <div class="info-section-header">
+        <span class="info-tag">COMO FUNCIONA</span>
+        <h3 class="info-title">3 passos para uma auditoria completa</h3>
+        <p class="info-subtitle">Sem instalação, sem configuração complexa — resultados em minutos</p>
+      </div>
+      <div class="steps-row">
+        <div class="step-card">
+          <div class="step-number">01</div>
+          <div class="step-icon">🌐</div>
+          <h4>Insira a URL</h4>
+          <p>Cole a URL do site, aplicação web ou projeto Supabase que deseja auditar. Funciona com qualquer domínio publicamente acessível.</p>
+          <div class="step-tip">💡 Suporte a anon key opcional para testes autenticados</div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step-card">
+          <div class="step-number">02</div>
+          <div class="step-icon">⚡</div>
+          <h4>Auditoria em Tempo Real</h4>
+          <p>O engine executa 40+ verificações via SSE streaming. Você acompanha cada resultado conforme é descoberto, sem esperar o fim.</p>
+          <div class="step-tip">💡 Módulos de análise profunda: código-fonte, rotas, PII, credenciais</div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step-card">
+          <div class="step-number">03</div>
+          <div class="step-icon">📊</div>
+          <h4>Relatório + Ações</h4>
+          <p>Receba score de segurança, veredicto de produção (APTO/NÃO APTO), evidência SHA-256, e exporte PDF, HTML ou JSON.</p>
+          <div class="step-tip">💡 Chat com IA, Bug Bounty report, Scripts Python Blue Team</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ POR QUE USAR / BENEFÍCIOS ═════════════════════════════════ -->
+    <section class="info-section" id="infoBeneficios">
+      <div class="info-section-header">
+        <span class="info-tag">POR QUE USAR</span>
+        <h3 class="info-title">Eficácia comprovada na prática</h3>
+        <p class="info-subtitle">Desenvolvido para detectar as vulnerabilidades mais comuns e críticas que afetam aplicações web modernas</p>
+      </div>
+      <div class="benefits-grid">
+        <div class="benefit-card benefit-highlight">
+          <div class="benefit-icon">🎯</div>
+          <h4>Detecção Precisa</h4>
+          <p>Identifica vulnerabilidades reais com baixa taxa de falsos positivos. Cada finding vem com evidência, contexto e severidade classificada.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">⚡</div>
+          <h4>Auditoria em Minutos</h4>
+          <p>Resultados completos em 2 a 5 minutos via streaming. Sem necessidade de instalar agentes ou configurar ambientes.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">🔐</div>
+          <h4>Veredicto de Produção</h4>
+          <p>Receba um parecer claro: APTO, APTO COM RESSALVAS ou NÃO APTO para produção. Com bloqueadores e razões detalhadas.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">🤖</div>
+          <h4>IA Integrada (Grok)</h4>
+          <p>Converse com o assistente de segurança sobre os resultados. Pergunte como corrigir, o que priorizar, e obtenha análises detalhadas.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">📋</div>
+          <h4>Relatórios Profissionais</h4>
+          <p>Exporte em PDF, HTML ou JSON. Inclui Bug Bounty report, checklist de segurança para clientes e conformidade ISO 27001/27002.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">🛡️</div>
+          <h4>Evidência Assinada</h4>
+          <p>Cada auditoria gera uma evidência SHA-256 com timestamp, tornando os resultados auditáveis, rastreáveis e defensáveis juridicamente.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Divider before input form -->
+    <div class="section-divider">
+      <span>🔍 INICIAR NOVA AUDITORIA</span>
+    </div>
 
     <!-- Input Section -->
     <section class="input-section">
@@ -364,102 +655,11 @@
       <div class="results-list" id="resultsList"></div>
     </section>
 
-    <!-- Evidence Section -->
+    <!-- Evidence Section (signature only — actions moved to left sidebar) -->
     <section class="evidence-section" id="evidenceSection" style="display: none;">
       <div class="evidence-card">
         <h3>🔐 Evidência Assinada</h3>
         <div class="evidence-details" id="evidenceDetails"></div>
-        
-        <div class="report-actions">
-          <h4>📊 Relatórios</h4>
-          <div class="report-buttons">
-            <button class="btn-report btn-pdf" onclick="downloadReportPDF()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-              </svg>
-              Download PDF
-            </button>
-            <button class="btn-report btn-html" onclick="downloadReportHTML()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                <polyline points="16 18 22 12 16 6"/>
-                <polyline points="8 6 2 12 8 18"/>
-              </svg>
-              Download HTML
-            </button>
-            <button class="btn-report btn-view" onclick="viewReportHTML()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-              Relatório Completo
-            </button>
-            <button class="btn-report btn-json" onclick="downloadReport()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-              Download JSON
-            </button>
-            <button class="btn-report btn-audit" onclick="viewAuditPage()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-              Dashboard da Auditoria
-            </button>
-            <button class="btn-report btn-scrape" id="btnScrape" onclick="downloadSourceCode()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                <path d="M4 17l6-6-6-6"/>
-                <path d="M12 19h8"/>
-              </svg>
-              📥 Download Código-Fonte (ZIP)
-            </button>
-            <button class="btn-report btn-ai" id="btnAIChat" onclick="showAIChat()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                <path d="M12 2a10 10 0 1 0 10 10H12V2z"/>
-                <path d="M12 2a10 10 0 0 1 10 10"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-              🤖 Chat com IA
-            </button>
-            <button class="btn-report btn-checklist" id="btnChecklist" onclick="openChecklist()" style="display:none">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                <path d="M9 11l3 3L22 4"/>
-                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-              </svg>
-              📋 Checklist do Cliente
-            </button>
-            <button class="btn-report btn-checklist-export" id="btnChecklistExport" onclick="downloadChecklistHTML()" style="display:none">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-              Exportar Checklist
-            </button>
-            <button class="btn-report btn-iso" id="btnISO" onclick="openISO()" style="display:none">
-              🏅 Conformidade ISO
-            </button>
-            <button class="btn-report btn-bounty" id="btnBugBounty" onclick="openBugBounty()" style="display:none">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 8v4l3 3"/>
-              </svg>
-              🐛 Bug Bounty Report
-            </button>
-            <button class="btn-report btn-python" id="btnPythonScripts" onclick="openScriptsPage()" style="display:none">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3"/>
-              </svg>
-              🐍 Scripts Python (Blue Team)
-            </button>
-            <button class="btn-report" id="btnTerminal" onclick="openTerminal()" style="display:none;background:linear-gradient(135deg,rgba(0,255,65,0.15),rgba(0,212,255,0.1));border-color:rgba(0,255,65,0.4);color:#00ff41;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
-              </svg>
-              🖥 Terminal de Segurança
-            </button>
-          </div>
-        </div>
       </div>
     </section>
 
@@ -750,6 +950,128 @@
       <circle cx="12" cy="12" r="3"/>
     </svg>
   </button>
+
+  <!-- ═══ ACTIONS SIDEBAR (fixed left, shown after audit) ══════════ -->
+  <aside class="actions-sidebar" id="actionsSidebar">
+    <div class="asb-header">
+      <span class="asb-title">RELATÓRIOS</span>
+      <button class="asb-toggle" id="asbToggle" onclick="toggleActionsSidebar()" title="Minimizar painel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+    </div>
+
+    <nav class="asb-list" id="asbList">
+
+      <!-- Grupo: Exportar -->
+      <div class="asb-group-label">Exportar</div>
+      <button class="asb-btn" onclick="downloadReportPDF()" title="Download PDF">
+        <span class="asb-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </span>
+        <span class="asb-label">Download PDF</span>
+      </button>
+      <button class="asb-btn" onclick="downloadReportHTML()" title="Download HTML">
+        <span class="asb-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <polyline points="16 18 22 12 16 6"/>
+            <polyline points="8 6 2 12 8 18"/>
+          </svg>
+        </span>
+        <span class="asb-label">Download HTML</span>
+      </button>
+      <button class="asb-btn" onclick="downloadReport()" title="Download JSON">
+        <span class="asb-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </span>
+        <span class="asb-label">Download JSON</span>
+      </button>
+      <button class="asb-btn" id="btnScrape" onclick="downloadSourceCode()" title="Download Código-Fonte">
+        <span class="asb-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <path d="M4 17l6-6-6-6"/>
+            <path d="M12 19h8"/>
+          </svg>
+        </span>
+        <span class="asb-label">Código-Fonte (ZIP)</span>
+      </button>
+
+      <div class="asb-divider"></div>
+
+      <!-- Grupo: Visualizar -->
+      <div class="asb-group-label">Visualizar</div>
+      <button class="asb-btn" onclick="viewReportHTML()" title="Relatório Completo">
+        <span class="asb-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </span>
+        <span class="asb-label">Relatório Completo</span>
+      </button>
+      <button class="asb-btn" onclick="viewAuditPage()" title="Dashboard da Auditoria">
+        <span class="asb-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </span>
+        <span class="asb-label">Dashboard</span>
+      </button>
+
+      <div class="asb-divider"></div>
+
+      <!-- Grupo: Ferramentas -->
+      <div class="asb-group-label">Ferramentas</div>
+      <button class="asb-btn" id="btnAIChat" onclick="showAIChat()" title="Chat com IA">
+        <span class="asb-icon">🤖</span>
+        <span class="asb-label">Chat com IA</span>
+      </button>
+      <button class="asb-btn" id="btnChecklist" onclick="openChecklist()" style="display:none" title="Checklist do Cliente">
+        <span class="asb-icon">📋</span>
+        <span class="asb-label">Checklist Cliente</span>
+      </button>
+      <button class="asb-btn" id="btnChecklistExport" onclick="downloadChecklistHTML()" style="display:none" title="Exportar Checklist">
+        <span class="asb-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </span>
+        <span class="asb-label">Exportar Checklist</span>
+      </button>
+      <button class="asb-btn" id="btnISO" onclick="openISO()" style="display:none" title="Conformidade ISO">
+        <span class="asb-icon">🏅</span>
+        <span class="asb-label">Conformidade ISO</span>
+      </button>
+      <button class="asb-btn" id="btnBugBounty" onclick="openBugBounty()" style="display:none" title="Bug Bounty Report">
+        <span class="asb-icon">🐛</span>
+        <span class="asb-label">Bug Bounty Report</span>
+      </button>
+      <button class="asb-btn" id="btnPythonScripts" onclick="openScriptsPage()" style="display:none" title="Scripts Python">
+        <span class="asb-icon">🐍</span>
+        <span class="asb-label">Scripts Python</span>
+      </button>
+      <button class="asb-btn asb-btn-terminal" id="btnTerminal" onclick="openTerminal()" style="display:none" title="Terminal de Segurança">
+        <span class="asb-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <polyline points="4 17 10 11 4 5"/>
+            <line x1="12" y1="19" x2="20" y2="19"/>
+          </svg>
+        </span>
+        <span class="asb-label">Terminal Segurança</span>
+      </button>
+
+    </nav>
+  </aside>
 
   <script src="app.js"></script>
 </body>
