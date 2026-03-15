@@ -2377,36 +2377,79 @@ function startOSINT() {
     stepDivs[k] = d;
   });
 
-  progressLabel.textContent = 'Iniciando varredura OSINT…';
+  progressLabel.textContent = 'Conectando ao servidor…';
+
+  // Abort controller for timeout
+  const abortCtrl = new AbortController();
+  const abortTimer = setTimeout(() => abortCtrl.abort(), 120000); // 2 min max
 
   fetch('/api/footprint', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url: targetUrl }),
-  }).then(res => {
+    signal: abortCtrl.signal,
+  }).then(async res => {
+    clearTimeout(abortTimer);
+
+    // Check HTTP status before trying to read as SSE
+    if (!res.ok) {
+      let errMsg = `Erro HTTP ${res.status}`;
+      try {
+        const errBody = await res.json();
+        errMsg = errBody.error || errMsg;
+      } catch {}
+      progressLabel.textContent = `Erro: ${errMsg}`;
+      console.error('[OSINT] Server error:', errMsg);
+      return;
+    }
+
+    progressLabel.textContent = 'Iniciando varredura OSINT…';
+
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
 
-    function pump() {
-      return reader.read().then(({ done, value }) => {
-        if (done) return;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop();
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          try {
-            const evt = JSON.parse(line.slice(6));
-            handleOSINTEvent(evt);
-          } catch {}
+    async function pump() {
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            // Process any remaining buffer content
+            if (buffer.trim()) {
+              for (const line of buffer.split('\n')) {
+                if (!line.startsWith('data: ')) continue;
+                try { handleOSINTEvent(JSON.parse(line.slice(6))); } catch {}
+              }
+            }
+            break;
+          }
+          buffer += decoder.decode(value, { stream: true });
+          // SSE uses \n\n as event separator; split safely
+          const parts = buffer.split('\n\n');
+          buffer = parts.pop(); // keep incomplete last chunk
+          for (const part of parts) {
+            for (const line of part.split('\n')) {
+              if (!line.startsWith('data: ')) continue;
+              try { handleOSINTEvent(JSON.parse(line.slice(6))); } catch {}
+            }
+          }
         }
-        return pump();
-      });
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          progressLabel.textContent = 'Varredura cancelada por timeout.';
+        } else {
+          progressLabel.textContent = `Erro de leitura: ${err.message}`;
+          console.error('[OSINT] stream read error:', err);
+        }
+      }
     }
+
     return pump();
   }).catch(err => {
-    progressLabel.textContent = `Erro: ${err.message}`;
+    clearTimeout(abortTimer);
+    const msg = err.name === 'AbortError' ? 'Timeout — varredura demorou mais de 2 minutos.' : err.message;
+    progressLabel.textContent = `Erro: ${msg}`;
+    console.error('[OSINT] fetch error:', err);
   });
 
   function handleOSINTEvent(evt) {

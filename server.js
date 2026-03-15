@@ -93,8 +93,9 @@ function createRateLimiter(maxReq, windowMs) {
   };
 }
 
-const auditLimiter = createRateLimiter(5, 60_000);   // 5 req/min por IP
-const aiLimiter    = createRateLimiter(20, 60_000);  // 20 req/min por IP
+const auditLimiter  = createRateLimiter(5, 60_000);   // 5 req/min por IP
+const aiLimiter     = createRateLimiter(20, 60_000);  // 20 req/min por IP
+const osintLimiter  = createRateLimiter(3, 60_000);   // 3 req/min por IP (OSINT é pesado)
 
 app.use(express.json({ limit: '1mb' }));
 
@@ -1027,7 +1028,7 @@ ${scripts.map(s => `#   - ${s.filename || s.id + '.py'}: ${s.name || s.id}`).joi
 });
 
 // ─── OSINT / Internet Footprint (SSE stream) ───────────────────────
-app.post('/api/footprint', auditLimiter, async (req, res) => {
+app.post('/api/footprint', osintLimiter, async (req, res) => {
   const { url } = req.body;
 
   if (!url || typeof url !== 'string') {
@@ -1048,20 +1049,38 @@ app.post('/api/footprint', auditLimiter, async (req, res) => {
     return res.status(400).json({ error: 'URL inválida' });
   }
 
+  // SSE headers — must be set BEFORE flushHeaders
   res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no'); // disable Nginx buffering
+  res.flushHeaders(); // send headers immediately so client knows the stream started
 
   const sendEvent = (data) => {
-    try { res.write(`data: ${JSON.stringify(data)}\n\n`); } catch {}
+    try {
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+      // Force flush for environments that buffer
+      if (typeof res.flush === 'function') res.flush();
+    } catch (e) {
+      console.warn('[OSINT] write error:', e.message);
+    }
   };
 
+  // Keep-alive ping every 15s so the browser doesn't close an idle connection
+  const pingInterval = setInterval(() => {
+    try { res.write(': ping\n\n'); } catch { clearInterval(pingInterval); }
+  }, 15000);
+
+  console.log(`[OSINT] Starting scan: ${targetUrl}`);
   try {
     await runOSINT(targetUrl, sendEvent);
+    console.log(`[OSINT] Scan complete: ${targetUrl}`);
   } catch (err) {
-    console.error('OSINT error:', err);
+    console.error('[OSINT] Error:', err);
     sendEvent({ type: 'error', message: err.message });
   }
+
+  clearInterval(pingInterval);
   res.end();
 });
 

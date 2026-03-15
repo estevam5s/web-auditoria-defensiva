@@ -21,10 +21,11 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/
 
 async function safeFetch(url, opts = {}) {
   try {
+    const { headers: extraHeaders, timeout: customTimeout, ...restOpts } = opts;
     const res = await fetch(url, {
-      timeout: 10000,
-      headers: { 'User-Agent': UA, 'Accept': 'application/json,text/html,*/*', ...opts.headers },
-      ...opts,
+      timeout: customTimeout || 12000,
+      headers: { 'User-Agent': UA, 'Accept': 'application/json,text/html,*/*', ...extraHeaders },
+      ...restOpts,
     });
     return res;
   } catch {
