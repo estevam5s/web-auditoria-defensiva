@@ -680,6 +680,7 @@ function handleComplete(results) {
   const btnISO = $('#btnISO');
   const btnPython = $('#btnPythonScripts');
   const btnBounty = $('#btnBugBounty');
+  const btnConsulting = $('#btnConsulting');
   const btnTerminal = $('#btnTerminal');
   const btnOSINT = $('#btnOSINT');
   if (btnChecklist) btnChecklist.style.display = '';
@@ -687,6 +688,7 @@ function handleComplete(results) {
   if (btnISO) btnISO.style.display = '';
   if (btnPython) btnPython.style.display = '';
   if (btnBounty) btnBounty.style.display = '';
+  if (btnConsulting) btnConsulting.style.display = '';
   if (btnTerminal) btnTerminal.style.display = '';
   if (btnOSINT) btnOSINT.style.display = '';
 }
@@ -721,6 +723,13 @@ function openBugBounty() {
   } else {
     window.open('/bugbounty', '_blank');
   }
+}
+
+// ── Consulting Proposal Page ───────────────────────────────────
+function openConsulting() {
+  const id = currentAuditId || auditResults?.evidence?.auditId;
+  if (!id) { alert('Execute uma auditoria primeiro para gerar a proposta de consultoria.'); return; }
+  window.open(`/consulting/${id}`, '_blank');
 }
 
 // ── Security Terminal ──────────────────────────────────────────

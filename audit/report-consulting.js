@@ -73,42 +73,235 @@ function getGroupLabel(group) {
 
 // ── Embedded CSS ───────────────────────────────────────────────────
 const CSS = `
+/* ── Reset & Base ── */
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#fff;color:#1f2937;font-size:14px;line-height:1.6}
-.print-btn{position:fixed;top:20px;right:20px;z-index:1000;background:#1a2744;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600}
-.print-btn:hover{background:#2d3e6e}
-section{padding:40px;max-width:900px;margin:0 auto 0 auto}
-section+section{border-top:1px solid #e5e7eb;padding-top:40px;margin-top:0}
-h1{font-size:28px;color:#1a2744;margin-bottom:8px}
-h2{font-size:20px;color:#1a2744;margin-bottom:16px;border-bottom:2px solid #1a2744;padding-bottom:8px}
-h3{font-size:15px;color:#1a2744;margin-bottom:8px}
-p{margin-bottom:12px;color:#374151}
-table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px}
-th{background:#1a2744;color:#fff;padding:10px 12px;text-align:left}
-td{padding:8px 12px;border-bottom:1px solid #e5e7eb}
-tr:nth-child(even) td{background:#f9fafb}
-.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;color:#fff}
-.cover{background:#fff;border-top:6px solid #1a2744;padding:60px 40px;max-width:none}
-.score-circle{width:110px;height:110px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
-.score-num{font-size:34px;font-weight:700;line-height:1}
-.score-lbl{font-size:11px;opacity:.85}
-.controls-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.ctrl-item{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px}
-.total-row td{background:#1a2744!important;color:#fff!important;font-weight:700;border-bottom:none}
-.empty-ok{background:#f0fdf4;border:1px solid #16a34a;border-radius:6px;padding:14px 18px;color:#15803d;font-weight:600;margin-bottom:16px}
-.group-hdr{display:flex;align-items:center;gap:10px;margin-top:24px;margin-bottom:8px}
-.footer-wrap{background:#f5f7fa;border-top:3px solid #1a2744;padding:30px 40px;font-size:13px}
-.footer-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.disclaimer{font-size:11px;color:#6b7280;margin-top:20px;font-style:italic;border-top:1px solid #e5e7eb;padding-top:12px}
-.hash{font-family:monospace;font-size:11px;color:#6b7280}
+html{scroll-behavior:smooth}
+body{font-family:'Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;background:#f0f2f5;color:#1f2937;font-size:14px;line-height:1.65}
+
+/* ── Print / Export Button ── */
+.print-btn{
+  position:fixed;top:24px;right:24px;z-index:9999;
+  background:linear-gradient(135deg,#1a2744 0%,#2d4a8a 100%);
+  color:#fff;border:none;padding:10px 22px;border-radius:8px;
+  cursor:pointer;font-size:13px;font-weight:700;letter-spacing:.3px;
+  box-shadow:0 4px 14px rgba(26,39,68,.35);transition:all .2s ease;
+  display:flex;align-items:center;gap:7px
+}
+.print-btn:hover{background:linear-gradient(135deg,#2d4a8a 0%,#3b5faa 100%);box-shadow:0 6px 18px rgba(26,39,68,.45);transform:translateY(-1px)}
+.print-btn:active{transform:translateY(0);box-shadow:0 3px 10px rgba(26,39,68,.3)}
+
+/* ── Cover Page ── */
+.cover{
+  background:#fff;
+  border-top:6px solid #1a2744;
+  padding:60px 56px 52px;
+  max-width:none;
+  position:relative;
+  overflow:hidden
+}
+.cover::before{
+  content:'';position:absolute;top:0;right:0;
+  width:320px;height:320px;
+  background:radial-gradient(circle at top right,rgba(45,74,138,.07) 0%,transparent 70%);
+  pointer-events:none
+}
+.cover-top-bar{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  margin-bottom:44px;padding-bottom:28px;border-bottom:1px solid #e5e7eb
+}
+.cover-consultant-name{font-size:17px;font-weight:700;color:#1a2744;margin-bottom:3px}
+.cover-consultant-detail{font-size:13px;color:#6b7280;line-height:1.7}
+.cover-date-label{font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.cover-date-value{font-size:13px;font-weight:600;color:#374151;text-align:right}
+.cover-category{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+.cover-title{font-size:30px;font-weight:800;color:#1a2744;line-height:1.25;word-break:break-all;margin-bottom:32px}
+.cover-score-row{display:flex;align-items:center;gap:28px;flex-wrap:wrap}
+
+/* ── Score Circle ── */
+.score-circle{
+  width:116px;height:116px;border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:#fff;flex-shrink:0;
+  box-shadow:0 6px 20px rgba(0,0,0,.2)
+}
+.score-num{font-size:36px;font-weight:800;line-height:1;letter-spacing:-1px}
+.score-lbl{font-size:11px;opacity:.9;margin-top:1px;font-weight:600;letter-spacing:.3px}
+.cover-score-info-title{font-size:19px;font-weight:800;color:#1a2744;margin-bottom:6px}
+
+/* ── Sections ── */
+section{
+  background:#fff;
+  max-width:960px;margin:20px auto;
+  padding:40px 48px;
+  border-radius:10px;
+  box-shadow:0 2px 12px rgba(0,0,0,.06);
+  border:1px solid #e9ecef
+}
+section.cover{background:#fff;border-radius:0;box-shadow:none;border:none;max-width:none;margin:0}
+
+/* ── Typography ── */
+h1{font-size:26px;font-weight:800;color:#1a2744;margin-bottom:6px;line-height:1.3}
+h2{
+  font-size:18px;font-weight:700;color:#1a2744;
+  margin-bottom:20px;padding-bottom:12px;
+  border-bottom:2px solid #1a2744;
+  display:flex;align-items:center;gap:10px
+}
+h2 .sec-icon{font-size:20px}
+h3{font-size:14px;font-weight:700;color:#1a2744;margin-bottom:6px}
+p{margin-bottom:12px;color:#374151;line-height:1.7}
+strong{color:#1a2744}
+
+/* ── Summary callout ── */
+.summary-box{
+  background:#f8fafd;border-left:4px solid #1a2744;
+  border-radius:0 8px 8px 0;padding:18px 22px;margin-bottom:20px;
+  font-size:14px;color:#374151;line-height:1.75
+}
+.summary-stats{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px
+}
+.stat-card{
+  background:#fff;border:1px solid #e5e7eb;border-radius:8px;
+  padding:14px 16px;text-align:center
+}
+.stat-card .stat-val{font-size:24px;font-weight:800;color:#1a2744;line-height:1}
+.stat-card .stat-label{font-size:11px;color:#6b7280;margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+
+/* ── Tables ── */
+.table-wrap{overflow-x:auto;margin-bottom:20px;border-radius:8px;border:1px solid #e5e7eb}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{
+  background:#1a2744;color:#fff;
+  padding:11px 14px;text-align:left;
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px
+}
+thead th:first-child{border-radius:8px 0 0 0}
+thead th:last-child{border-radius:0 8px 0 0}
+td{padding:10px 14px;border-bottom:1px solid #f0f2f5;vertical-align:top;color:#374151}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f8fafd}
+tfoot td{background:#1a2744!important;color:#fff!important;font-weight:700;border-bottom:none;padding:12px 14px}
+tfoot tr td:last-child{font-size:15px}
+
+/* ── Badges ── */
+.badge{
+  display:inline-block;padding:3px 9px;border-radius:20px;
+  font-size:10px;font-weight:800;color:#fff;letter-spacing:.5px;
+  white-space:nowrap
+}
+
+/* ── Group header ── */
+.group-hdr{
+  display:flex;align-items:center;gap:10px;
+  margin-top:28px;margin-bottom:10px;
+  padding:10px 14px;
+  background:#f8fafd;border-left:3px solid #1a2744;
+  border-radius:0 6px 6px 0
+}
+.group-hdr h3{margin:0;font-size:14px;font-weight:700;color:#1a2744}
+
+/* ── Services ── */
+.service-note{font-size:12px;color:#6b7280;font-style:italic;margin-top:8px}
+.service-total-label{font-size:13px}
+
+/* ── Controls grid ── */
+.controls-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:6px 16px;margin-top:4px
+}
+.ctrl-item{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 10px;font-size:13px;
+  background:#f0fdf4;border-radius:6px;
+  border:1px solid #bbf7d0
+}
+.ctrl-check{font-size:14px;font-weight:800;color:#16a34a;flex-shrink:0}
+
+/* ── Empty states ── */
+.empty-ok{
+  background:#f0fdf4;border:1px solid #86efac;border-radius:8px;
+  padding:16px 20px;color:#166534;font-weight:600;
+  display:flex;align-items:center;gap:10px;font-size:14px
+}
+.empty-ok::before{content:'✓';font-size:18px;color:#16a34a;flex-shrink:0}
+.empty-warn{
+  background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;
+  padding:16px 20px;color:#92400e;font-weight:600;
+  display:flex;align-items:center;gap:10px;font-size:14px
+}
+
+/* ── Next Steps list ── */
+.next-steps-list{list-style:none;padding:0;counter-reset:steps}
+.next-steps-list li{
+  counter-increment:steps;
+  padding:14px 16px 14px 54px;
+  position:relative;
+  border:1px solid #e5e7eb;border-radius:8px;
+  margin-bottom:10px;background:#fff
+}
+.next-steps-list li::before{
+  content:counter(steps);
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  width:26px;height:26px;border-radius:50%;
+  background:#1a2744;color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800
+}
+.next-step-title{display:flex;align-items:center;gap:8px;margin-bottom:3px;font-weight:700;color:#1a2744;font-size:14px}
+.next-step-desc{font-size:13px;color:#6b7280}
+
+/* ── Footer ── */
+.footer-wrap{
+  background:#1a2744;color:#cbd5e1;
+  padding:36px 56px;font-size:13px;margin-top:0
+}
+.footer-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:20px}
+.footer-section-label{
+  font-size:10px;text-transform:uppercase;letter-spacing:1.5px;
+  color:#64748b;margin-bottom:10px;font-weight:700
+}
+.footer-name{font-size:15px;font-weight:800;color:#e2e8f0;margin-bottom:4px}
+.footer-detail{color:#94a3b8;margin-bottom:3px;font-size:13px}
+.footer-doc-item{margin-bottom:4px;color:#94a3b8}
+.footer-doc-label{color:#64748b;font-size:11px}
+.hash{font-family:'Courier New',Courier,monospace;font-size:11px;color:#475569}
+.disclaimer{
+  font-size:11px;color:#475569;font-style:italic;
+  border-top:1px solid #2d4a6e;padding-top:16px;margin-top:4px;line-height:1.7
+}
+
+/* ── Divider ── */
+.page-break-hint{height:20px;background:transparent}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#f1f5f9}
+::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#64748b}
+
+/* ── Print Media ── */
 @media print{
+  body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .print-btn{display:none!important}
-  section{page-break-before:always;max-width:none}
+  section{
+    page-break-inside:avoid;max-width:none;
+    box-shadow:none!important;border:none!important;
+    margin:0;border-radius:0;padding:32px 40px
+  }
   section.cover{page-break-before:avoid}
-  *{box-shadow:none!important}
-  body{background:#fff;color:#000}
+  section+section{page-break-before:always}
+  h2{page-break-after:avoid}
+  .group-hdr{page-break-after:avoid}
   tr{page-break-inside:avoid}
-  .footer-wrap{page-break-before:always}
+  thead{display:table-header-group}
+  tfoot{display:table-footer-group}
+  .table-wrap{border:1px solid #e5e7eb!important}
+  .footer-wrap{page-break-before:always;margin:0}
+  .summary-stats{grid-template-columns:repeat(4,1fr)}
+  .controls-grid{grid-template-columns:repeat(2,1fr)}
+  .ctrl-item{background:#f0fdf4!important;-webkit-print-color-adjust:exact}
+  .empty-ok{background:#f0fdf4!important;-webkit-print-color-adjust:exact}
 }
 `;
 
@@ -125,30 +318,28 @@ function buildCover(projectUrl, auditDate, score, grade, productionReady, cfg) {
   ].filter(Boolean).join('');
 
   return `<section class="cover">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:40px">
+  <div class="cover-top-bar">
     <div>
-      <h1 style="font-size:24px;margin-bottom:6px">${esc(cfg.name)}</h1>
-      ${contactLines}
+      <div class="cover-consultant-name">${esc(cfg.name)}</div>
+      <div class="cover-consultant-detail">${contactLines}</div>
     </div>
-    <div style="text-align:right;color:#6b7280;font-size:12px;padding-top:4px">
-      <div style="text-transform:uppercase;letter-spacing:.5px">Emitido em</div>
-      <div style="font-weight:600;color:#1f2937">${esc(auditDate)}</div>
+    <div style="text-align:right">
+      <div class="cover-date-label">Emitido em</div>
+      <div class="cover-date-value">${esc(auditDate)}</div>
     </div>
   </div>
 
-  <div style="border-top:1px solid #e5e7eb;padding-top:40px">
-    <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Proposta de Consultoria em Segurança</div>
-    <h1 style="font-size:32px;color:#1a2744;word-break:break-all">${esc(projectUrl)}</h1>
-  </div>
+  <div class="cover-category">Proposta de Consultoria em Segurança</div>
+  <div class="cover-title">${esc(projectUrl)}</div>
 
-  <div style="display:flex;align-items:center;gap:24px;margin-top:36px">
+  <div class="cover-score-row">
     <div class="score-circle" style="background:${scoreColor}">
       <span class="score-num">${score}</span>
       <span class="score-lbl">Grau ${esc(grade.grade || '?')}</span>
     </div>
     <div>
-      <div style="font-size:18px;font-weight:700;color:#1a2744;margin-bottom:6px">${esc(grade.label || '')}</div>
-      <span class="badge" style="background:${esc(pvColor)};color:#000;font-size:12px;padding:4px 14px;border-radius:16px">${esc(pv.label || '')}</span>
+      <div class="cover-score-info-title">${esc(grade.label || '')}</div>
+      <span class="badge" style="background:${esc(pvColor)};color:#fff;font-size:11px;padding:5px 16px;border-radius:20px">${esc(pv.label || '')}</span>
     </div>
   </div>
 </section>`;
@@ -172,15 +363,33 @@ function buildSummary(projectUrl, auditDate, score, grade, failed, warnings, tot
   }
 
   return `<section>
-  <h2>Sumário Executivo</h2>
-  <p>
+  <h2><span class="sec-icon">📊</span> Sumário Executivo</h2>
+  <div class="summary-box">
     A auditoria de segurança realizada em <strong>${esc(projectUrl)}</strong> em ${esc(auditDate)}
     identificou <strong>${failed}</strong> falha(s) e <strong>${warnings}</strong> alerta(s)
     em um total de <strong>${totalChecks}</strong> verificações, com duração de ${esc(duration)}.
     O score de segurança obtido foi <strong>${score}/100</strong>
     (Grau <strong>${esc(grade.grade || '?')}</strong> — ${esc(grade.label || '')}).
     ${esc(fraseFinal)}
-  </p>
+  </div>
+  <div class="summary-stats">
+    <div class="stat-card">
+      <div class="stat-val" style="color:#dc2626">${failed}</div>
+      <div class="stat-label">Falhas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color:#ea580c">${warnings}</div>
+      <div class="stat-label">Alertas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color:#1a2744">${totalChecks}</div>
+      <div class="stat-label">Verificações</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color:#16a34a">${score}</div>
+      <div class="stat-label">Score / 100</div>
+    </div>
+  </div>
 </section>`;
 }
 
@@ -190,8 +399,8 @@ function buildVulnerabilities(results) {
 
   if (issues.length === 0) {
     return `<section>
-  <h2>Levantamento de Vulnerabilidades</h2>
-  <div class="empty-ok">✓ Nenhuma vulnerabilidade encontrada — sistema em conformidade.</div>
+  <h2><span class="sec-icon">🔍</span> Levantamento de Vulnerabilidades</h2>
+  <div class="empty-ok">Nenhuma vulnerabilidade encontrada — sistema em conformidade.</div>
 </section>`;
   }
 
@@ -203,7 +412,7 @@ function buildVulnerabilities(results) {
     grouped[g].push(r);
   }
 
-  let html = '<section><h2>Levantamento de Vulnerabilidades por Categoria</h2>';
+  let html = `<section><h2><span class="sec-icon">🔍</span> Levantamento de Vulnerabilidades por Categoria</h2>`;
 
   for (const [group, items] of Object.entries(grouped)) {
     const maxSev  = maxSeverity(items);
@@ -212,11 +421,13 @@ function buildVulnerabilities(results) {
     const label    = getGroupLabel(group);
 
     html += `<div class="group-hdr">
-      <h3 style="margin:0">${esc(label)}</h3>
+      <h3>${esc(label)}</h3>
       <span class="badge" style="background:${sevColor}">${sevLabel}</span>
+      <span style="margin-left:auto;font-size:12px;color:#6b7280">${items.length} item(s)</span>
     </div>
+    <div class="table-wrap">
     <table>
-      <thead><tr><th>Check</th><th>Status</th><th>Severidade</th><th>Descrição</th></tr></thead>
+      <thead><tr><th>Verificação</th><th>Status</th><th>Severidade</th><th>Descrição</th></tr></thead>
       <tbody>`;
 
     for (const r of items) {
@@ -224,14 +435,14 @@ function buildVulnerabilities(results) {
       const sl = SEV_LABELS[r.severity] || esc((r.severity || '').toUpperCase());
       const statusColor = r.status === 'FAIL' ? '#dc2626' : '#ea580c';
       html += `<tr>
-        <td>${esc(r.check || '')}</td>
-        <td><span class="badge" style="background:${statusColor}">${esc(r.status)}</span></td>
-        <td><span class="badge" style="background:${sc}">${sl}</span></td>
-        <td>${esc(r.message || '')}</td>
+        <td style="font-weight:600;color:#1a2744;min-width:160px">${esc(r.check || '')}</td>
+        <td style="min-width:70px"><span class="badge" style="background:${statusColor}">${esc(r.status)}</span></td>
+        <td style="min-width:90px"><span class="badge" style="background:${sc}">${sl}</span></td>
+        <td style="color:#4b5563">${esc(r.message || '')}</td>
       </tr>`;
     }
 
-    html += '</tbody></table>';
+    html += '</tbody></table></div>';
   }
 
   html += '</section>';
@@ -294,18 +505,20 @@ function buildServices(results, prices) {
     : '';
 
   return `<section>
-  <h2>Serviços de Consultoria Recomendados</h2>
+  <h2><span class="sec-icon">💼</span> Serviços de Consultoria Recomendados</h2>
+  <div class="table-wrap">
   <table>
-    <thead><tr><th>Serviço</th><th>Descrição</th><th style="text-align:center">Estimativa</th><th style="text-align:right">Valor (R$)</th></tr></thead>
+    <thead><tr><th>Serviço</th><th>Descrição</th><th style="text-align:center;white-space:nowrap">Estimativa</th><th style="text-align:right;white-space:nowrap">Valor (R$)</th></tr></thead>
     <tbody>
       ${rows}
     </tbody>
     <tfoot>
-      <tr class="total-row"><td colspan="3"><strong>Total Estimado</strong></td><td style="text-align:right">R$ ${total.toLocaleString('pt-BR')}</td></tr>
+      <tr><td colspan="3" class="service-total-label"><strong>Total Estimado</strong></td><td style="text-align:right;font-size:16px">R$ ${total.toLocaleString('pt-BR')}</td></tr>
     </tfoot>
   </table>
+  </div>
   ${extraNote}
-  <p style="font-size:12px;color:#6b7280;font-style:italic">Valores estimados. Proposta formal mediante definição detalhada do escopo.</p>
+  <p class="service-note">* Valores estimados. Proposta formal com escopo detalhado disponível mediante solicitação. Os preços podem variar conforme complexidade do projeto.</p>
 </section>`;
 }
 
@@ -315,17 +528,17 @@ function buildControls(results) {
 
   if (passed.length === 0) {
     return `<section>
-  <h2>Controles Aprovados</h2>
+  <h2><span class="sec-icon">✅</span> Controles Aprovados</h2>
   <p style="color:#6b7280">Nenhum controle aprovado registrado.</p>
 </section>`;
   }
 
   const items = passed.map(r =>
-    `<div class="ctrl-item"><span style="color:#16a34a;font-weight:700">✓</span> ${esc(r.check || '')}</div>`
+    `<div class="ctrl-item"><span class="ctrl-check">✓</span>${esc(r.check || '')}</div>`
   ).join('');
 
   return `<section>
-  <h2>Controles Aprovados (${passed.length})</h2>
+  <h2><span class="sec-icon">✅</span> Controles Aprovados (${passed.length})</h2>
   <div class="controls-grid">${items}</div>
 </section>`;
 }
@@ -336,8 +549,8 @@ function buildNextSteps(results) {
 
   if (fails.length === 0) {
     return `<section>
-  <h2>Próximos Passos</h2>
-  <div class="empty-ok">✓ Nenhuma ação imediata necessária — mantenha monitoramento contínuo.</div>
+  <h2><span class="sec-icon">🚀</span> Próximos Passos</h2>
+  <div class="empty-ok">Nenhuma ação imediata necessária — mantenha monitoramento contínuo.</div>
 </section>`;
   }
 
@@ -348,18 +561,18 @@ function buildNextSteps(results) {
   const items = sorted.slice(0, 10).map(r => {
     const sc = SEV_COLORS[r.severity] || '#6b7280';
     const sl = SEV_LABELS[r.severity] || '';
-    return `<li style="margin-bottom:12px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
-        <strong>${esc(r.check || '')}</strong>
+    return `<li>
+      <div class="next-step-title">
+        ${esc(r.check || '')}
         <span class="badge" style="background:${sc}">${sl}</span>
       </div>
-      <div style="color:#4b5563;font-size:13px">${esc(r.message || '')}</div>
+      <div class="next-step-desc">${esc(r.message || '')}</div>
     </li>`;
   }).join('');
 
   return `<section>
-  <h2>Próximos Passos (${Math.min(fails.length, 10)} principais)</h2>
-  <ol style="padding-left:20px">${items}</ol>
+  <h2><span class="sec-icon">🚀</span> Próximos Passos (${Math.min(fails.length, 10)} principais)</h2>
+  <ol class="next-steps-list">${items}</ol>
 </section>`;
 }
 
@@ -373,27 +586,27 @@ function buildFooter(evidence, cfg, generatedDate) {
     : '—';
 
   const contactLines = [
-    cfg.name    && `<div><strong>${esc(cfg.name)}</strong></div>`,
-    cfg.company && `<div>${esc(cfg.company)}</div>`,
-    cfg.email   && `<div>✉ ${esc(cfg.email)}</div>`,
-    cfg.phone   && `<div>✆ ${esc(cfg.phone)}</div>`,
+    cfg.name    && `<div class="footer-name">${esc(cfg.name)}</div>`,
+    cfg.company && `<div class="footer-detail">${esc(cfg.company)}</div>`,
+    cfg.email   && `<div class="footer-detail">✉ ${esc(cfg.email)}</div>`,
+    cfg.phone   && `<div class="footer-detail">✆ ${esc(cfg.phone)}</div>`,
   ].filter(Boolean).join('');
 
   return `<div class="footer-wrap">
   <div class="footer-grid">
     <div>
-      <h3 style="margin-bottom:8px;font-size:13px;text-transform:uppercase;color:#6b7280;letter-spacing:.5px">Consultor</h3>
+      <div class="footer-section-label">Consultor Responsável</div>
       ${contactLines}
     </div>
     <div style="text-align:right">
-      <h3 style="margin-bottom:8px;font-size:13px;text-transform:uppercase;color:#6b7280;letter-spacing:.5px">Documento</h3>
-      <div>Auditoria: <span class="hash">${esc(auditId)}</span></div>
-      <div>SHA-256: <span class="hash">${esc(sha256)}</span></div>
-      <div>Data da auditoria: ${esc(auditDate)}</div>
-      <div>Gerado em: ${esc(generatedDate)}</div>
+      <div class="footer-section-label">Rastreabilidade do Documento</div>
+      <div class="footer-doc-item"><span class="footer-doc-label">ID da Auditoria: </span><span class="hash">${esc(auditId)}</span></div>
+      <div class="footer-doc-item"><span class="footer-doc-label">SHA-256: </span><span class="hash">${esc(sha256)}</span></div>
+      <div class="footer-doc-item"><span class="footer-doc-label">Data da auditoria: </span>${esc(auditDate)}</div>
+      <div class="footer-doc-item"><span class="footer-doc-label">Gerado em: </span>${esc(generatedDate)}</div>
     </div>
   </div>
-  <div class="disclaimer">Este documento é confidencial e destinado exclusivamente ao destinatário indicado.</div>
+  <div class="disclaimer">Este documento é confidencial e destinado exclusivamente ao destinatário indicado. A reprodução ou distribuição não autorizada é proibida. As informações contidas neste relatório refletem o estado do sistema no momento da auditoria.</div>
 </div>`;
 }
 
