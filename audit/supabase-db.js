@@ -5,13 +5,17 @@
 
 const fetch = require('node-fetch');
 
-const getSupabaseConfig = () => ({
-  url: process.env.SUPABASE_URL || 'https://qmrceufksvlfdwnwftst.supabase.co',
-  key: process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtcmNldWZrc3ZsZmR3bndmdHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NzQ0ODEsImV4cCI6MjA4ODQ1MDQ4MX0.NXX4jvBXumkAp2L8z56q5pLXoXJaVUNPnjBwn4XUPPE'
-});
+const getSupabaseConfig = () => {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return { url, key };
+};
 
 const supabaseFetch = async (endpoint, options = {}) => {
   const config = getSupabaseConfig();
+  if (!config) return { success: false, error: 'Supabase não configurado' };
+
   const url = `${config.url}/rest/v1/${endpoint}`;
   const headers = {
     'Content-Type': 'application/json',
@@ -21,27 +25,13 @@ const supabaseFetch = async (endpoint, options = {}) => {
     ...options.headers
   };
 
-  console.log('Supabase fetch to:', url);
-  console.log('Has key:', !!config.key);
-
   try {
-    const response = await fetch(url, {
-      ...options,
-      headers
-    });
-
+    const response = await fetch(url, { ...options, headers });
     const data = await response.json();
-    
-    console.log('Response status:', response.status);
-    console.log('Response data:', JSON.stringify(data).substring(0, 200));
-    
-    if (!response.ok) {
-      throw new Error(data.message || `HTTP ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(data.message || `HTTP ${response.status}`);
     return { success: true, data };
   } catch (error) {
-    console.error('Supabase fetch error:', error.message);
+    console.error('[Supabase] Fetch error:', error.message);
     return { success: false, error: error.message };
   }
 };
@@ -88,22 +78,24 @@ const getClientInfo = (userAgent) => {
   return info;
 };
 
+// Strip rawContent from result details before persisting (prevents credential leakage in DB)
+function stripSensitiveFromResults(results) {
+  return (results || []).map(r => {
+    if (!r.details?.rawContent) return r;
+    const { rawContent, ...safeDetails } = r.details;
+    return { ...r, details: safeDetails };
+  });
+}
+
 async function saveAuditToSupabase(auditData, userIp, userAgent) {
-  console.log('\n========== SAVE AUDIT TO SUPABASE ==========');
-  console.log('auditData:', JSON.stringify({
-    auditId: auditData.evidence?.auditId,
-    projectUrl: auditData.projectUrl,
-    score: auditData.score,
-    grade: auditData.grade,
-    totalChecks: auditData.totalChecks,
-    hasResults: !!auditData.results,
-    resultsCount: auditData.results?.length || 0,
-    hasCatalogData: !!auditData.catalogData
-  }, null, 2));
-  
+  const config = getSupabaseConfig();
+  if (!config) {
+    console.log('[Supabase] Não configurado — pulando persistência.');
+    return { success: false, error: 'Supabase não configurado' };
+  }
+
   const clientInfo = getClientInfo(userAgent);
-  console.log('Client Info:', clientInfo);
-  console.log('User IP:', userIp);
+  const safeResults = stripSensitiveFromResults(auditData.results);
 
   const auditRecord = {
     audit_id: auditData.evidence?.auditId || `audit-${Date.now()}`,
@@ -121,7 +113,7 @@ async function saveAuditToSupabase(auditData, userIp, userAgent) {
     duration: auditData.duration,
     evidence_sha256: auditData.evidence?.sha256 || null,
     evidence_timestamp: auditData.evidence?.timestamp || new Date().toISOString(),
-    results_json: auditData.results || [],
+    results_json: safeResults,
     catalog_data_json: auditData.catalogData || {},
     user_ip: userIp || null,
     user_machine: clientInfo.machine,
@@ -131,24 +123,16 @@ async function saveAuditToSupabase(auditData, userIp, userAgent) {
     status: 'completed'
   };
 
-  console.log('Attempting to insert into audits table...');
-  console.log('Record keys:', Object.keys(auditRecord));
-  
   const result = await supabaseFetch('audits', {
     method: 'POST',
     body: JSON.stringify(auditRecord)
   });
 
-  console.log('Insert result:', result);
-
   if (result.success && result.data && result.data[0]) {
     const auditId = result.data[0].id;
-    console.log('✅ Audit saved successfully! ID:', auditId);
 
-    // Save individual results
-    if (auditData.results && auditData.results.length > 0) {
-      console.log(`Saving ${auditData.results.length} individual results...`);
-      const resultsToInsert = auditData.results.map(r => ({
+    if (safeResults.length > 0) {
+      const resultsToInsert = safeResults.map(r => ({
         audit_id: auditId,
         check_name: r.check,
         status: r.status,
@@ -156,21 +140,13 @@ async function saveAuditToSupabase(auditData, userIp, userAgent) {
         message: r.message,
         details_json: r.details || {}
       }));
-
-      const resultsResult = await supabaseFetch('audit_results', {
-        method: 'POST',
-        body: JSON.stringify(resultsToInsert)
-      });
-      console.log('Results save result:', resultsResult);
+      await supabaseFetch('audit_results', { method: 'POST', body: JSON.stringify(resultsToInsert) });
     }
 
-    // Save vulnerabilities
-    const vulnerabilities = auditData.results?.filter(r => 
+    const vulnerabilities = safeResults.filter(r =>
       r.status === 'FAIL' && ['critical', 'high'].includes(r.severity)
-    ) || [];
-
+    );
     if (vulnerabilities.length > 0) {
-      console.log(`Saving ${vulnerabilities.length} vulnerabilities...`);
       const vulnToInsert = vulnerabilities.map(v => ({
         audit_id: auditId,
         severity: v.severity,
@@ -179,20 +155,12 @@ async function saveAuditToSupabase(auditData, userIp, userAgent) {
         description: v.message,
         details_json: v.details || {}
       }));
-
-      const vulnResult = await supabaseFetch('vulnerabilities', {
-        method: 'POST',
-        body: JSON.stringify(vulnToInsert)
-      });
-      console.log('Vulnerabilities save result:', vulnResult);
+      await supabaseFetch('vulnerabilities', { method: 'POST', body: JSON.stringify(vulnToInsert) });
     }
 
-    console.log('========== SAVE COMPLETE ==========\n');
-    return { success: true, auditId: auditId };
+    return { success: true, auditId };
   }
 
-  console.error('❌ Failed to save audit:', result.error);
-  console.log('========== SAVE FAILED ==========\n');
   return { success: false, error: result.error };
 }
 

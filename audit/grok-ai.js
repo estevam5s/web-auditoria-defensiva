@@ -5,7 +5,7 @@
 
 const fetch = require('node-fetch');
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY || process.env.GROK_API_KEY || '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';
+const GROQ_API_KEY = process.env.GROQ_API_KEY || process.env.GROK_API_KEY;
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
 
@@ -64,6 +64,10 @@ function buildAnalysisPrompt(auditData, userQuestion) {
 }
 
 async function askGrok(auditData, userQuestion) {
+  if (!GROQ_API_KEY) {
+    return { success: false, error: 'GROQ_API_KEY não configurada. Defina a variável de ambiente.' };
+  }
+
   const messages = [
     { role: 'system', content: SYSTEM_PROMPT },
     { role: 'user', content: buildAnalysisPrompt(auditData, userQuestion) }
@@ -93,7 +97,7 @@ async function askGrok(auditData, userQuestion) {
     }
 
     const data = await response.json();
-    
+
     if (data.choices && data.choices[0]) {
       return {
         success: true,
@@ -114,48 +118,19 @@ async function askGrok(auditData, userQuestion) {
 }
 
 async function askGrokStream(auditData, userQuestion, onChunk) {
-  const messages = [
-    { role: 'system', content: SYSTEM_PROMPT },
-    { role: 'user', content: buildAnalysisPrompt(auditData, userQuestion) }
-  ];
-
-  const requestBody = {
-    model: DEFAULT_MODEL,
-    messages,
-    temperature: 0.7,
-    max_tokens: 2048,
-    stream: false
-  };
-
   try {
-    const response = await fetch(GROQ_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`
-      },
-      body: JSON.stringify(requestBody)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Groq API error: ${response.status} - ${errorText}`);
+    const result = await askGrok(auditData, userQuestion);
+    if (!result.success) {
+      onChunk({ error: result.error, done: true });
+      return;
     }
-
-    const data = await response.json();
-    
-    if (data.choices && data.choices[0]) {
-      const content = data.choices[0].message.content;
-      // Send content in chunks to simulate streaming
-      const words = content.split(' ');
-      for (const word of words) {
-        onChunk({ content: word + ' ', done: false });
-        await new Promise(r => setTimeout(r, 10));
-      }
-      onChunk({ done: true });
-    } else {
-      throw new Error('Invalid response from Groq API');
+    // Simulate streaming word by word for UI compatibility
+    const words = result.response.split(' ');
+    for (const word of words) {
+      onChunk({ content: word + ' ', done: false });
+      await new Promise(r => setTimeout(r, 10));
     }
+    onChunk({ done: true });
   } catch (error) {
     console.error('Groq API Error:', error.message);
     onChunk({ error: error.message, done: true });
@@ -274,6 +249,10 @@ O prompt deve conter:
 }
 
 async function generateFixPrompt(auditData) {
+  if (!GROQ_API_KEY) {
+    return { success: false, error: 'GROQ_API_KEY não configurada. Defina a variável de ambiente.' };
+  }
+
   const userContent = buildFixPromptInput(auditData);
 
   const requestBody = {

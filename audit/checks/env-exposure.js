@@ -206,7 +206,11 @@ async function checkEnvExposure(config, emit) {
     scanContent(res.text, url, allFindings);
     const newFindings = allFindings.length - prevLen;
 
-    exposedPaths.push({ path, url, size: res.text.length, findings: newFindings });
+    // Store raw content for .env files so the report can display the actual exposed content
+    const isEnvFile = /\.(env|env\..+)$/.test(path) || path === '/.env';
+    const rawContent = isEnvFile ? res.text : undefined;
+
+    exposedPaths.push({ path, url, size: res.text.length, findings: newFindings, rawContent });
     emit && emit({ type: 'log', level: newFindings > 0 ? 'warn' : 'info',
       message: `[Env Scanner] ${path} → ${res.text.length}B${newFindings > 0 ? ` — ${newFindings} segredo(s)!` : ''}` });
   }
@@ -383,7 +387,13 @@ async function checkEnvExposure(config, emit) {
       severity: 'critical',
       message: `${exposedWithSecrets.length} arquivo(s) sensível(is) com credenciais acessível(is) publicamente!`,
       details: {
-        files: exposedWithSecrets.map(p => ({ url: p.url, achados: p.findings, tamanho: p.size + ' bytes' })),
+        files: exposedWithSecrets.map(p => ({
+          url: p.url,
+          achados: p.findings,
+          tamanho: p.size + ' bytes',
+          // rawContent only populated for .env files — stripped before DB persistence
+          rawContent: p.rawContent || undefined
+        })),
         recommendation: 'Bloqueie acesso a estes arquivos via configuração do servidor (nginx/apache). Rotacione todas as credenciais imediatamente.',
       }
     });

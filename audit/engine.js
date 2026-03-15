@@ -36,6 +36,7 @@ const { deepBundleKeyScanner } = require('./checks/bundle-keys');
 const { deepStorageCheck } = require('./checks/storage-deep');
 const { deepCredentialPIIDetector } = require('./checks/credential-pii');
 const { detectStack } = require('./checks/stack-detector');
+const { saasCustomerDataCheck } = require('./checks/saas-pii');
 
 // ── New Advanced Modules ───────────────────────────────────────────────
 const { runAutoDetect } = require('./checks/auto-detect');
@@ -114,6 +115,7 @@ function calculateScore(results) {
     { group: 'port-scan',    pattern: /Port Scan|Serviços.*Expostos|Portas.*Abertas/i,             weight: 2.0, keyControl: true  },
     { group: 'git-exposure', pattern: /Git Exposure|\.git|docker-compose|\.env\b/i,               weight: 2.0, keyControl: true  },
     { group: 'open-redirect',pattern: /Open Redirect|Redirecionamento.*Aberto/i,                  weight: 1.5, keyControl: true  },
+    { group: 'saas-pii',     pattern: /SaaS Customer|Customer Data/i,                             weight: 1.8, keyControl: true  },
   ];
 
   // ── Severity → base penalty ───────────────────────────────────
@@ -222,6 +224,43 @@ function getScoreGrade(score) {
   return { grade: 'F', color: '#ff0040', label: 'Crítico — Ação Imediata' };
 }
 
+// ── Production Readiness Verdict ─────────────────────────────────
+function getProductionVerdict(score, results) {
+  const criticalFails = results.filter(r => r.status === 'FAIL' && r.severity === 'critical');
+  const credentialFails = results.filter(r =>
+    r.status === 'FAIL' && /Service Key|\.env|Credential|PII|saas/i.test(r.check)
+  );
+  const criticalWarns = results.filter(r => r.status === 'WARN' && r.severity === 'critical');
+
+  const hasCriticalFail   = criticalFails.length > 0;
+  const hasCredentialFail = credentialFails.length > 0;
+  const hasCriticalWarn   = criticalWarns.length > 0;
+  const scoreOk           = score >= 85;
+
+  const reasons  = [];
+  const blockers = [];
+
+  if (scoreOk && !hasCriticalFail && !hasCredentialFail && !hasCriticalWarn) {
+    reasons.push(`Score ${score}/100 ≥ 85`);
+    reasons.push('Zero falhas críticas');
+    reasons.push('Nenhuma credencial exposta');
+    reasons.push('Sem alertas críticos');
+    return { verdict: 'APTO', label: 'Apto para Produção', color: '#00ff41', reasons, blockers };
+  }
+
+  if (scoreOk && !hasCriticalFail && !hasCredentialFail && hasCriticalWarn) {
+    reasons.push(`Score ${score}/100 ≥ 85`);
+    reasons.push('Zero falhas críticas');
+    criticalWarns.forEach(w => blockers.push(`Alerta crítico: ${w.check}`));
+    return { verdict: 'APTO_COM_RESSALVAS', label: 'Apto com Ressalvas', color: '#ffaa00', reasons, blockers };
+  }
+
+  if (!scoreOk) blockers.push(`Score ${score}/100 abaixo do mínimo (85)`);
+  criticalFails.forEach(f => blockers.push(`Falha crítica: ${f.check}`));
+  credentialFails.forEach(f => blockers.push(`Credencial exposta: ${f.check}`));
+  return { verdict: 'NAO_APTO', label: 'Não Apto para Produção', color: '#ff0040', reasons, blockers };
+}
+
 // ── Main audit runner ────────────────────────────────────────────
 async function runFullAudit(config, emit) {
   const auditStart = Date.now();
@@ -278,6 +317,7 @@ async function runFullAudit(config, emit) {
     { name: '🔑 Bundle Key Scanner', fn: deepBundleKeyScanner, enabled: config.options.checkDeepBundleKeys !== false, usesEmit: true, useWebsiteUrl: true },
     { name: '📦 Deep Storage Abuse', fn: deepStorageCheck, enabled: config.options.checkDeepStorage !== false, usesEmit: true },
     { name: '🕵️ Credential & PII Detector', fn: deepCredentialPIIDetector, enabled: config.options.checkDeepCredPII !== false, usesEmit: true, useWebsiteUrl: true },
+    { name: '🧑‍💼 SaaS Customer Data Exposure', fn: saasCustomerDataCheck, enabled: config.options.checkSaasPII !== false, usesEmit: true },
     { name: '🔧 Stack Detection', fn: detectStack, enabled: true, usesEmit: true, useWebsiteUrl: true },
   ];
 
@@ -368,6 +408,7 @@ async function runFullAudit(config, emit) {
 
   const score = calculateScore(results);
   const grade = getScoreGrade(score);
+  const productionReady = getProductionVerdict(score, results);
   const duration = ((Date.now() - auditStart) / 1000).toFixed(1);
 
   const summary = {
@@ -375,6 +416,7 @@ async function runFullAudit(config, emit) {
     projectRef: config.projectRef,
     score,
     grade,
+    productionReady,
     totalChecks: results.length,
     passed: results.filter(r => r.status === 'PASS').length,
     failed: results.filter(r => r.status === 'FAIL').length,

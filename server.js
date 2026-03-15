@@ -43,8 +43,72 @@ const BUILD_HASH = process.env.BUILD_HASH ||
 
 console.log(`[Cache] Build hash: ${BUILD_HASH} (versão: ${APP_VERSION})`);
 
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
+// ─── CORS — wildcard em dev, restrito em produção ─────────────────
+const isDev = process.env.NODE_ENV !== 'production';
+
+function parseCorsOrigins(raw) {
+  if (!raw) return false;
+  return raw.split(',').map(s => s.trim()).filter(Boolean);
+}
+
+if (!isDev && !process.env.CORS_ORIGIN) {
+  console.warn('[CORS] Produção sem CORS_ORIGIN definido — todas origens externas bloqueadas.');
+}
+
+app.use(cors({
+  origin: isDev
+    ? '*'
+    : (req, callback) => {
+        const allowed = parseCorsOrigins(process.env.CORS_ORIGIN);
+        if (allowed === false) return callback(null, false);
+        const origin = req.headers.origin;
+        callback(null, allowed.includes(origin) ? origin : false);
+      }
+}));
+
+// ─── Rate Limiters ────────────────────────────────────────────────
+function createRateLimiter(maxReq, windowMs) {
+  const counts = new Map();
+  setInterval(() => {
+    const now = Date.now();
+    for (const [ip, entry] of counts.entries()) {
+      if (now > entry.reset) counts.delete(ip);
+    }
+  }, windowMs);
+
+  return (req, res, next) => {
+    const ip = (req.headers['x-forwarded-for'] || req.ip || 'unknown').split(',')[0].trim();
+    const now = Date.now();
+    const entry = counts.get(ip) || { count: 0, reset: now + windowMs };
+    if (now > entry.reset) { entry.count = 0; entry.reset = now + windowMs; }
+    entry.count++;
+    counts.set(ip, entry);
+    if (entry.count > maxReq) {
+      const retryAfter = Math.ceil((entry.reset - now) / 1000);
+      res.setHeader('Retry-After', retryAfter);
+      return res.status(429).json({ error: 'Rate limit exceeded', retryAfter, limit: maxReq, window: `${windowMs / 1000}s` });
+    }
+    next();
+  };
+}
+
+const auditLimiter = createRateLimiter(5, 60_000);   // 5 req/min por IP
+const aiLimiter    = createRateLimiter(20, 60_000);  // 20 req/min por IP
+
+app.use(express.json({ limit: '1mb' }));
+
+// ─── Security Headers ─────────────────────────────────────────────
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  if (!isDev) {
+    res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
+  }
+  next();
+});
 
 // ─── Cache-control: no-cache para arquivos que mudam a cada deploy ─
 // O SW também usa /api/version para invalidar automaticamente
@@ -100,7 +164,7 @@ const auditStore = new Map();
 
 function storeAudit(data, userIp = null, userAgent = null) {
   if (!data || !data.evidence?.auditId) {
-    console.error('❌ Cannot store audit: missing data or auditId');
+    console.error('[Audit] Cannot store: missing data or auditId');
     return;
   }
   auditStore.set(data.evidence.auditId, data);
@@ -109,72 +173,55 @@ function storeAudit(data, userIp = null, userAgent = null) {
     const oldest = auditStore.keys().next().value;
     auditStore.delete(oldest);
   }
-  
-  // Debug log
-  console.log('\n============================================');
-  console.log('=== STORING AUDIT ===');
-  console.log('============================================');
-  console.log('Audit ID:', data.evidence.auditId);
-  console.log('Project URL:', data.projectUrl);
-  console.log('Score:', data.score, `(${data.grade?.grade} - ${data.grade?.label})`);
-  console.log('Total Checks:', data.totalChecks);
-  console.log('Passed:', data.passed, '| Failed:', data.failed, '| Warnings:', data.warnings);
-  console.log('Results count:', data.results?.length || 0);
-  console.log('Has catalogData:', !!data.catalogData);
-  console.log('Evidence SHA256:', data.evidence?.sha256);
-  console.log('User IP:', userIp);
-  console.log('User Agent:', userAgent ? userAgent.substring(0, 100) : 'N/A');
-  console.log('SUPABASE_URL set:', !!process.env.SUPABASE_URL);
-  console.log('SUPABASE_ANON_KEY set:', !!process.env.SUPABASE_ANON_KEY);
-  console.log('============================================\n');
-  
-  // Try to save to Supabase
-  const supabaseUrl = process.env.SUPABASE_URL || 'https://qmrceufksvlfdwnwftst.supabase.co';
-  const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtcmNldWZrc3ZsZmR3bndmdHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NzQ0ODEsImV4cCI6MjA4ODQ1MDQ4MX0.NXX4jvBXumkAp2L8z56q5pLXoXJaVUNPnjBwn4XUPPE';
-  
-  console.log('Using Supabase URL:', supabaseUrl);
-  console.log('Calling saveAuditToSupabase...\n');
-  
+
+  console.log(`[Audit] Stored ${data.evidence.auditId} | Score: ${data.score} | IP: ${userIp}`);
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[Audit Debug] ${data.projectUrl} | ${data.grade?.grade} | checks: ${data.totalChecks} | passed: ${data.passed} | failed: ${data.failed}`);
+  }
+
   saveAuditToSupabase(data, userIp, userAgent)
     .then(result => {
-      console.log('\n============================================');
-      console.log('=== SAVE RESULT ===');
-      console.log('============================================');
-      console.log('Success:', result.success);
-      if (result.success) {
-        console.log(`✅ AUDIT SAVED TO SUPABASE: ${result.auditId}`);
-        console.log('You can view this audit at:');
-        console.log(`   Local: http://localhost:${PORT}/audit/${data.evidence.auditId}`);
-        console.log(`   API:   http://localhost:${PORT}/api/db/audit/${result.auditId}`);
-      } else {
-        console.error('❌ Failed to save:', result.error);
-      }
-      console.log('============================================\n');
+      if (result.success) console.log(`[Supabase] Audit saved: ${result.auditId}`);
+      else if (result.error !== 'Supabase não configurado') console.error(`[Supabase] Save failed: ${result.error}`);
     })
-    .catch(err => {
-      console.error('\n============================================');
-      console.error('=== SAVE EXCEPTION ===');
-      console.error('============================================');
-      console.error('Exception saving audit:', err.message);
-      console.error('Stack:', err.stack);
-      console.error('============================================\n');
-    });
+    .catch(err => console.error(`[Supabase] Exception: ${err.message}`));
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────
+function resolveAuditData(auditId, auditData) {
+  return auditData || (auditId ? auditStore.get(auditId) : null);
 }
 
 // ─── API Routes ───────────────────────────────────────────────────
 
 // Start audit (SSE stream)
-app.post('/api/audit', async (req, res) => {
+app.post('/api/audit', auditLimiter, async (req, res) => {
   const { url, anonKey, options } = req.body;
 
-  if (!url) {
+  if (!url || typeof url !== 'string') {
     return res.status(400).json({ error: 'URL do projeto Supabase é obrigatória' });
   }
 
+  // Basic input validation — reject obviously invalid or dangerous inputs
+  const trimmedUrl = url.trim();
+  if (trimmedUrl.length > 2048) {
+    return res.status(400).json({ error: 'URL muito longa' });
+  }
+  // Block private/loopback addresses to prevent SSRF
+  if (/^(https?:\/\/)?(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(trimmedUrl)) {
+    return res.status(400).json({ error: 'URL de destino não permitida' });
+  }
+
   try {
-    let projectUrl = url.trim().replace(/\/+$/, '');
+    let projectUrl = trimmedUrl.replace(/\/+$/, '');
     if (!projectUrl.startsWith('http')) {
       projectUrl = 'https://' + projectUrl;
+    }
+
+    // Validate URL structure
+    try { new URL(projectUrl); } catch {
+      return res.status(400).json({ error: 'URL inválida' });
     }
 
     const supabaseMatch = projectUrl.match(/https?:\/\/([a-z0-9]+)\.supabase\.co/);
@@ -603,24 +650,14 @@ app.post('/api/report/catalog/html', (req, res) => {
 });
 
 // ─── AI Chat Endpoint ───────────────────────────────────────────────
-app.post('/api/ai/chat', async (req, res) => {
+app.post('/api/ai/chat', aiLimiter, async (req, res) => {
   const { auditId, question, history, auditData } = req.body;
-  
+
   if (!question) {
     return res.status(400).json({ error: 'Question is required' });
   }
 
-  let auditDataToUse = null;
-  
-  // First try: use auditData passed directly (for Vercel/production)
-  if (auditData) {
-    auditDataToUse = auditData;
-  }
-  // Second try: use auditId to look up in memory store (for local dev)
-  else if (auditId) {
-    auditDataToUse = auditStore.get(auditId);
-  }
-
+  const auditDataToUse = resolveAuditData(auditId, auditData);
   if (!auditDataToUse) {
     return res.status(404).json({ error: 'Audit not found. Please run an audit first.' });
   }
@@ -647,21 +684,14 @@ app.post('/api/ai/chat', async (req, res) => {
 });
 
 // ─── AI Chat Non-Stream ─────────────────────────────────────────────
-app.post('/api/ai/chat/simple', async (req, res) => {
+app.post('/api/ai/chat/simple', aiLimiter, async (req, res) => {
   const { auditId, question, auditData } = req.body;
-  
+
   if (!question) {
     return res.status(400).json({ error: 'Question is required' });
   }
 
-  let auditDataToUse = null;
-  
-  if (auditData) {
-    auditDataToUse = auditData;
-  } else if (auditId) {
-    auditDataToUse = auditStore.get(auditId);
-  }
-
+  const auditDataToUse = resolveAuditData(auditId, auditData);
   if (!auditDataToUse) {
     return res.status(404).json({ error: 'Audit not found. Please run an audit first.' });
   }
@@ -675,11 +705,10 @@ app.post('/api/ai/chat/simple', async (req, res) => {
 });
 
 // ─── AI Fix Prompt Generator ────────────────────────────────────────
-app.post('/api/ai/fix-prompt', async (req, res) => {
+app.post('/api/ai/fix-prompt', aiLimiter, async (req, res) => {
   const { auditId, auditData } = req.body;
 
-  let auditDataToUse = auditData || auditStore.get(auditId);
-
+  const auditDataToUse = resolveAuditData(auditId, auditData);
   if (!auditDataToUse) {
     return res.status(404).json({ error: 'Audit not found. Run an audit first.' });
   }
@@ -755,11 +784,11 @@ app.get('/bugbounty', (req, res) => {
 // Generate a complete bug bounty report from audit data
 app.post('/api/bugbounty/generate', async (req, res) => {
   const { auditId, auditData, reporterInfo } = req.body;
-  const auditDataToUse = auditData || (auditId ? auditStore.get(auditId) : null);
+  const auditDataToUse = resolveAuditData(auditId, auditData);
   if (!auditDataToUse) return res.status(404).json({ error: 'Audit not found. Run an audit first.' });
 
   try {
-    const GROQ_API_KEY = process.env.GROQ_API_KEY || process.env.GROK_API_KEY || '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';
+    const GROQ_API_KEY = process.env.GROQ_API_KEY || process.env.GROK_API_KEY;
     const { projectUrl, results = [], score, grade, evidence } = auditDataToUse;
 
     const criticalFindings = results.filter(r => r.status === 'FAIL' || r.severity === 'critical' || r.severity === 'high');
@@ -789,24 +818,25 @@ Gere um relatório profissional em português com:
 
 Seja técnico e profissional, como se fosse enviado para um programa de bug bounty real.`;
 
-    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY}` },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          { role: 'system', content: 'Você é um especialista em Bug Bounty e penetration testing. Escreva relatórios técnicos profissionais.' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.3,
-        max_tokens: 3000,
-      }),
-    });
-
     let aiReport = '';
-    if (groqRes.ok) {
-      const groqData = await groqRes.json();
-      aiReport = groqData.choices?.[0]?.message?.content || '';
+    if (GROQ_API_KEY) {
+      const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY}` },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: 'Você é um especialista em Bug Bounty e penetration testing. Escreva relatórios técnicos profissionais.' },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.3,
+          max_tokens: 3000,
+        }),
+      });
+      if (groqRes.ok) {
+        const groqData = await groqRes.json();
+        aiReport = groqData.choices?.[0]?.message?.content || '';
+      }
     }
 
     // Build known bug bounty platforms for this target
@@ -891,7 +921,7 @@ ${aiReport || 'N/A'}
 
 ## Evidence
 
-This report was generated by **Supabase Guard v3.2** — Defensive Audit Console.
+This report was generated by **Supabase Guard v${APP_VERSION}** — Defensive Audit Console.
 - Audit ID: \`${auditId}\`
 - SHA-256: \`${sha256}\`
 - Generated: ${generatedAt}
@@ -913,11 +943,10 @@ app.get('/scripts/:id', (req, res) => {
 });
 
 // Generate Python scripts from audit data using Groq AI
-app.post('/api/ai/generate-scripts', async (req, res) => {
+app.post('/api/ai/generate-scripts', aiLimiter, async (req, res) => {
   const { auditId, auditData } = req.body;
 
-  let auditDataToUse = auditData || (auditId ? auditStore.get(auditId) : null);
-
+  const auditDataToUse = resolveAuditData(auditId, auditData);
   if (!auditDataToUse) {
     return res.status(404).json({ error: 'Audit not found. Run an audit first.' });
   }
@@ -999,10 +1028,10 @@ app.get('*', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`\n  ╔══════════════════════════════════════════╗`);
-  console.log(`  ║   SUPABASE GUARD — Audit Console v3.2    ║`);
+  console.log(`  ║   SUPABASE GUARD — Audit Console v${APP_VERSION}  ║`);
   console.log(`  ║   Running on http://localhost:${PORT}        ║`);
   console.log(`  ║                                          ║`);
-  console.log(`  ║   NEW Features v3.2:                      ║`);
+  console.log(`  ║   Features v${APP_VERSION}:                     ║`);
   console.log(`  ║   🔱 Hydra Credential Attack Simulation   ║`);
   console.log(`  ║   🕸️ Tailscale/VPN/Network Security       ║`);
   console.log(`  ║   🌊 Advanced DoS (Slowloris/ReDoS/HTTP2) ║`);

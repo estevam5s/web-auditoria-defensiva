@@ -7,6 +7,7 @@ function generateHTMLReport(auditData, networkInfo = {}) {
   const results = auditData.results || [];
   const score = auditData.score ?? 0;
   const grade = auditData.grade || {};
+  const productionReady = auditData.productionReady || null;
   const { ip = null, hostname = null, hosting = null } = networkInfo;
 
   // Categorize results
@@ -29,6 +30,16 @@ function generateHTMLReport(auditData, networkInfo = {}) {
 
   // Group results by check category
   const checkGroups = groupResults(results);
+
+  // Extract exposed .env files with raw content
+  const exposedEnvFiles = [];
+  for (const r of results) {
+    if (r.details?.files && Array.isArray(r.details.files)) {
+      for (const f of r.details.files) {
+        if (f.rawContent) exposedEnvFiles.push({ url: f.url || f.name, rawContent: f.rawContent });
+      }
+    }
+  }
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -297,7 +308,41 @@ function generateHTMLReport(auditData, networkInfo = {}) {
         </div>
       </div>
     </section>
-    
+
+    <!-- Production Readiness Verdict -->
+    ${productionReady ? `
+    <section id="production-verdict" style="margin-bottom:2rem;">
+      <div style="
+        background: ${productionReady.color}18;
+        border: 2px solid ${productionReady.color};
+        border-radius: 12px;
+        padding: 1.5rem 2rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+      ">
+        <div style="flex:0 0 auto;">
+          <div style="font-size:2.5rem;font-weight:900;color:${productionReady.color};letter-spacing:2px;">
+            ${productionReady.verdict === 'APTO' ? '✅' : productionReady.verdict === 'APTO_COM_RESSALVAS' ? '⚠️' : '❌'}
+          </div>
+        </div>
+        <div style="flex:1;min-width:200px;">
+          <div style="font-size:1.3rem;font-weight:700;color:${productionReady.color};margin-bottom:0.5rem;">
+            🏭 ${productionReady.label}
+          </div>
+          ${productionReady.reasons.length > 0 ? `
+          <div style="font-size:0.85rem;color:#aaa;margin-bottom:0.5rem;">
+            ${productionReady.reasons.map(r => `<span style="margin-right:1rem;">✓ ${esc(r)}</span>`).join('')}
+          </div>` : ''}
+          ${productionReady.blockers.length > 0 ? `
+          <ul style="margin:0;padding-left:1.2rem;font-size:0.9rem;color:#ffcccc;">
+            ${productionReady.blockers.map(b => `<li>${esc(b)}</li>`).join('')}
+          </ul>` : ''}
+        </div>
+      </div>
+    </section>` : ''}
+
     <!-- Charts -->
     <section id="charts">
       <h2>📊 Gráficos de Análise</h2>
@@ -601,6 +646,22 @@ RedirectMatch 404 /\\.git</pre>
       ` : '<p style="color:var(--gray)">Nenhum arquivo sensível exposto detectado. ✓</p>'}
     </section>
     
+    <!-- Exposed .env files with raw content -->
+    ${exposedEnvFiles.length > 0 ? `
+    <section id="env-exposed" style="margin-bottom:2rem;">
+      <h2>🔑 Arquivos .env Expostos Publicamente</h2>
+      <div style="background:#ff00200d;border:2px solid #ff0040;border-radius:8px;padding:1rem;margin-bottom:0.5rem;">
+        <p style="color:#ff6680;font-weight:600;margin-bottom:0.5rem;">⚠️ CRÍTICO: Os seguintes arquivos .env estão acessíveis publicamente — conteúdo real exposto:</p>
+        ${exposedEnvFiles.map(f => `
+          <div style="margin-bottom:1rem;">
+            <div style="font-family:monospace;font-size:0.8rem;color:#ff9999;margin-bottom:0.5rem;">📄 ${esc(f.url)}</div>
+            <pre style="background:#1a0a0a;border:1px solid #ff0040;border-radius:6px;padding:1rem;font-family:monospace;font-size:0.75rem;color:#ff6666;overflow-x:auto;white-space:pre-wrap;word-break:break-all;">${esc(f.rawContent)}</pre>
+          </div>
+        `).join('')}
+        <p style="color:#ff9999;font-size:0.8rem;margin-top:0.5rem;">AÇÃO URGENTE: Bloqueie o acesso a este arquivo no servidor e rotacione todas as credenciais imediatamente.</p>
+      </div>
+    </section>` : ''}
+
     <!-- Insights -->
     <section id="insights">
       <h2>💡 Insights & Recomendações</h2>
@@ -617,13 +678,13 @@ RedirectMatch 404 /\\.git</pre>
         <div class="evidence-row"><div class="key">Projeto</div><div class="val">${esc(auditData.projectUrl || 'N/A')}</div></div>
         <div class="evidence-row"><div class="key">Score</div><div class="val">${score}/100 (${grade.grade || '-'})</div></div>
         <div class="evidence-row"><div class="key">Duração</div><div class="val">${esc(auditData.duration || 'N/A')}</div></div>
-        <div class="evidence-row"><div class="key">Engine</div><div class="val">Supabase Guard v2.0</div></div>
+        <div class="evidence-row"><div class="key">Engine</div><div class="val">Supabase Guard v3.3.0</div></div>
       </div>
     </section>
     
     <!-- Footer -->
     <div class="report-footer">
-      <p>Documento confidencial — Gerado por <strong>Supabase Guard v2.0</strong></p>
+      <p>Documento confidencial — Gerado por <strong>Supabase Guard v3.3.0</strong></p>
       <p style="margin-top:0.3rem">SHA-256: ${esc(auditData.evidence?.sha256 || 'N/A')}</p>
     </div>
   </div>

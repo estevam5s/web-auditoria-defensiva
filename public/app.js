@@ -328,6 +328,7 @@ function handleComplete(results) {
   // Show results UI
   showScoreCard(results);
   showResultsList(results.results);
+  showDiscoveredRoutes(results.results);
   showEvidence(results);
 
   // Reveal checklist, ISO, Python Scripts, Terminal buttons now that we have an auditId
@@ -410,6 +411,40 @@ function showScoreCard(results) {
   $('#scoreMeta').textContent =
     `Projeto: ${results.projectUrl} | Duração: ${results.duration} | ${results.totalChecks} verificações | ${new Date().toLocaleString('pt-BR')}`;
 
+  // Production Readiness Verdict Banner
+  let verdictEl = $('#productionVerdict');
+  if (!verdictEl) {
+    verdictEl = document.createElement('div');
+    verdictEl.id = 'productionVerdict';
+    section.insertBefore(verdictEl, section.querySelector('#fixPromptScoreContainer') || null);
+  }
+  if (results.productionReady) {
+    const pr = results.productionReady;
+    const icon = pr.verdict === 'APTO' ? '✅' : pr.verdict === 'APTO_COM_RESSALVAS' ? '⚠️' : '❌';
+    const listHtml = pr.blockers.length > 0
+      ? `<ul style="margin:8px 0 0 16px;padding:0;font-size:13px;color:${pr.verdict === 'NAO_APTO' ? '#ffcccc' : '#ffe0a0'}">
+          ${pr.blockers.map(b => `<li>${b}</li>`).join('')}
+        </ul>`
+      : `<div style="font-size:13px;color:#aaa;margin-top:6px">${pr.reasons.map(r => `✓ ${r}`).join(' &nbsp;|&nbsp; ')}</div>`;
+    verdictEl.innerHTML = `
+      <div style="
+        margin: 20px 0;
+        padding: 16px 22px;
+        background: ${pr.color}15;
+        border: 2px solid ${pr.color};
+        border-radius: 12px;
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+      ">
+        <div style="font-size:2rem;line-height:1;">${icon}</div>
+        <div>
+          <div style="font-size:1.1rem;font-weight:700;color:${pr.color};">🏭 Veredicto de Produção: ${pr.label}</div>
+          ${listHtml}
+        </div>
+      </div>`;
+  }
+
   // Add fix prompt button below score
   let fixBtn = $('#btnFixPromptScore');
   if (!fixBtn) {
@@ -428,6 +463,116 @@ function showScoreCard(results) {
 
   // Scroll to score
   section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ── Build details HTML — highlights rawContent from .env exposure ─
+function buildDetailsHtml(details) {
+  if (!details) return '';
+
+  // Check if any file in details.files has rawContent
+  const envFiles = (details.files || []).filter(f => f.rawContent);
+
+  if (envFiles.length > 0) {
+    return `
+      ${envFiles.map(f => `
+        <div style="margin-bottom:12px;">
+          <div style="color:#ff6680;font-weight:600;font-size:12px;margin-bottom:6px;">
+            ⚠️ ARQUIVO .env EXPOSTO: ${escapeHtml(f.url || '')}
+          </div>
+          <pre style="background:#1a0a0a;border:1px solid #ff0040;border-radius:6px;padding:10px;font-size:11px;color:#ff9999;overflow-x:auto;white-space:pre-wrap;max-height:300px;overflow-y:auto;">${escapeHtml(f.rawContent)}</pre>
+        </div>
+      `).join('')}
+      <pre style="color:#888;font-size:11px;">${escapeHtml(JSON.stringify({ ...details, files: (details.files || []).map(f => ({ ...f, rawContent: f.rawContent ? '[CONTEÚDO EXPOSTO ACIMA]' : undefined })) }, null, 2))}</pre>
+    `;
+  }
+
+  return `<pre>${escapeHtml(JSON.stringify(details, null, 2))}</pre>`;
+}
+
+// ── Discovered Routes Section ────────────────────────────────────
+function showDiscoveredRoutes(results) {
+  const section = $('#routesSection');
+  const countEl = $('#routesCount');
+  const filtersEl = $('#routesFilters');
+  const listEl = $('#routesList');
+  if (!section || !listEl) return;
+
+  // Collect all routes from all relevant checks
+  const allRoutes = [];
+  const seenUrls = new Set();
+
+  (results || []).forEach(r => {
+    const d = r.details;
+    if (!d) return;
+
+    // route-discovery check: details.allRoutes = [{url, method, source, status}]
+    if (Array.isArray(d.allRoutes)) {
+      d.allRoutes.forEach(route => {
+        const key = `${route.method || 'GET'}:${route.url || route.path || ''}`;
+        if (!seenUrls.has(key)) { seenUrls.add(key); allRoutes.push(route); }
+      });
+    }
+    // JS route extraction: details.routes = [string | {path, method}]
+    if (Array.isArray(d.routes)) {
+      d.routes.forEach(route => {
+        const url = typeof route === 'string' ? route : (route.url || route.path || '');
+        const method = typeof route === 'string' ? 'GET' : (route.method || 'GET');
+        const key = `${method}:${url}`;
+        if (url && !seenUrls.has(key)) { seenUrls.add(key); allRoutes.push({ url, method, source: 'js-analysis' }); }
+      });
+    }
+  });
+
+  if (allRoutes.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  countEl.textContent = `${allRoutes.length} rotas`;
+
+  // Collect unique sources for filter buttons
+  const sources = [...new Set(allRoutes.map(r => r.source || 'unknown'))];
+  let activeFilter = 'all';
+
+  function renderList(filter) {
+    const filtered = filter === 'all' ? allRoutes : allRoutes.filter(r => (r.source || 'unknown') === filter);
+    const methodColor = { GET: '#00ff9f', POST: '#00d4ff', PUT: '#ffaa00', DELETE: '#ff4466', PATCH: '#cc88ff', HEAD: '#888', OPTIONS: '#888' };
+    listEl.innerHTML = filtered.map(route => {
+      const method = (route.method || 'GET').toUpperCase();
+      const url = route.url || route.path || '';
+      const status = route.status ? ` <span style="color:#aaa;font-size:10px;">[${route.status}]</span>` : '';
+      const src = route.source ? `<span style="color:#555;font-size:10px;margin-left:8px;">${escapeHtml(route.source)}</span>` : '';
+      return `<div style="display:flex;align-items:center;gap:10px;padding:7px 10px;border-bottom:1px solid #1a1a2e;font-size:12px;font-family:'JetBrains Mono',monospace;">
+        <span style="background:${methodColor[method]||'#888'}22;color:${methodColor[method]||'#aaa'};border:1px solid ${methodColor[method]||'#555'}44;padding:2px 7px;border-radius:4px;font-size:10px;min-width:52px;text-align:center;">${method}</span>
+        <span style="color:#e0e0e0;flex:1;word-break:break-all;">${escapeHtml(url)}${status}</span>${src}
+      </div>`;
+    }).join('') || '<div style="color:#555;padding:12px;font-size:12px;">Nenhuma rota nesta categoria.</div>';
+  }
+
+  // Build filter buttons
+  filtersEl.innerHTML = ['all', ...sources].map(src => `
+    <button onclick="window._routeFilter('${escapeHtml(src)}')" id="rfbtn_${src}" style="
+      background:${src==='all'?'#00d4ff22':'#1a1a2e'};color:${src==='all'?'#00d4ff':'#aaa'};
+      border:1px solid ${src==='all'?'#00d4ff44':'#333'};padding:4px 12px;border-radius:20px;
+      font-size:11px;cursor:pointer;font-family:'JetBrains Mono',monospace;">
+      ${src === 'all' ? 'Todas' : escapeHtml(src)}
+    </button>`).join('');
+
+  window._routeFilter = (filter) => {
+    activeFilter = filter;
+    ['all', ...sources].forEach(s => {
+      const btn = document.getElementById(`rfbtn_${s}`);
+      if (!btn) return;
+      const active = s === filter;
+      btn.style.background = active ? '#00d4ff22' : '#1a1a2e';
+      btn.style.color = active ? '#00d4ff' : '#aaa';
+      btn.style.borderColor = active ? '#00d4ff44' : '#333';
+    });
+    renderList(filter);
+  };
+
+  renderList('all');
 }
 
 // ── Results List ─────────────────────────────────────────────────
@@ -468,7 +613,7 @@ function showResultsList(results) {
       <div class="result-message">${escapeHtml(result.message)}</div>
       ${result.details ? `
         <div class="result-details">
-          <pre>${escapeHtml(JSON.stringify(result.details, null, 2))}</pre>
+          ${buildDetailsHtml(result.details)}
         </div>
       ` : ''}
     `;
@@ -1550,6 +1695,7 @@ async function loadAuditForCompare(source, auditId) {
       $('#projectUrl').value = data.projectUrl;
       showScoreCard(data);
       showResultsList(data.results);
+      showDiscoveredRoutes(data.results);
       showEvidence(data);
       appendLog('info', 'HISTORY', `Auditoria carregada: ${data.projectUrl}`);
     }

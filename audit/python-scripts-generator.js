@@ -6,7 +6,7 @@
 
 const fetch = require('node-fetch');
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY || process.env.GROK_API_KEY || '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';
+const GROQ_API_KEY = process.env.GROQ_API_KEY || process.env.GROK_API_KEY;
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = 'llama-3.3-70b-versatile';
 
