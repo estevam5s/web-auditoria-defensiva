@@ -491,11 +491,11 @@ function buildDetailsHtml(details) {
 
 // ── Discovered Routes Section ────────────────────────────────────
 function showDiscoveredRoutes(results) {
-  const section = $('#routesSection');
+  const sidebar = $('#routesSidebar');
   const countEl = $('#routesCount');
   const filtersEl = $('#routesFilters');
   const listEl = $('#routesList');
-  if (!section || !listEl) return;
+  if (!sidebar || !listEl) return;
 
   // Collect all routes from all relevant checks
   const allRoutes = [];
@@ -524,11 +524,11 @@ function showDiscoveredRoutes(results) {
   });
 
   if (allRoutes.length === 0) {
-    section.style.display = 'none';
+    sidebar.style.display = 'none';
     return;
   }
 
-  section.style.display = 'block';
+  sidebar.style.display = 'block';
   countEl.textContent = `${allRoutes.length} rotas`;
 
   // Collect unique sources for filter buttons

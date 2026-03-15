@@ -260,6 +260,26 @@
       </div>
     </section>
 
+    <!-- Audit Results Layout: routes sidebar (left) + main content (right) -->
+    <div class="audit-layout" id="auditLayout">
+
+      <!-- LEFT SIDEBAR: Discovered Routes (shown by JS when routes found) -->
+      <aside class="routes-sidebar" id="routesSidebar">
+        <section id="routesSection">
+          <div style="background:#0d0d14;border:1px solid #1a1a2e;border-radius:12px;padding:20px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+              <h3 style="color:#00d4ff;font-size:0.9rem;letter-spacing:1px;">🗺️ ROTAS DESCOBERTAS</h3>
+              <span id="routesCount" style="background:#1a1a2e;color:#aaa;padding:4px 12px;border-radius:20px;font-size:11px;"></span>
+            </div>
+            <div id="routesFilters" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;"></div>
+            <div id="routesList" style="max-height:calc(100vh - 220px);overflow-y:auto;"></div>
+          </div>
+        </section>
+      </aside>
+
+      <!-- RIGHT MAIN: Score, Results, Evidence -->
+      <div class="audit-main">
+
     <!-- Score Card (hidden until audit complete) -->
     <section class="score-section" id="scoreSection" style="display: none;">
       <div class="score-card">
@@ -300,18 +320,6 @@
         </div>
       </div>
       <div class="results-list" id="resultsList"></div>
-    </section>
-
-    <!-- Discovered Routes Section (hidden until audit complete) -->
-    <section id="routesSection" style="display:none;margin-bottom:24px;">
-      <div style="background:#0d0d14;border:1px solid #1a1a2e;border-radius:12px;padding:20px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-          <h3 style="color:#00d4ff;font-size:1rem;letter-spacing:1px;">🗺️ ROTAS DESCOBERTAS</h3>
-          <span id="routesCount" style="background:#1a1a2e;color:#aaa;padding:4px 12px;border-radius:20px;font-size:12px;"></span>
-        </div>
-        <div id="routesFilters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;"></div>
-        <div id="routesList" style="max-height:420px;overflow-y:auto;"></div>
-      </div>
     </section>
 
     <!-- Evidence Section -->
@@ -412,6 +420,9 @@
         </div>
       </div>
     </section>
+
+      </div><!-- /.audit-main -->
+    </div><!-- /.audit-layout -->
 
     <!-- AI Chat Section -->
     <section class="ai-chat-section" id="aiChatSection" style="display: none;">
