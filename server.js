@@ -18,6 +18,7 @@ const { runFullAudit } = require('./audit/engine');
 const { generatePDFReport } = require('./audit/report-pdf');
 const { generateHTMLReport } = require('./audit/report-html');
 const { lightScrape } = require('./audit/scraper');
+const { runOSINT } = require('./audit/osint');
 
 const { generateSupabaseCatalog, generateCatalogHTML } = require('./audit/report-supabase-catalog');
 const { askGrok, askGrokStream, generateFixPrompt } = require('./audit/grok-ai');
@@ -1023,6 +1024,45 @@ ${scripts.map(s => `#   - ${s.filename || s.id + '.py'}: ${s.name || s.id}`).joi
     console.error('ZIP generation error:', err);
     if (!res.headersSent) res.status(500).json({ error: err.message });
   }
+});
+
+// ─── OSINT / Internet Footprint (SSE stream) ───────────────────────
+app.post('/api/footprint', auditLimiter, async (req, res) => {
+  const { url } = req.body;
+
+  if (!url || typeof url !== 'string') {
+    return res.status(400).json({ error: 'URL é obrigatória' });
+  }
+
+  const trimmedUrl = url.trim();
+  if (trimmedUrl.length > 2048) {
+    return res.status(400).json({ error: 'URL muito longa' });
+  }
+  if (/^(https?:\/\/)?(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(trimmedUrl)) {
+    return res.status(400).json({ error: 'URL de destino não permitida' });
+  }
+
+  let targetUrl = trimmedUrl;
+  if (!targetUrl.startsWith('http')) targetUrl = 'https://' + targetUrl;
+  try { new URL(targetUrl); } catch {
+    return res.status(400).json({ error: 'URL inválida' });
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const sendEvent = (data) => {
+    try { res.write(`data: ${JSON.stringify(data)}\n\n`); } catch {}
+  };
+
+  try {
+    await runOSINT(targetUrl, sendEvent);
+  } catch (err) {
+    console.error('OSINT error:', err);
+    sendEvent({ type: 'error', message: err.message });
+  }
+  res.end();
 });
 
 // SPA fallback

@@ -8,6 +8,312 @@ let auditResults = null;
 let logLines = [];
 let isScanning = false;
 
+// ═══════════════════════════════════════════════════════════════════
+// NOTIFICATION MANAGER — Sons + Browser Notifications + In-app Toast
+// ═══════════════════════════════════════════════════════════════════
+const NotifMgr = (function () {
+  // ── Persistent settings via localStorage ──────────────────────
+  const LS_SOUND  = 'sg_notif_sound';
+  const LS_SYSTEM = 'sg_notif_system';
+  const LS_VOLUME = 'sg_notif_volume';
+
+  let soundEnabled  = localStorage.getItem(LS_SOUND)  !== 'false';
+  let systemEnabled = localStorage.getItem(LS_SYSTEM) === 'true';
+  let volume        = parseFloat(localStorage.getItem(LS_VOLUME) ?? '0.6');
+
+  // ── Web Audio context (created lazily on first user gesture) ──
+  let audioCtx = null;
+
+  function getCtx() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    return audioCtx;
+  }
+
+  // ── Low-level tone helper ──────────────────────────────────────
+  // type: 'sine' | 'triangle' | 'square' | 'sawtooth'
+  function playTone(freq, startTime, duration, gainPeak, type = 'sine', ctx) {
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, startTime);
+
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(gainPeak * volume, startTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.05);
+  }
+
+  // ── Sound presets ──────────────────────────────────────────────
+  const SOUNDS = {
+    // Quick double-beep ascending sweep — "scan started"
+    start: (ctx) => {
+      const t = ctx.currentTime;
+      playTone(440, t,        0.12, 0.35, 'sine', ctx);
+      playTone(660, t + 0.14, 0.16, 0.4,  'sine', ctx);
+      playTone(880, t + 0.32, 0.22, 0.45, 'sine', ctx);
+    },
+
+    // Triumphant ascending major chord: C4-E4-G4-C5
+    complete: (ctx) => {
+      const t = ctx.currentTime;
+      const notes = [261.63, 329.63, 392.00, 523.25];
+      notes.forEach((f, i) => playTone(f, t + i * 0.11, 0.45, 0.38, 'sine', ctx));
+    },
+
+    // Warning triple descend — low score
+    warning: (ctx) => {
+      const t = ctx.currentTime;
+      playTone(523.25, t,        0.18, 0.35, 'triangle', ctx);
+      playTone(440,    t + 0.20, 0.18, 0.35, 'triangle', ctx);
+      playTone(349.23, t + 0.40, 0.28, 0.4,  'triangle', ctx);
+    },
+
+    // Two-tone descending minor — "something went wrong"
+    error: (ctx) => {
+      const t = ctx.currentTime;
+      playTone(440, t,        0.22, 0.4,  'sawtooth', ctx);
+      playTone(311, t + 0.25, 0.35, 0.45, 'sawtooth', ctx);
+    },
+
+    // Very subtle soft tick — milestone / progress
+    tick: (ctx) => {
+      const t = ctx.currentTime;
+      playTone(1200, t, 0.06, 0.15, 'sine', ctx);
+    },
+  };
+
+  function playSound(type) {
+    if (!soundEnabled) return;
+    try {
+      const ctx = getCtx();
+      if (SOUNDS[type]) SOUNDS[type](ctx);
+    } catch (e) {
+      console.warn('[NotifMgr] playSound error:', e);
+    }
+  }
+
+  // ── In-app Toast ──────────────────────────────────────────────
+  function showToast(type, title, body, duration = 5000) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const icons = {
+      start:    '🔍',
+      complete: '✅',
+      warning:  '⚠️',
+      error:    '❌',
+      info:     'ℹ️',
+    };
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+      <div class="toast-icon">${icons[type] || '🔔'}</div>
+      <div class="toast-body">
+        <div class="toast-title">${title}</div>
+        ${body ? `<div class="toast-msg">${body}</div>` : ''}
+      </div>
+      <button class="toast-close" aria-label="Fechar">✕</button>
+    `;
+
+    toast.querySelector('.toast-close').addEventListener('click', () => dismissToast(toast));
+    container.appendChild(toast);
+
+    // Animate in
+    requestAnimationFrame(() => toast.classList.add('toast-visible'));
+
+    // Auto-dismiss
+    const tid = setTimeout(() => dismissToast(toast), duration);
+    toast._timerId = tid;
+  }
+
+  function dismissToast(toast) {
+    clearTimeout(toast._timerId);
+    toast.classList.remove('toast-visible');
+    toast.classList.add('toast-hiding');
+    toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+  }
+
+  // ── Browser Notification ──────────────────────────────────────
+  async function sendBrowserNotif(title, body, icon = '🛡️') {
+    if (!systemEnabled) return;
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+
+    try {
+      const n = new Notification(title, {
+        body,
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
+        tag: 'supabase-guard',
+        renotify: true,
+      });
+      setTimeout(() => n.close(), 8000);
+    } catch (e) {
+      console.warn('[NotifMgr] Browser notif error:', e);
+    }
+  }
+
+  // ── Public API ────────────────────────────────────────────────
+  async function requestPermission() {
+    if (!('Notification' in window)) return 'unsupported';
+    if (Notification.permission === 'granted') return 'granted';
+    if (Notification.permission === 'denied') return 'denied';
+    const result = await Notification.requestPermission();
+    return result;
+  }
+
+  function notify(type, title, body) {
+    playSound(type);
+    showToast(type, title, body);
+    sendBrowserNotif(title, body);
+  }
+
+  function setSoundEnabled(val) {
+    soundEnabled = val;
+    localStorage.setItem(LS_SOUND, val);
+  }
+
+  function setSystemEnabled(val) {
+    systemEnabled = val;
+    localStorage.setItem(LS_SYSTEM, val);
+  }
+
+  function setVolume(val) {
+    volume = Math.max(0, Math.min(1, val));
+    localStorage.setItem(LS_VOLUME, volume);
+  }
+
+  function getSettings() {
+    return {
+      soundEnabled,
+      systemEnabled,
+      volume,
+      permission: ('Notification' in window) ? Notification.permission : 'unsupported',
+    };
+  }
+
+  return { notify, playSound, showToast, requestPermission, setSoundEnabled, setSystemEnabled, setVolume, getSettings };
+})();
+
+// ── Notification Panel UI Controls ──────────────────────────────
+function toggleNotifPanel() {
+  const panel = document.getElementById('notifPanel');
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) syncNotifPanel();
+
+  // Close when clicking outside
+  if (!isOpen) {
+    setTimeout(() => {
+      function outsideClick(e) {
+        const wrap = document.getElementById('notifBellWrap');
+        if (wrap && !wrap.contains(e.target)) {
+          panel.style.display = 'none';
+          document.removeEventListener('click', outsideClick);
+        }
+      }
+      document.addEventListener('click', outsideClick);
+    }, 50);
+  }
+}
+
+function syncNotifPanel() {
+  const s = NotifMgr.getSettings();
+
+  const chkSound  = document.getElementById('chkNotifSound');
+  const chkSystem = document.getElementById('chkNotifSystem');
+  const permText  = document.getElementById('notifPermText');
+  const volSlider = document.getElementById('notifVolume');
+  const volVal    = document.getElementById('notifVolVal');
+
+  if (chkSound)  chkSound.checked  = s.soundEnabled;
+  if (chkSystem) chkSystem.checked = s.systemEnabled && s.permission === 'granted';
+  if (volSlider) volSlider.value   = Math.round(s.volume * 100);
+  if (volVal)    volVal.textContent = Math.round(s.volume * 100) + '%';
+
+  if (permText) {
+    if (s.permission === 'unsupported') {
+      permText.textContent = 'Não suportado neste navegador';
+      if (chkSystem) chkSystem.disabled = true;
+    } else if (s.permission === 'denied') {
+      permText.textContent = 'Bloqueado — libere nas configurações do navegador';
+      if (chkSystem) chkSystem.disabled = true;
+    } else if (s.permission === 'granted') {
+      permText.textContent = 'Permissão concedida';
+    } else {
+      permText.textContent = 'Clique para solicitar permissão';
+    }
+  }
+}
+
+async function onNotifSystemToggle(el) {
+  if (el.checked) {
+    const result = await NotifMgr.requestPermission();
+    if (result !== 'granted') {
+      el.checked = false;
+      const permText = document.getElementById('notifPermText');
+      if (permText) permText.textContent = result === 'denied'
+        ? 'Bloqueado — libere nas configurações do navegador'
+        : 'Permissão negada';
+      return;
+    }
+    NotifMgr.setSystemEnabled(true);
+    const permText = document.getElementById('notifPermText');
+    if (permText) permText.textContent = 'Permissão concedida';
+  } else {
+    NotifMgr.setSystemEnabled(false);
+  }
+  updateNotifBellState();
+}
+
+function onNotifSoundToggle(el) {
+  NotifMgr.setSoundEnabled(el.checked);
+  updateNotifBellState();
+}
+
+function onVolumeChange(el) {
+  const val = parseInt(el.value) / 100;
+  NotifMgr.setVolume(val);
+  const lbl = document.getElementById('notifVolVal');
+  if (lbl) lbl.textContent = el.value + '%';
+}
+
+function notifPreview(type) {
+  const titles = { start: 'Auditoria Iniciada', complete: 'Auditoria Concluída', error: 'Erro na Auditoria' };
+  NotifMgr.notify(type, titles[type] || 'Teste', 'Pré-visualização do som de alerta');
+}
+
+function updateNotifBellState() {
+  const s = NotifMgr.getSettings();
+  const btn  = document.getElementById('notifBellBtn');
+  const dot  = document.getElementById('notifBellDot');
+  const icon = document.getElementById('notifBellIcon');
+  if (!btn) return;
+
+  const active = s.soundEnabled || (s.systemEnabled && s.permission === 'granted');
+  btn.classList.toggle('notif-bell-active', active);
+  if (dot) dot.style.display = active ? 'block' : 'none';
+  if (icon) icon.setAttribute('fill', active ? 'currentColor' : 'none');
+}
+
+// Init bell state on load
+document.addEventListener('DOMContentLoaded', () => {
+  syncNotifPanel();
+  updateNotifBellState();
+});
+
 // ── DOM Elements ─────────────────────────────────────────────────
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -136,6 +442,10 @@ async function startAudit() {
 
   appendLog('info', 'INIT', `Iniciando auditoria em: ${url}`);
   appendLog('info', 'MODE', 'Role: GUEST (anon key)');
+
+  // Notification: audit started
+  NotifMgr.notify('start', '🔍 Auditoria Iniciada', `Varrendo: ${url.replace(/https?:\/\//, '')}`);
+  updateNotifBellState();
 
   // Gather options
   const anonKey = $('#anonKey')?.value?.trim() || '';
@@ -286,6 +596,7 @@ function handleEvent(event) {
     case 'error':
       appendLog('error', 'ERROR', event.message);
       setStatus('error', 'Error');
+      NotifMgr.notify('error', '❌ Erro na Auditoria', event.message?.slice(0, 100));
       break;
 
     case 'log':
@@ -336,6 +647,21 @@ function handleComplete(results) {
   appendLog('info', '─────', '─────────────────────────────────────');
   appendLog('info', 'DONE', `Auditoria concluída em ${results.duration}`);
   appendLog('info', 'SCORE', `${results.score}/100 (${results.grade.grade} — ${results.grade.label})`);
+
+  // Notification: audit complete
+  {
+    const score = results.score;
+    const grade = results.grade?.grade || '';
+    const label = results.grade?.label || '';
+    const domain = (results.projectUrl || '').replace(/https?:\/\//, '').split('/')[0];
+    if (score >= 70) {
+      NotifMgr.notify('complete', `✅ Auditoria Concluída — ${grade}`, `${domain} · Score: ${score}/100 — ${label}`);
+    } else if (score >= 40) {
+      NotifMgr.notify('warning', `⚠️ Atenção: Score Baixo — ${grade}`, `${domain} · Score: ${score}/100 — ${label}. Verifique as falhas detectadas.`);
+    } else {
+      NotifMgr.notify('error', `🚨 Score Crítico — ${grade}`, `${domain} · Score: ${score}/100 — ${label}. Vulnerabilidades críticas encontradas!`);
+    }
+  }
   appendLog('info', 'HASH', `SHA-256: ${results.evidence.sha256}`);
   appendLog('info', 'ID', `Audit ID: ${results.evidence.auditId}`);
 
@@ -355,12 +681,14 @@ function handleComplete(results) {
   const btnPython = $('#btnPythonScripts');
   const btnBounty = $('#btnBugBounty');
   const btnTerminal = $('#btnTerminal');
+  const btnOSINT = $('#btnOSINT');
   if (btnChecklist) btnChecklist.style.display = '';
   if (btnExport) btnExport.style.display = '';
   if (btnISO) btnISO.style.display = '';
   if (btnPython) btnPython.style.display = '';
   if (btnBounty) btnBounty.style.display = '';
   if (btnTerminal) btnTerminal.style.display = '';
+  if (btnOSINT) btnOSINT.style.display = '';
 }
 
 // ── Actions Sidebar Toggle ───────────────────────────────────────
@@ -1079,29 +1407,43 @@ async function downloadSourceCode() {
   }
 
   try {
+    const auditId = auditResults?.evidence?.auditId || null;
+    const domain  = url.replace(/https?:\/\//, '').replace(/[^a-zA-Z0-9.-]/g, '-').slice(0, 40);
+
+    appendLog('info', 'SCRAPE', `Rastreando ${url}${auditId ? ' + relatório de segurança' : ''}...`);
+
     const response = await fetch('/api/scrape', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url })
+      body: JSON.stringify({ url, auditId })
     });
 
-    if (!response.ok) throw new Error('Falha no download');
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: 'Falha no servidor' }));
+      throw new Error(err.error || `HTTP ${response.status}`);
+    }
 
-    const blob = await response.blob();
+    const blob    = await response.blob();
     const blobUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = `source-code-${url.replace(/https?:\/\//, '').replace(/[^a-zA-Z0-9]/g, '-')}.zip`;
+    const a       = document.createElement('a');
+    a.href        = blobUrl;
+    a.download    = `${domain}-source.zip`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(blobUrl);
 
-    appendLog('info', 'SCRAPE', `✓ Código-fonte baixado! (${(blob.size / 1024 / 1024).toFixed(2)} MB)`);
+    appendLog('info', 'SCRAPE', `✓ ZIP baixado: ${domain}-source.zip (${(blob.size / 1024 / 1024).toFixed(2)} MB)`);
+    appendLog('info', 'SCRAPE', 'Estrutura: pages/ css/ js/ images/ fonts/ sourcemaps/ security/ static/');
   } catch (err) {
     appendLog('error', 'SCRAPE', `Erro: ${err.message}`);
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = '📥 Download Código-Fonte (ZIP)';
+      const icon = btn.querySelector('.asb-icon');
+      const label = btn.querySelector('.asb-label');
+      if (label) label.textContent = 'Código-Fonte (ZIP)';
+      else btn.innerHTML = btn.innerHTML; // restore
     }
   }
 }
@@ -1980,6 +2322,331 @@ function installApp() {
   window.addEventListener('resize', resize);
   requestAnimationFrame(draw);
 })();
+
+// ═══════════════════════════════════════════════════════════════════
+// OSINT / INTERNET FOOTPRINT
+// ═══════════════════════════════════════════════════════════════════
+
+let osintData = null;
+
+function startOSINT() {
+  const targetUrl = auditResults?.projectUrl;
+  if (!targetUrl) {
+    alert('Execute uma auditoria primeiro para ter o alvo da varredura OSINT.');
+    return;
+  }
+
+  const section = document.getElementById('osintSection');
+  const progressWrap = document.getElementById('osintProgressWrap');
+  const progressLabel = document.getElementById('osintProgressLabel');
+  const progressFill = document.getElementById('osintProgressFill');
+  const stepsEl = document.getElementById('osintSteps');
+  const resultsEl = document.getElementById('osintResults');
+
+  if (!section) return;
+
+  // Show section, reset state
+  section.style.display = 'block';
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  progressWrap.style.display = 'block';
+  resultsEl.style.display = 'none';
+  stepsEl.innerHTML = '';
+  progressFill.style.width = '0%';
+  progressLabel.textContent = 'Conectando…';
+
+  const stepLabels = {
+    dns: '🔍 DNS',
+    certs: '🔒 Certs',
+    wayback: '🕰️ Wayback',
+    github: '🐙 GitHub',
+    hackernews: '📰 HN',
+    reddit: '🤖 Reddit',
+    duckduckgo: '🦆 DDG',
+    social: '📱 Social',
+    shodan: '🛰️ Shodan',
+  };
+
+  const stepOrder = Object.keys(stepLabels);
+  const stepDivs = {};
+  stepOrder.forEach(k => {
+    const d = document.createElement('span');
+    d.className = 'osint-step osint-step-wait';
+    d.textContent = stepLabels[k];
+    d.id = `osint-step-${k}`;
+    stepsEl.appendChild(d);
+    stepDivs[k] = d;
+  });
+
+  progressLabel.textContent = 'Iniciando varredura OSINT…';
+
+  fetch('/api/footprint', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url: targetUrl }),
+  }).then(res => {
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    function pump() {
+      return reader.read().then(({ done, value }) => {
+        if (done) return;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const evt = JSON.parse(line.slice(6));
+            handleOSINTEvent(evt);
+          } catch {}
+        }
+        return pump();
+      });
+    }
+    return pump();
+  }).catch(err => {
+    progressLabel.textContent = `Erro: ${err.message}`;
+  });
+
+  function handleOSINTEvent(evt) {
+    if (evt.type === 'start') {
+      progressLabel.textContent = `Varrendo: ${evt.domain}`;
+    } else if (evt.type === 'progress') {
+      const pct = Math.round((evt.done / evt.total) * 100);
+      progressFill.style.width = pct + '%';
+      progressLabel.textContent = evt.label;
+      if (stepDivs[evt.step]) {
+        stepDivs[evt.step].className = 'osint-step osint-step-running';
+      }
+    } else if (evt.type === 'step_done') {
+      if (stepDivs[evt.step]) {
+        stepDivs[evt.step].className = 'osint-step osint-step-done';
+      }
+    } else if (evt.type === 'complete') {
+      progressFill.style.width = '100%';
+      progressLabel.textContent = 'Varredura concluída!';
+      osintData = evt.results;
+      setTimeout(() => {
+        progressWrap.style.display = 'none';
+        resultsEl.style.display = 'block';
+        renderOSINTResults(evt.results);
+      }, 600);
+    } else if (evt.type === 'error') {
+      progressLabel.textContent = `Erro: ${evt.message}`;
+    }
+  }
+}
+
+function closeOSINT() {
+  const section = document.getElementById('osintSection');
+  if (section) section.style.display = 'none';
+}
+
+function switchOsintTab(tabName, btn) {
+  document.querySelectorAll('.osint-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.osint-tab-panel').forEach(p => { p.style.display = 'none'; });
+  if (btn) btn.classList.add('active');
+  const panel = document.getElementById(`osint-panel-${tabName}`);
+  if (panel) panel.style.display = 'block';
+}
+
+function renderOSINTResults(data) {
+  const domain = data.domain;
+
+  // Summary
+  const summary = document.getElementById('osintSummary');
+  if (summary) {
+    const socialFound = (data.social || []).filter(s => s.found).length;
+    const certsTotal = data.certs?.total || 0;
+    const waybackAvail = data.wayback?.available ? 'Disponível' : 'Não disponível';
+    const ghTotal = data.github?.total || 0;
+    const hnTotal = data.hackernews?.total || 0;
+    const redditTotal = data.reddit?.total || 0;
+
+    summary.innerHTML = `
+      <div class="osint-stat"><span class="osint-stat-val">${socialFound}</span><span class="osint-stat-lbl">Perfis Encontrados</span></div>
+      <div class="osint-stat"><span class="osint-stat-val">${certsTotal}</span><span class="osint-stat-lbl">Certificados SSL</span></div>
+      <div class="osint-stat"><span class="osint-stat-val">${waybackAvail}</span><span class="osint-stat-lbl">Wayback Machine</span></div>
+      <div class="osint-stat"><span class="osint-stat-val">${ghTotal}</span><span class="osint-stat-lbl">Menções GitHub</span></div>
+      <div class="osint-stat"><span class="osint-stat-val">${hnTotal}</span><span class="osint-stat-lbl">HackerNews</span></div>
+      <div class="osint-stat"><span class="osint-stat-val">${redditTotal}</span><span class="osint-stat-lbl">Reddit</span></div>
+    `;
+  }
+
+  // Tab: Social
+  const socialPanel = document.getElementById('osint-panel-social');
+  if (socialPanel) {
+    const probes = data.social || [];
+    const found = probes.filter(s => s.found);
+    const notFound = probes.filter(s => !s.found);
+    socialPanel.innerHTML = `
+      <h3 class="osint-panel-title">Presença em Redes Sociais — <em>${domain}</em></h3>
+      ${found.length ? `
+        <p class="osint-found-label">✅ Perfis encontrados (${found.length})</p>
+        <div class="osint-social-grid">
+          ${found.map(s => `
+            <a href="${s.url}" target="_blank" rel="noopener" class="osint-social-card osint-social-found">
+              <span class="osint-social-icon">${s.icon}</span>
+              <span class="osint-social-name">${s.name}</span>
+              <span class="osint-social-badge">HTTP ${s.status}</span>
+            </a>
+          `).join('')}
+        </div>` : '<p class="osint-empty">Nenhum perfil com resposta positiva encontrado.</p>'}
+      ${notFound.length ? `
+        <p class="osint-found-label muted" style="margin-top:16px">⚪ Não encontrados / sem resposta (${notFound.length})</p>
+        <div class="osint-social-grid muted">
+          ${notFound.map(s => `
+            <a href="${s.url}" target="_blank" rel="noopener" class="osint-social-card osint-social-missing">
+              <span class="osint-social-icon">${s.icon}</span>
+              <span class="osint-social-name">${s.name}</span>
+            </a>
+          `).join('')}
+        </div>` : ''}
+      ${data.dns ? `
+        <h4 class="osint-section-subtitle">🔍 Registros DNS</h4>
+        <div class="osint-dns-grid">
+          ${data.dns.a?.length ? `<div class="osint-dns-row"><strong>A:</strong> ${data.dns.a.join(', ')}</div>` : ''}
+          ${data.dns.aaaa?.length ? `<div class="osint-dns-row"><strong>AAAA:</strong> ${data.dns.aaaa.join(', ')}</div>` : ''}
+          ${data.dns.ns?.length ? `<div class="osint-dns-row"><strong>NS:</strong> ${data.dns.ns.join(', ')}</div>` : ''}
+          ${data.dns.mx?.length ? `<div class="osint-dns-row"><strong>MX:</strong> ${data.dns.mx.join(', ')}</div>` : ''}
+          ${data.dns.txt?.length ? `<div class="osint-dns-row"><strong>TXT:</strong> <span class="osint-txt-list">${data.dns.txt.map(t => `<code>${t}</code>`).join(' ')}</span></div>` : ''}
+        </div>` : ''}
+    `;
+  }
+
+  // Tab: Mentions
+  const mentionsPanel = document.getElementById('osint-panel-mentions');
+  if (mentionsPanel) {
+    const hn = data.hackernews?.items || [];
+    const reddit = data.reddit?.items || [];
+    const ddg = data.duckduckgo?.results || [];
+    const wb = data.wayback;
+
+    mentionsPanel.innerHTML = `
+      ${wb ? `
+        <div class="osint-wayback-card">
+          <h4>🕰️ Wayback Machine</h4>
+          ${wb.available
+            ? `<p>Snapshot mais recente: <a href="${wb.snapshotUrl}" target="_blank" rel="noopener">${wb.timestamp}</a></p>`
+            : '<p>Nenhum snapshot disponível.</p>'}
+          ${wb.recentSnaps?.length ? `
+            <div class="osint-snaps">
+              ${wb.recentSnaps.map(s => `<a href="${s.archiveUrl}" target="_blank" rel="noopener" class="osint-snap-link">${s.timestamp.slice(0,8)}</a>`).join('')}
+            </div>` : ''}
+        </div>` : ''}
+
+      ${hn.length ? `
+        <h4 class="osint-section-subtitle">📰 HackerNews (${data.hackernews.total} resultados)</h4>
+        <div class="osint-mention-list">
+          ${hn.map(h => `
+            <div class="osint-mention-card">
+              <a href="${h.hnUrl}" target="_blank" rel="noopener" class="osint-mention-title">${h.title || 'Sem título'}</a>
+              <div class="osint-mention-meta">
+                <span>▲ ${h.points || 0}</span>
+                <span>💬 ${h.comments || 0}</span>
+                <span>👤 ${h.author || ''}</span>
+                <span>${h.date ? new Date(h.date).toLocaleDateString('pt-BR') : ''}</span>
+              </div>
+            </div>`).join('')}
+        </div>` : '<p class="osint-empty">Sem menções no HackerNews.</p>'}
+
+      ${reddit.length ? `
+        <h4 class="osint-section-subtitle">🤖 Reddit (${data.reddit.total} resultados)</h4>
+        <div class="osint-mention-list">
+          ${reddit.map(r => `
+            <div class="osint-mention-card">
+              <a href="${r.url}" target="_blank" rel="noopener" class="osint-mention-title">${r.title || 'Sem título'}</a>
+              <div class="osint-mention-meta">
+                <span>r/${r.subreddit}</span>
+                <span>⬆ ${r.score || 0}</span>
+                <span>💬 ${r.comments || 0}</span>
+              </div>
+            </div>`).join('')}
+        </div>` : '<p class="osint-empty">Sem menções no Reddit.</p>'}
+
+      ${ddg.length ? `
+        <h4 class="osint-section-subtitle">🦆 DuckDuckGo — Resultados Gerais</h4>
+        <div class="osint-mention-list">
+          ${ddg.map(d => `
+            <div class="osint-mention-card">
+              <a href="${d.url}" target="_blank" rel="noopener" class="osint-mention-title">${d.title || d.url}</a>
+              ${d.snippet ? `<p class="osint-mention-snippet">${d.snippet}</p>` : ''}
+            </div>`).join('')}
+        </div>` : ''}
+    `;
+  }
+
+  // Tab: Technical
+  const techPanel = document.getElementById('osint-panel-tech');
+  if (techPanel) {
+    const certs = data.certs;
+    const gh = data.github;
+
+    techPanel.innerHTML = `
+      ${certs ? `
+        <h4 class="osint-section-subtitle">🔒 Certificados SSL (crt.sh) — ${certs.total} certificados</h4>
+        ${certs.subdomains?.length ? `
+          <div class="osint-subdomains">
+            <strong>Subdomínios descobertos (${certs.subdomains.length}):</strong>
+            <div class="osint-subdomain-list">
+              ${certs.subdomains.map(s => `<code class="osint-subdomain">${s}</code>`).join('')}
+            </div>
+          </div>` : ''}
+        ${certs.certs?.length ? `
+          <div class="osint-certs-list">
+            ${certs.certs.slice(0, 6).map(c => `
+              <div class="osint-cert-card">
+                <div class="osint-cert-cn">${c.commonName}</div>
+                <div class="osint-cert-meta">Emissor: ${c.issuer} · Válido: ${c.notBefore ? c.notBefore.slice(0,10) : '?'} → ${c.notAfter ? c.notAfter.slice(0,10) : '?'}</div>
+              </div>`).join('')}
+          </div>` : ''}` : ''}
+
+      ${gh ? `
+        <h4 class="osint-section-subtitle">🐙 GitHub — ${gh.total} menções em código</h4>
+        ${gh.items?.length ? `
+          <div class="osint-mention-list">
+            ${gh.items.map(i => `
+              <div class="osint-mention-card">
+                <a href="${i.fileUrl}" target="_blank" rel="noopener" class="osint-mention-title">${i.repo} / ${i.name}</a>
+                <div class="osint-mention-meta">
+                  ${i.language ? `<span>${i.language}</span>` : ''}
+                  ${i.stars != null ? `<span>⭐ ${i.stars}</span>` : ''}
+                  <span>📄 ${i.path}</span>
+                </div>
+              </div>`).join('')}
+          </div>` : '<p class="osint-empty">Nenhuma menção encontrada no GitHub.</p>'}` : ''}
+    `;
+  }
+
+  // Tab: Dorks
+  const dorksPanel = document.getElementById('osint-panel-dorks');
+  if (dorksPanel) {
+    const dorks = data.dorks || [];
+    const categories = [...new Set(dorks.map(d => d.category))];
+
+    dorksPanel.innerHTML = `
+      <p class="osint-dorks-intro">Clique em qualquer link para executar a busca no buscador desejado. Use com responsabilidade.</p>
+      ${categories.map(cat => `
+        <h4 class="osint-section-subtitle">${cat}</h4>
+        <div class="osint-dorks-grid">
+          ${dorks.filter(d => d.category === cat).map(d => `
+            <div class="osint-dork-card">
+              <div class="osint-dork-name">${d.name}</div>
+              <code class="osint-dork-query">${d.query}</code>
+              <div class="osint-dork-links">
+                ${d.google ? `<a href="${d.google}" target="_blank" rel="noopener" class="osint-dork-link osint-dork-google">Google</a>` : ''}
+                ${d.bing ? `<a href="${d.bing}" target="_blank" rel="noopener" class="osint-dork-link osint-dork-bing">Bing</a>` : ''}
+                ${d.ddg ? `<a href="${d.ddg}" target="_blank" rel="noopener" class="osint-dork-link osint-dork-ddg">DDG</a>` : ''}
+              </div>
+            </div>`).join('')}
+        </div>`).join('')}
+    `;
+  }
+
+  // Activate first tab
+  switchOsintTab('social', document.querySelector('.osint-tab[data-tab="social"]'));
+}
 
 // Register Service Worker
 if ('serviceWorker' in navigator) {

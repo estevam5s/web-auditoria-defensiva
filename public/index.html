@@ -116,6 +116,66 @@
         <span class="badge badge-ai" onclick="showAIChat()" style="cursor:pointer;">🤖 AI: Grok</span>
         <span class="badge badge-bounty" onclick="openBugBounty()" style="cursor:pointer;">🐛 Bug Bounty</span>
         <a class="badge badge-academy" href="/learn" style="cursor:pointer;text-decoration:none;">🎓 Academia</a>
+
+        <!-- Notification Bell -->
+        <div class="notif-bell-wrap" id="notifBellWrap">
+          <button class="notif-bell-btn" id="notifBellBtn" onclick="toggleNotifPanel()" title="Notificações e Sons">
+            <svg id="notifBellIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <span class="notif-bell-dot" id="notifBellDot" style="display:none;"></span>
+          </button>
+
+          <!-- Notification Settings Popover -->
+          <div class="notif-panel" id="notifPanel" style="display:none;">
+            <div class="notif-panel-header">
+              <span>🔔 Notificações</span>
+              <button class="notif-panel-close" onclick="toggleNotifPanel()">✕</button>
+            </div>
+
+            <div class="notif-row">
+              <div class="notif-row-info">
+                <span class="notif-row-label">Notificações do Sistema</span>
+                <span class="notif-row-sub" id="notifPermText">Clique para ativar</span>
+              </div>
+              <label class="notif-toggle">
+                <input type="checkbox" id="chkNotifSystem" onchange="onNotifSystemToggle(this)">
+                <span class="notif-toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="notif-row">
+              <div class="notif-row-info">
+                <span class="notif-row-label">Sons de Alerta</span>
+                <span class="notif-row-sub">Início, conclusão e erros</span>
+              </div>
+              <label class="notif-toggle">
+                <input type="checkbox" id="chkNotifSound" onchange="onNotifSoundToggle(this)" checked>
+                <span class="notif-toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="notif-row notif-vol-row" id="notifVolRow">
+              <span class="notif-row-label">Volume</span>
+              <input type="range" id="notifVolume" min="0" max="100" value="60" class="notif-vol-slider" oninput="onVolumeChange(this)">
+              <span class="notif-vol-val" id="notifVolVal">60%</span>
+            </div>
+
+            <div class="notif-preview-row">
+              <button class="notif-preview-btn" onclick="notifPreview('start')" title="Testar som de início">
+                <span>▶</span> Início
+              </button>
+              <button class="notif-preview-btn" onclick="notifPreview('complete')" title="Testar som de conclusão">
+                <span>▶</span> Concluído
+              </button>
+              <button class="notif-preview-btn" onclick="notifPreview('error')" title="Testar som de erro">
+                <span>▶</span> Erro
+              </button>
+            </div>
+          </div>
+        </div>
+
         <button class="btn-install" id="btnInstall" onclick="installApp()" style="display: none;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -666,6 +726,48 @@
       </div><!-- /.audit-main -->
     </div><!-- /.audit-layout -->
 
+    <!-- OSINT / Internet Footprint Section -->
+    <section class="osint-section" id="osintSection" style="display:none;">
+      <div class="osint-header">
+        <div class="osint-title-row">
+          <span class="osint-icon">🌐</span>
+          <div>
+            <h2 class="osint-title">Varredura OSINT — Pegada Digital</h2>
+            <p class="osint-subtitle">Descubra onde o site aparece na internet, redes sociais, repositórios e menções públicas</p>
+          </div>
+        </div>
+        <button class="osint-close-btn" onclick="closeOSINT()" title="Fechar">✕</button>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="osint-progress-wrap" id="osintProgressWrap">
+        <div class="osint-progress-label" id="osintProgressLabel">Iniciando varredura…</div>
+        <div class="osint-progress-bar"><div class="osint-progress-fill" id="osintProgressFill" style="width:0%"></div></div>
+        <div class="osint-steps" id="osintSteps"></div>
+      </div>
+
+      <!-- Results -->
+      <div class="osint-results" id="osintResults" style="display:none;">
+
+        <!-- Summary row -->
+        <div class="osint-summary" id="osintSummary"></div>
+
+        <!-- Tabs -->
+        <div class="osint-tabs">
+          <button class="osint-tab active" data-tab="social" onclick="switchOsintTab('social', this)">📱 Redes Sociais</button>
+          <button class="osint-tab" data-tab="mentions" onclick="switchOsintTab('mentions', this)">💬 Menções</button>
+          <button class="osint-tab" data-tab="tech" onclick="switchOsintTab('tech', this)">💻 Técnico</button>
+          <button class="osint-tab" data-tab="dorks" onclick="switchOsintTab('dorks', this)">🔍 Google Dorks</button>
+        </div>
+
+        <!-- Tab panels -->
+        <div class="osint-tab-panel" id="osint-panel-social"></div>
+        <div class="osint-tab-panel" id="osint-panel-mentions" style="display:none;"></div>
+        <div class="osint-tab-panel" id="osint-panel-tech" style="display:none;"></div>
+        <div class="osint-tab-panel" id="osint-panel-dorks" style="display:none;"></div>
+      </div>
+    </section>
+
     <!-- AI Chat Section -->
     <section class="ai-chat-section" id="aiChatSection" style="display: none;">
       <div class="ai-chat-container">
@@ -1069,9 +1171,16 @@
         </span>
         <span class="asb-label">Terminal Segurança</span>
       </button>
+      <button class="asb-btn asb-btn-osint" id="btnOSINT" onclick="startOSINT()" style="display:none" title="Varredura OSINT — Pegada Digital">
+        <span class="asb-icon">🌐</span>
+        <span class="asb-label">Varredura OSINT</span>
+      </button>
 
     </nav>
   </aside>
+
+  <!-- Toast notification container -->
+  <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 
   <script src="app.js"></script>
 </body>
