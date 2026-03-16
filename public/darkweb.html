@@ -1253,8 +1253,14 @@ async function init() {
     // Done — render
     setTimeout(() => {
       $('loadingScreen').style.display = 'none';
-      $('mainContent').style.display = '';
-      render(intel);
+      $('mainContent').style.display = 'block';
+      try {
+        render(intel);
+      } catch (renderErr) {
+        console.error('[DarkWeb] Render error:', renderErr);
+        $('mainContent').style.display = 'none';
+        showError(`Erro ao renderizar relatório: ${renderErr.message}`);
+      }
     }, 600);
 
   } catch (err) {
