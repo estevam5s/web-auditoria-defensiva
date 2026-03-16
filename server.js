@@ -238,8 +238,10 @@ function storeAudit(data, userIp = null, userAgent = null) {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────
-function resolveAuditData(auditId, auditData) {
-  return auditData || (auditId ? auditStore.get(auditId) : null);
+async function resolveAuditData(auditId, auditData) {
+  if (auditData) return auditData;
+  if (!auditId) return null;
+  return await resolveAudit(auditId);
 }
 
 // ─── API Routes ───────────────────────────────────────────────────
@@ -388,7 +390,7 @@ app.post('/api/scrape', async (req, res) => {
   if (!targetUrl.startsWith('http')) targetUrl = 'https://' + targetUrl;
 
   // Optionally embed audit results inside the ZIP
-  const auditData = auditId ? auditStore.get(auditId) : null;
+  const auditData = auditId ? await resolveAudit(auditId) : null;
 
   try {
     const domain   = targetUrl.replace(/https?:\/\//, '').replace(/[^a-zA-Z0-9.-]/g, '-').slice(0, 40);
@@ -406,9 +408,9 @@ app.post('/api/scrape', async (req, res) => {
 });
 
 // ─── Audit Info Route (detailed page for developer) ──────────────
-app.get('/api/audit/:id', (req, res) => {
-  const data = auditStore.get(req.params.id);
-  if (!data) return res.status(404).json({ error: 'Audit not found. Re-run the audit first.' });
+app.get('/api/audit/:id', async (req, res) => {
+  const data = await resolveAudit(req.params.id);
+  if (!data) return res.status(404).json({ error: 'Auditoria não encontrada. Execute novamente ou verifique o histórico.' });
   res.json(data);
 });
 
@@ -439,7 +441,7 @@ app.get('/terminal/:auditId', (req, res) => {
 
 // Terminal AI endpoint — calls Groq and returns analysis
 app.post('/api/terminal/:auditId/ai', async (req, res) => {
-  const data = auditStore.get(req.params.auditId);
+  const data = await resolveAudit(req.params.auditId);
   if (!data) return res.status(404).json({ error: 'Auditoria não encontrada. Execute novamente.' });
 
   const { question } = req.body;
@@ -719,7 +721,7 @@ app.post('/api/ai/chat', aiLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Question is required' });
   }
 
-  const auditDataToUse = resolveAuditData(auditId, auditData);
+  const auditDataToUse = await resolveAuditData(auditId, auditData);
   if (!auditDataToUse) {
     return res.status(404).json({ error: 'Audit not found. Please run an audit first.' });
   }
@@ -753,7 +755,7 @@ app.post('/api/ai/chat/simple', aiLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Question is required' });
   }
 
-  const auditDataToUse = resolveAuditData(auditId, auditData);
+  const auditDataToUse = await resolveAuditData(auditId, auditData);
   if (!auditDataToUse) {
     return res.status(404).json({ error: 'Audit not found. Please run an audit first.' });
   }
@@ -770,7 +772,7 @@ app.post('/api/ai/chat/simple', aiLimiter, async (req, res) => {
 app.post('/api/ai/fix-prompt', aiLimiter, async (req, res) => {
   const { auditId, auditData } = req.body;
 
-  const auditDataToUse = resolveAuditData(auditId, auditData);
+  const auditDataToUse = await resolveAuditData(auditId, auditData);
   if (!auditDataToUse) {
     return res.status(404).json({ error: 'Audit not found. Run an audit first.' });
   }
@@ -784,10 +786,10 @@ app.post('/api/ai/fix-prompt', aiLimiter, async (req, res) => {
 });
 
 // ─── Get Audit Full Data for AI ─────────────────────────────────────
-app.get('/api/ai/audit/:id', (req, res) => {
-  const data = auditStore.get(req.params.id);
+app.get('/api/ai/audit/:id', async (req, res) => {
+  const data = await resolveAudit(req.params.id);
   if (!data) {
-    return res.status(404).json({ error: 'Audit not found' });
+    return res.status(404).json({ error: 'Auditoria não encontrada.' });
   }
   res.json({
     auditId: data.evidence?.auditId,
@@ -814,9 +816,9 @@ app.get('/iso/:id', (req, res) => {
 });
 
 // Export checklist as standalone HTML (no server dependency)
-app.get('/api/checklist/:id/export', (req, res) => {
+app.get('/api/checklist/:id/export', async (req, res) => {
   const { id } = req.params;
-  const data = auditStore.get(id);
+  const data = await resolveAudit(id);
   if (!data) {
     return res.status(404).json({ error: 'Auditoria não encontrada. Execute uma nova auditoria.' });
   }
@@ -920,7 +922,7 @@ app.get('/bugbounty', (req, res) => {
 // Generate a complete bug bounty report from audit data
 app.post('/api/bugbounty/generate', async (req, res) => {
   const { auditId, auditData, reporterInfo } = req.body;
-  const auditDataToUse = resolveAuditData(auditId, auditData);
+  const auditDataToUse = await resolveAuditData(auditId, auditData);
   if (!auditDataToUse) return res.status(404).json({ error: 'Audit not found. Run an audit first.' });
 
   try {
@@ -1082,7 +1084,7 @@ app.get('/scripts/:id', (req, res) => {
 app.post('/api/ai/generate-scripts', aiLimiter, async (req, res) => {
   const { auditId, auditData } = req.body;
 
-  const auditDataToUse = resolveAuditData(auditId, auditData);
+  const auditDataToUse = await resolveAuditData(auditId, auditData);
   if (!auditDataToUse) {
     return res.status(404).json({ error: 'Audit not found. Run an audit first.' });
   }
