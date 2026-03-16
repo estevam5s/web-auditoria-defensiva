@@ -574,6 +574,12 @@
             oninput="document.getElementById('delayVal').textContent=this.value">
         </div>
         <div class="setting-item">
+          <label>Workers concorrentes: <span id="concurrencyVal">2</span></label>
+          <input type="range" class="slider" id="concurrencySlider" min="1" max="5" value="2" step="1"
+            oninput="document.getElementById('concurrencyVal').textContent=this.value">
+          <span style="font-size:.78rem;color:var(--muted)">Cada worker usa IP e UA distintos</span>
+        </div>
+        <div class="setting-item">
           <label>Parar ao encontrar credencial válida</label>
           <div class="toggle-wrap">
             <label class="toggle">
@@ -581,6 +587,16 @@
               <span class="toggle-slider"></span>
             </label>
             <span id="stopLabel" style="font-size:.82rem;color:var(--muted)">Ativado — eficiência máxima</span>
+          </div>
+        </div>
+        <div class="setting-item">
+          <label>Delay adaptativo (anti-bloqueio)</label>
+          <div class="toggle-wrap">
+            <label class="toggle">
+              <input type="checkbox" id="adaptiveDelay" checked>
+              <span class="toggle-slider"></span>
+            </label>
+            <span id="adaptiveLabel" style="font-size:.82rem;color:var(--muted)">Ativado — recua ao detectar bloqueio</span>
           </div>
         </div>
       </div>
@@ -733,6 +749,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('stopLabel').textContent = e.target.checked
       ? 'Ativado — eficiência máxima'
       : 'Desativado — testa toda a lista';
+  });
+
+  document.getElementById('adaptiveDelay').addEventListener('change', e => {
+    document.getElementById('adaptiveLabel').textContent = e.target.checked
+      ? 'Ativado — recua ao detectar bloqueio'
+      : 'Desativado — delay fixo';
   });
 });
 
@@ -896,7 +918,8 @@ async function startAttack() {
   log('info', `╚══════════════════════════════════════════════╝`);
   log('system', `Alvo: ${selectedUrl}`);
   log('system', `Wordlist: ${wordlistType === 'builtin' ? 'Padrão integrada' : 'Arquivo personalizado'}`);
-  log('system', `Delay: ${document.getElementById('delaySlider').value}ms por tentativa`);
+  log('system', `Delay: ${document.getElementById('delaySlider').value}ms por tentativa | Workers: ${document.getElementById('concurrencySlider').value}`);
+  log('system', `Delay adaptativo: ${document.getElementById('adaptiveDelay').checked ? 'Ativado' : 'Desativado'}`);
   log('system', `────────────────────────────────────────────────`);
 
   try {
@@ -919,8 +942,10 @@ async function startAttack() {
         loginUrl: selectedUrl,
         wordlistType:    effectiveWordlistType,
         wordlistContent,
-        delayMs: parseInt(document.getElementById('delaySlider').value),
+        delayMs:       parseInt(document.getElementById('delaySlider').value),
         stopOnSuccess: document.getElementById('stopOnSuccess').checked,
+        concurrency:   parseInt(document.getElementById('concurrencySlider').value),
+        adaptiveDelay: document.getElementById('adaptiveDelay').checked,
       }),
     });
 
@@ -992,7 +1017,7 @@ function handleEvent(evt) {
     }
 
     case 'start':
-      log('info', `► Iniciando — tipo: ${evt.endpointType} • delay: ${evt.delayMs}ms • ${evt.total} credenciais`);
+      log('info', `► Iniciando — tipo: ${evt.endpointType} • delay: ${evt.delayMs}ms • workers: ${evt.concurrency || 1} • ${evt.total} credenciais`);
       break;
 
     case 'attempt': {

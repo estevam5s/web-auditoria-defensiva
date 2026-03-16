@@ -1367,7 +1367,7 @@ app.get('/api/bruteforce/info/:id', async (req, res) => {
 
 // Prepare session — store config, return sessionId
 app.post('/api/bruteforce/prepare', express.json({ limit: '3mb' }), async (req, res) => {
-  const { auditId, loginUrl, wordlistType, wordlistContent, delayMs, stopOnSuccess } = req.body || {};
+  const { auditId, loginUrl, wordlistType, wordlistContent, delayMs, stopOnSuccess, concurrency, adaptiveDelay } = req.body || {};
   if (!loginUrl) return res.status(400).json({ error: 'loginUrl obrigatório.' });
 
   const data = auditId ? await resolveAudit(auditId) : null;
@@ -1391,6 +1391,8 @@ app.post('/api/bruteforce/prepare', express.json({ limit: '3mb' }), async (req, 
     anonKey,
     delayMs:       Math.max(50, Math.min(2000, Number(delayMs) || 150)),
     stopOnSuccess: stopOnSuccess !== false,
+    concurrency:   Math.max(1, Math.min(5, Number(concurrency) || 2)),
+    adaptiveDelay: adaptiveDelay !== false,
     createdAt:     Date.now(),
   });
 
