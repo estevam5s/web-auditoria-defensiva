@@ -1,10 +1,9 @@
 'use strict';
 
 /* ═══════════════════════════════════════════════════════════════════
-   BRUTE FORCE RESILIENCE TEST ENGINE
-   Testa a resistência de endpoints de login contra ataques de força
-   bruta. Detecta rate limiting, bloqueio de conta e credenciais fracas.
-   Usa apenas módulos nativos do Node.js.
+   BRUTE FORCE RESILIENCE TEST ENGINE v2
+   Detecta o endpoint real de autenticação a partir de uma URL de login,
+   testa credenciais e detecta rate limiting, lockout e credenciais fracas.
    ═══════════════════════════════════════════════════════════════════ */
 
 const http         = require('http');
@@ -99,8 +98,9 @@ function parseWordlist(text, defaultUser = 'admin@target.com') {
     .split('\n')
     .map(l => l.trim())
     .filter(l => l && !l.startsWith('#') && !l.startsWith('//'))
-    .slice(0, 1000)            // cap em 1000 entradas por segurança
+    .slice(0, 1000)
     .map(line => {
+      // Split on first colon only — handles email:password correctly
       const colonIdx = line.indexOf(':');
       if (colonIdx > 0 && colonIdx < line.length - 1) {
         return { user: line.slice(0, colonIdx), pass: line.slice(colonIdx + 1) };
@@ -109,80 +109,348 @@ function parseWordlist(text, defaultUser = 'admin@target.com') {
     });
 }
 
+// ── HTTP GET utility (nativo, sem dependências externas) ─────────
+function httpGet(url, timeoutMs = 10000) {
+  return new Promise((resolve, reject) => {
+    let parsed;
+    try { parsed = new URL(url); } catch (e) { return reject(e); }
+
+    const lib = parsed.protocol === 'https:' ? https : http;
+    const req = lib.request({
+      hostname: parsed.hostname,
+      port:     parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
+      path:     parsed.pathname + (parsed.search || ''),
+      method:   'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; SupabaseGuard/2.0)',
+        'Accept':     'text/html,application/json,*/*',
+      },
+      timeout: timeoutMs,
+    }, res => {
+      let body = '';
+      res.on('data', d => { if (body.length < 200000) body += d; });
+      res.on('end', () => resolve({ status: res.statusCode, body, headers: res.headers }));
+    });
+
+    req.on('timeout', () => { req.destroy(); reject(new Error('TIMEOUT')); });
+    req.on('error',  reject);
+    req.end();
+  });
+}
+
 // ── Detecta o tipo de endpoint de login ─────────────────────────
 function detectEndpointType(urlStr) {
-  if (urlStr.includes('/auth/v1/token'))  return 'supabase_token';
-  if (urlStr.includes('/auth/v1/'))       return 'supabase_auth';
-  if (urlStr.includes('/api/auth'))       return 'api_json';
-  if (urlStr.includes('/api/login'))      return 'api_json';
-  if (urlStr.includes('.json'))           return 'api_json';
+  if (urlStr.includes('/auth/v1/token'))               return 'supabase_token';
+  if (urlStr.includes('/auth/v1/'))                    return 'supabase_auth';
+  if (urlStr.includes('/api/auth/callback/credentials')) return 'nextauth';
+  if (urlStr.includes('/api/auth/signin'))             return 'nextauth';
+  if (urlStr.includes('/api/auth'))                    return 'api_json';
+  if (urlStr.includes('/api/login'))                   return 'api_json';
+  if (urlStr.includes('/api/session'))                 return 'api_json';
+  if (urlStr.includes('/api/user'))                    return 'api_json';
+  if (urlStr.includes('.json'))                        return 'api_json';
   return 'form';
 }
 
+// ── Resolve o endpoint real de autenticação a partir de uma URL de página ──
+// Quando o usuário informa uma URL de página (/login, /signin), tenta
+// descobrir automaticamente o endpoint de API real por:
+//   1. Buscar Supabase URL no HTML/scripts inline
+//   2. Detectar Next.js e padrão NextAuth
+//   3. Parsear form action
+//   4. Buscar chamadas fetch/axios no HTML inline
+//   5. Fallback para padrões comuns do domínio
+async function resolveLoginEndpoint(urlStr, emit) {
+  const raw = urlStr.startsWith('http') ? urlStr : 'https://' + urlStr;
+  let parsed;
+  try { parsed = new URL(raw); } catch { return { url: raw, type: 'form', detected: 'unknown' }; }
+
+  const origin = parsed.origin;
+  const path   = parsed.pathname;
+
+  // Já parece ser um endpoint de API — usar diretamente
+  if (
+    path.includes('/api/')    ||
+    path.includes('/auth/v1/')||
+    path.endsWith('.json')    ||
+    parsed.search.includes('grant_type=')
+  ) {
+    return { url: parsed.href, type: detectEndpointType(parsed.href), detected: 'direct' };
+  }
+
+  emit?.({ type: 'log', level: 'info', message: `[BF] Analisando página de login: ${parsed.href}` });
+
+  try {
+    const page = await httpGet(parsed.href, 8000);
+    const html = page.body;
+
+    // ── 1. Busca URL do Supabase (máxima prioridade) ──────────────
+    const supabaseMatch = html.match(/https?:\/\/([a-z0-9-]+)\.supabase\.co/);
+    if (supabaseMatch) {
+      const supabaseAuthUrl = `https://${supabaseMatch[1]}.supabase.co/auth/v1/token?grant_type=password`;
+      emit?.({ type: 'log', level: 'info', message: `[BF] Supabase detectado no bundle → ${supabaseAuthUrl}` });
+      return { url: supabaseAuthUrl, type: 'supabase_token', detected: 'supabase' };
+    }
+
+    // ── 2. Detecta Next.js ────────────────────────────────────────
+    const isNextJs = html.includes('__NEXT_DATA__') || html.includes('/_next/static') || html.includes('next/dist');
+
+    // ── 3. Busca scripts externos e inspeciona o primeiro ─────────
+    const scriptSrcs = [];
+    const scriptRegex = /<script[^>]+src=["']([^"']+\.js[^"']*)["']/gi;
+    let scriptMatch;
+    while ((scriptMatch = scriptRegex.exec(html)) !== null) {
+      let src = scriptMatch[1].split('?')[0];
+      if (src.startsWith('//'))  src = 'https:' + src;
+      else if (src.startsWith('/')) src = origin + src;
+      else if (!src.startsWith('http')) src = origin + '/' + src;
+      scriptSrcs.push(src);
+      if (scriptSrcs.length >= 5) break; // limite: inspecionar só os primeiros 5
+    }
+
+    for (const scriptUrl of scriptSrcs) {
+      try {
+        const scriptRes = await httpGet(scriptUrl, 6000);
+        const code = scriptRes.body;
+        // Supabase URL no bundle
+        const sbMatch = code.match(/https?:\/\/([a-z0-9-]+)\.supabase\.co/);
+        if (sbMatch) {
+          const supabaseAuthUrl = `https://${sbMatch[1]}.supabase.co/auth/v1/token?grant_type=password`;
+          emit?.({ type: 'log', level: 'info', message: `[BF] Supabase encontrado em ${scriptUrl} → ${supabaseAuthUrl}` });
+          return { url: supabaseAuthUrl, type: 'supabase_token', detected: 'supabase_bundle' };
+        }
+      } catch { /* continua */ }
+    }
+
+    // ── 4. Busca form action no HTML ──────────────────────────────
+    const formMatch =
+      html.match(/<form[^>]+action=["']([^"'#][^"']*)["'][^>]*method=["']post["']/i) ||
+      html.match(/<form[^>]+method=["']post["'][^>]+action=["']([^"'#][^"']*)["']/i);
+    if (formMatch) {
+      let action = formMatch[1];
+      if (!action.startsWith('http')) action = origin + (action.startsWith('/') ? '' : '/') + action;
+      const type = detectEndpointType(action);
+      emit?.({ type: 'log', level: 'info', message: `[BF] Form action detectado → ${action} (${type})` });
+      return { url: action, type };
+    }
+
+    // ── 5. Busca chamada fetch/axios inline ───────────────────────
+    const fetchMatch = html.match(/(?:fetch|axios\.post)\s*\(\s*['"`]([^'"`]*(?:login|auth|signin|session)[^'"`]*)['"`]/i);
+    if (fetchMatch) {
+      let apiUrl = fetchMatch[1];
+      if (!apiUrl.startsWith('http')) apiUrl = origin + (apiUrl.startsWith('/') ? '' : '/') + apiUrl;
+      emit?.({ type: 'log', level: 'info', message: `[BF] API call detectado no HTML → ${apiUrl}` });
+      return { url: apiUrl, type: 'api_json', detected: 'fetch_inline' };
+    }
+
+    // ── 6. Next.js detectado → tentar NextAuth ────────────────────
+    if (isNextJs) {
+      const nextAuthUrl = `${origin}/api/auth/callback/credentials`;
+      emit?.({ type: 'log', level: 'info', message: `[BF] Next.js detectado → tentando NextAuth: ${nextAuthUrl}` });
+      return { url: nextAuthUrl, type: 'nextauth', detected: 'nextjs', origin };
+    }
+
+  } catch (err) {
+    emit?.({ type: 'log', level: 'warn', message: `[BF] Falha ao inspecionar página: ${err.message}` });
+  }
+
+  // ── 7. Fallback: padrões comuns baseados no domínio ──────────────
+  emit?.({ type: 'log', level: 'warn', message: `[BF] Usando padrão genérico: ${origin}/api/login` });
+  return {
+    url:       `${origin}/api/login`,
+    type:      'api_json',
+    detected:  'fallback',
+    candidates: [
+      `${origin}/api/login`,
+      `${origin}/api/auth/login`,
+      `${origin}/api/signin`,
+      `${origin}/api/users/login`,
+      raw, // também testa a URL original
+    ],
+  };
+}
+
+// ── Obtém CSRF token do NextAuth ─────────────────────────────────
+async function getNextAuthCsrf(origin) {
+  try {
+    const res = await httpGet(`${origin}/api/auth/csrf`, 5000);
+    if (res.status === 200) {
+      const json = JSON.parse(res.body);
+      const cookie = res.headers['set-cookie'];
+      return {
+        csrfToken: json.csrfToken || '',
+        cookie: Array.isArray(cookie) ? cookie.join('; ') : (cookie || ''),
+      };
+    }
+  } catch { /* csrf não disponível */ }
+  return null;
+}
+
 // ── Monta payload e headers para cada tipo ───────────────────────
-function buildPayload(credential, endpointType) {
+function buildPayload(credential, endpointType, csrfData) {
   if (endpointType === 'supabase_token' || endpointType === 'supabase_auth') {
     return {
       contentType: 'application/json',
       body: JSON.stringify({ email: credential.user, password: credential.pass }),
     };
   }
+
+  if (endpointType === 'nextauth') {
+    // NextAuth requer o csrfToken no body
+    const params = new URLSearchParams({
+      csrfToken: csrfData?.csrfToken || '',
+      callbackUrl: '/',
+      json: 'true',
+      email: credential.user,
+      username: credential.user,
+      password: credential.pass,
+    });
+    return {
+      contentType: 'application/x-www-form-urlencoded',
+      body: params.toString(),
+      csrfCookie: csrfData?.cookie || '',
+    };
+  }
+
   if (endpointType === 'api_json') {
     return {
       contentType: 'application/json',
-      body: JSON.stringify({ username: credential.user, email: credential.user, password: credential.pass }),
+      body: JSON.stringify({
+        email:    credential.user,
+        username: credential.user,
+        login:    credential.user,
+        password: credential.pass,
+      }),
     };
   }
+
   // form-urlencoded genérico
-  const body = `username=${encodeURIComponent(credential.user)}&email=${encodeURIComponent(credential.user)}&password=${encodeURIComponent(credential.pass)}`;
-  return { contentType: 'application/x-www-form-urlencoded', body };
+  const params = new URLSearchParams({
+    username: credential.user,
+    email:    credential.user,
+    login:    credential.user,
+    password: credential.pass,
+  });
+  return { contentType: 'application/x-www-form-urlencoded', body: params.toString() };
 }
 
 // ── Detecta se a resposta indica sucesso de autenticação ─────────
+// Muito mais preciso que a versão anterior — evita falsos positivos
 function isSuccess(status, body, headers) {
+  const contentType = (headers?.['content-type'] || '').toLowerCase();
+  const setCookie   = headers?.['set-cookie'];
+  const location    = headers?.['location'] || '';
+
+  // ── Respostas 200/201 ──────────────────────────────────────────
   if (status === 200 || status === 201) {
-    try {
-      const json = JSON.parse(body);
-      if (json.access_token || json.token || json.jwt || json.auth_token) return true;
-      if (json.session && (json.session.access_token || json.session.user)) return true;
-      if (json.data && json.data.session) return true;
-      if (json.user && (json.user.id || json.user.email) && !json.error) return true;
-    } catch { /* not JSON — check raw */ }
-    if (body.includes('access_token') || body.includes('Bearer ')) return true;
-    // Form response with no error keyword is likely success
-    if (!body.includes('Invalid') && !body.includes('incorrect') &&
-        !body.includes('error') && !body.includes('fail') && body.length < 500) return true;
+    const isJson = contentType.includes('application/json') ||
+                   body.trimStart().startsWith('{') ||
+                   body.trimStart().startsWith('[');
+
+    if (isJson) {
+      try {
+        const json = JSON.parse(body);
+
+        // ── Falha explícita (erro no JSON) ────────────────────────
+        if (json.error)      return false;
+        if (json.error_code) return false;
+        if (json.code === 'invalid_credentials') return false;
+        if (json.code === 'invalid_login_credentials') return false;
+        if (typeof json.message === 'string' &&
+            /invalid|incorrect|wrong|unauthorized|bad credential|invalid password|not found|does not exist/i
+            .test(json.message)) return false;
+        if (typeof json.msg === 'string' &&
+            /invalid|incorrect|wrong|unauthorized|bad/i.test(json.msg)) return false;
+        if (typeof json.detail === 'string' &&
+            /invalid|incorrect|wrong/i.test(json.detail)) return false;
+
+        // ── Sucesso explícito ─────────────────────────────────────
+        if (json.access_token)  return true;
+        if (json.token)         return true;
+        if (json.jwt)           return true;
+        if (json.auth_token)    return true;
+        if (json.id_token)      return true;
+        if (json.refresh_token && json.access_token) return true;
+        if (json.token_type?.toLowerCase() === 'bearer' && !json.error) return true;
+        if (json.session?.access_token) return true;
+        if (json.session?.user?.id)     return true;
+        if (json.data?.session?.access_token) return true;
+        if (json.user?.id && !json.error && !json.message) return true;
+        // NextAuth success: { ok: true, url: '/dashboard' }
+        if (json.ok === true && json.url && !json.error) return true;
+        // Generic: { success: true, token: '...' }
+        if (json.success === true && (json.token || json.data?.token)) return true;
+
+        // JSON sem indicador de token → não é sucesso
+        return false;
+      } catch { /* JSON inválido → não é sucesso */ return false; }
+    }
+
+    // ── Resposta HTML ─────────────────────────────────────────────
+    if (contentType.includes('text/html')) {
+      // Verificar se há cookie de sessão sendo definido
+      if (setCookie) {
+        const cookies = Array.isArray(setCookie) ? setCookie : [setCookie];
+        const hasAuthCookie = cookies.some(c =>
+          /session|auth[-_]?token|jwt|access[-_]?token|next-auth\.session/i.test(c)
+        );
+        if (hasAuthCookie) return true;
+      }
+      // HTML como resposta a POST é geralmente a página de login re-renderizada (falha)
+      return false;
+    }
+
+    // ── Resposta não-JSON e não-HTML ──────────────────────────────
+    if (body.includes('access_token') || body.includes('"token"')) return true;
+    return false;
   }
-  if ((status === 302 || status === 303) && headers && headers.location) {
-    const loc = (headers.location || '').toLowerCase();
-    return !loc.includes('login') && !loc.includes('signin') &&
-           !loc.includes('error') && !loc.includes('fail');
+
+  // ── Redirecionamento: sucesso se não volta para página de login ──
+  if (status === 302 || status === 303) {
+    if (!location) return false;
+    const loc = location.toLowerCase();
+    return !loc.includes('login')   &&
+           !loc.includes('signin')  &&
+           !loc.includes('error')   &&
+           !loc.includes('fail')    &&
+           !loc.includes('unauthorized') &&
+           !loc.includes('?error')  &&
+           !loc.includes('#error');
   }
+
   return false;
 }
 
 // ── Realiza uma tentativa de login ────────────────────────────────
-async function doAttempt(parsedUrl, credential, endpointType, anonKey, delayMs) {
+async function doAttempt(parsedUrl, credential, endpointType, anonKey, delayMs, csrfData) {
   if (delayMs > 0) await new Promise(r => setTimeout(r, delayMs));
 
   return new Promise(resolve => {
     const t0  = Date.now();
     const lib = parsedUrl.protocol === 'https:' ? https : http;
-    const { contentType, body } = buildPayload(credential, endpointType);
+    const { contentType, body, csrfCookie } = buildPayload(credential, endpointType, csrfData);
     const bodyBuf = Buffer.from(body, 'utf8');
 
-    const headers = {
-      'User-Agent':      'SupabaseGuard-BruteforceTest/1.0 (authorized-security-test)',
-      'Accept':          'application/json, text/html, */*',
-      'Content-Type':    contentType,
-      'Content-Length':  bodyBuf.length,
+    const reqHeaders = {
+      'User-Agent':     'Mozilla/5.0 (compatible; SupabaseGuard-BruteforceTest/2.0; authorized-security-test)',
+      'Accept':         'application/json, text/html, */*',
+      'Content-Type':   contentType,
+      'Content-Length': bodyBuf.length,
       'X-Security-Test': '1',
-      'Connection':      'keep-alive',
+      'Connection':     'keep-alive',
+      'Referer':        parsedUrl.origin + '/login',
+      'Origin':         parsedUrl.origin,
     };
 
+    // Cookie do CSRF (NextAuth)
+    if (csrfCookie) {
+      reqHeaders['Cookie'] = csrfCookie;
+    }
+
+    // apikey do Supabase
     if (anonKey && (endpointType === 'supabase_token' || endpointType === 'supabase_auth')) {
-      headers['apikey']        = anonKey;
-      headers['Authorization'] = `Bearer ${anonKey}`;
+      reqHeaders['apikey']        = anonKey;
+      reqHeaders['Authorization'] = `Bearer ${anonKey}`;
     }
 
     const req = lib.request({
@@ -190,24 +458,29 @@ async function doAttempt(parsedUrl, credential, endpointType, anonKey, delayMs) 
       port:     parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80),
       path:     parsedUrl.pathname + (parsedUrl.search || ''),
       method:   'POST',
-      headers,
-      timeout:  10000,
+      headers:  reqHeaders,
+      timeout:  12000,
     }, res => {
       let data = '';
-      res.on('data', d => { if (data.length < 2048) data += d; });
+      res.on('data', d => { if (data.length < 4096) data += d; });
       res.on('end', () => {
         const lat     = Date.now() - t0;
         const status  = res.statusCode;
         const success = isSuccess(status, data, res.headers);
-        const blocked = status === 429 || (status === 403 && !success);
-        const waf     = status === 403 && (
-          data.includes('cloudflare') || data.includes('Cloudflare') ||
-          data.includes('WAF') || data.includes('blocked') || data.includes('captcha')
+        const blocked = status === 429 || (status === 403 && !success) || status === 423;
+        const waf     = (status === 403 || status === 406 || status === 429) && (
+          data.toLowerCase().includes('cloudflare') ||
+          data.toLowerCase().includes('waf')        ||
+          data.toLowerCase().includes('blocked')    ||
+          data.toLowerCase().includes('captcha')    ||
+          (res.headers?.['cf-ray'] !== undefined)
         );
         resolve({
           ok: true, status, lat, success, blocked, waf,
           user: credential.user, pass: credential.pass,
-          snippet: data.slice(0, 120),
+          snippet: data.slice(0, 200),
+          contentType: res.headers['content-type'] || '',
+          setCookie: res.headers['set-cookie'] || null,
         });
       });
       res.on('error', () => resolve({
@@ -242,7 +515,6 @@ function calcSecurityScore(results, hits) {
   ).length;
   const blockRate = blocked / results.length;
 
-  // Se encontrou credenciais, é automaticamente grau F
   if (hits.length > 0) {
     return {
       score: 0, grade: 'F', color: '#ef4444',
@@ -253,21 +525,16 @@ function calcSecurityScore(results, hits) {
 
   let s = 100;
 
-  // Rate limiting
-  if      (blockRate >= 0.7) s = Math.min(s, 100);       // excelente — bloqueou a maioria
+  if      (blockRate >= 0.7) s = Math.min(s, 100);
   else if (blockRate >= 0.4) s -= 10;
   else if (blockRate >= 0.2) s -= 25;
   else if (blockRate >= 0.05) s -= 40;
-  else                        s -= 55;                     // sem bloqueio algum
+  else                        s -= 55;
 
-  // WAF bonus
   if (wafHits > 0) s = Math.min(100, s + 5);
-
-  // SQL injection bloqueado
   if (sqlProbes > 0 && sqlBlocked === sqlProbes) s = Math.min(100, s + 5);
-  else if (sqlProbes > 0 && sqlBlocked === 0)    s -= 10; // não bloqueou SQL injection
+  else if (sqlProbes > 0 && sqlBlocked === 0)    s -= 10;
 
-  // Punição por erros de conexão massivos (servidor derrubou / ficou instável)
   const connErrors = results.filter(r => !r.ok).length;
   if (connErrors / results.length > 0.3) s -= 10;
 
@@ -354,36 +621,54 @@ function buildRecommendations(results, hits, endpointType) {
 
 // ── Criador do teste ─────────────────────────────────────────────
 function createBruteforceTest(config) {
-  /* config:
-     - loginUrl:      string
-     - credentials:   [{user, pass}]   (ou BUILTIN_WORDLIST se omitido)
-     - anonKey:       string | null
-     - delayMs:       number (ms entre tentativas, min 50)
-     - stopOnSuccess: bool (default true)
-     - signal:        AbortSignal
-  */
   const emitter = new EventEmitter();
-  emitter.setMaxListeners(30);
+  emitter.setMaxListeners(50);
 
   const run = async () => {
+    // ── 1. Resolver endpoint real ─────────────────────────────────
+    const logEmit = (d) => emitter.emit('log', d);
+
+    const resolved = await resolveLoginEndpoint(config.loginUrl, logEmit);
+    let loginUrl     = resolved.url;
+    let endpointType = resolved.type;
+
+    emitter.emit('resolved', {
+      originalUrl:  config.loginUrl,
+      resolvedUrl:  loginUrl,
+      endpointType,
+      detected:     resolved.detected,
+    });
+
+    // ── 2. Para NextAuth: obter CSRF token ────────────────────────
+    let csrfData = null;
+    if (endpointType === 'nextauth' && resolved.origin) {
+      emitter.emit('log', { type: 'log', level: 'info', message: '[BF] Obtendo CSRF token do NextAuth...' });
+      csrfData = await getNextAuthCsrf(resolved.origin || new URL(loginUrl).origin);
+      if (csrfData?.csrfToken) {
+        emitter.emit('log', { type: 'log', level: 'info', message: `[BF] CSRF token obtido: ${csrfData.csrfToken.slice(0, 12)}...` });
+      }
+    }
+
+    // ── 3. Parsear URL do endpoint ────────────────────────────────
     let parsed;
     try {
-      const raw = config.loginUrl.startsWith('http') ? config.loginUrl : `https://${config.loginUrl}`;
+      const raw = loginUrl.startsWith('http') ? loginUrl : 'https://' + loginUrl;
       parsed = new URL(raw);
     } catch {
-      emitter.emit('error', 'URL de login inválida');
+      emitter.emit('error', 'URL de login inválida após resolução');
       return;
     }
 
-    const endpointType  = detectEndpointType(config.loginUrl);
     const credentials   = config.credentials?.length ? config.credentials : BUILTIN_WORDLIST;
     const delayMs       = Math.max(50, Math.min(2000, config.delayMs ?? 150));
     const stopOnSuccess = config.stopOnSuccess !== false;
 
     emitter.emit('start', {
-      target:       parsed.origin + parsed.pathname,
-      total:        credentials.length,
+      target:          parsed.origin + parsed.pathname,
+      originalTarget:  config.loginUrl,
+      total:           credentials.length,
       endpointType,
+      detected:        resolved.detected,
       delayMs,
     });
 
@@ -392,14 +677,16 @@ function createBruteforceTest(config) {
     let blockedCount  = 0;
     let consecutiveBlocks = 0;
 
+    // ── 4. Loop de tentativas ─────────────────────────────────────
     for (let i = 0; i < credentials.length; i++) {
       if (config.signal?.aborted) {
         emitter.emit('aborted', { done: i, total: credentials.length });
         break;
       }
 
+      // Para NextAuth com múltiplos candidatos, tentar outros se 404
       const cred   = credentials[i];
-      const result = await doAttempt(parsed, cred, endpointType, config.anonKey, delayMs);
+      const result = await doAttempt(parsed, cred, endpointType, config.anonKey, delayMs, csrfData);
       results.push(result);
 
       if (result.success) hits.push({ ...result, index: i });
@@ -412,6 +699,7 @@ function createBruteforceTest(config) {
         ...result,
         hitsTotal:    hits.length,
         blockedTotal: blockedCount,
+        endpointType,
       });
 
       if (result.success && stopOnSuccess) {
@@ -445,8 +733,11 @@ function createBruteforceTest(config) {
         waf:       results.filter(r => r.waf).length,
         meanLat:   ok.length ? Math.round(ok.reduce((a, r) => a + (r.lat || 0), 0) / ok.length) : 0,
       },
-      target:    config.loginUrl,
-      timestamp: new Date().toISOString(),
+      target:       loginUrl,
+      originalTarget: config.loginUrl,
+      endpointType,
+      detected:     resolved.detected,
+      timestamp:    new Date().toISOString(),
     });
   };
 

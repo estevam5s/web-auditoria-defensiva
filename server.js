@@ -1320,28 +1320,47 @@ app.get('/api/bruteforce/info/:id', async (req, res) => {
   const data = await resolveAudit(req.params.id);
   if (!data) return res.status(404).json({ success: false, error: 'Auditoria não encontrada.' });
 
-  // Extract login-related routes from audit results
   const loginRoutes = [];
+
+  // ── Extrair rotas de login dos resultados da auditoria ──────────
   (data.results || []).forEach(r => {
     if (r.route && (
       r.route.includes('/auth') || r.route.includes('/login') ||
-      r.route.includes('/signin') || r.route.includes('/token')
+      r.route.includes('/signin') || r.route.includes('/token') ||
+      r.route.includes('/session')
     )) loginRoutes.push(r.route);
   });
 
-  // Always offer the Supabase auth endpoint for the scanned project
-  // Use supabaseUrl if auto-detect found one (separate from the website URL), otherwise use projectUrl
-  const supabaseBase = (data.supabaseUrl || data.projectUrl || '').replace(/\/$/, '');
-  if (supabaseBase.startsWith('http')) {
+  // ── Supabase auth (máxima prioridade) ───────────────────────────
+  // Usar supabaseUrl (detectado pelo auto-detect) quando disponível
+  const supabaseBase = (data.supabaseUrl || '').replace(/\/$/, '');
+  if (supabaseBase.startsWith('http') && supabaseBase.includes('supabase')) {
     loginRoutes.unshift(`${supabaseBase}/auth/v1/token?grant_type=password`);
+  }
+
+  // ── Candidatos específicos do site auditado ─────────────────────
+  const siteBase = (data.projectUrl || '').replace(/\/$/, '');
+  if (siteBase.startsWith('http')) {
+    // Adicionar a URL de login do site (para auto-detecção pelo engine)
+    const siteLoginCandidates = [
+      `${siteBase}/login`,
+      `${siteBase}/signin`,
+      `${siteBase}/api/auth/callback/credentials`,
+      `${siteBase}/api/auth/signin`,
+      `${siteBase}/api/login`,
+    ];
+    siteLoginCandidates.forEach(u => {
+      if (!loginRoutes.includes(u)) loginRoutes.push(u);
+    });
   }
 
   res.json({
     success:      true,
     projectUrl:   data.projectUrl,
+    supabaseUrl:  data.supabaseUrl || null,
     score:        data.score,
     grade:        data.grade,
-    loginRoutes:  [...new Set(loginRoutes)].slice(0, 8),
+    loginRoutes:  [...new Set(loginRoutes)].slice(0, 12),
     wordlistSize: BUILTIN_WORDLIST.length,
   });
 });
@@ -1404,6 +1423,8 @@ app.get('/api/bruteforce/stream/:sessionId', async (req, res) => {
   const { emitter, run } = createBruteforceTest({ ...session, signal: abortCtrl.signal });
 
   emitter.on('start',        d => send({ type: 'start',        ...d }));
+  emitter.on('resolved',     d => send({ type: 'resolved',     ...d }));
+  emitter.on('log',          d => send({ type: 'log',          ...d }));
   emitter.on('attempt',      d => send({ type: 'attempt',      ...d }));
   emitter.on('hit_found',    d => send({ type: 'hit_found',    ...d }));
   emitter.on('blocked_hard', d => send({ type: 'blocked_hard', ...d }));

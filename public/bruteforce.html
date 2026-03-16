@@ -478,7 +478,8 @@
 
       <div class="wl-tabs">
         <button class="wl-tab active" onclick="switchWordlistTab('builtin', this)">Lista Padrão</button>
-        <button class="wl-tab" onclick="switchWordlistTab('custom', this)">Upload Personalizado</button>
+        <button class="wl-tab" onclick="switchWordlistTab('manual', this)">✏️ Credenciais Manuais</button>
+        <button class="wl-tab" onclick="switchWordlistTab('custom', this)">Upload Arquivo</button>
       </div>
 
       <!-- Builtin -->
@@ -496,6 +497,44 @@
             —
             <small>entradas</small>
           </div>
+        </div>
+      </div>
+
+      <!-- Manual credentials -->
+      <div class="wl-panel" id="wlManual">
+        <div style="margin-bottom:12px;font-size:.85rem;color:var(--text)">
+          Insira credenciais específicas para testar — uma por linha no formato <code style="color:var(--accent)">email:senha</code>
+        </div>
+        <textarea
+          id="manualCreds"
+          placeholder="rebecaluizeferreira@pedacinhodoceu.com.br:Minha_Senha@123&#10;admin@site.com:Admin@2025&#10;usuario@empresa.com:Senha#2024"
+          style="
+            width:100%; height:160px; padding:12px 14px;
+            background:var(--surface2); border:1px solid var(--border);
+            border-radius:8px; color:var(--text); font-family:var(--font-mono);
+            font-size:0.82rem; resize:vertical; outline:none; line-height:1.6;
+            transition:border-color .2s;
+          "
+          oninput="handleManualCreds(this.value)"
+          onfocus="this.style.borderColor='var(--accent)'"
+          onblur="this.style.borderColor='var(--border)'"
+        ></textarea>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+          <div style="font-size:.78rem;color:var(--muted);font-family:var(--font-mono)">
+            Formato: <code style="color:var(--blue)">email:senha</code> ou <code style="color:var(--blue)">usuario:senha</code>
+            &nbsp;•&nbsp; <span id="manualCount" style="color:var(--accent)">0 credenciais</span>
+          </div>
+          <button onclick="clearManualCreds()" style="
+            background:none;border:1px solid var(--border);border-radius:6px;
+            color:var(--muted);cursor:pointer;padding:4px 10px;font-size:.75rem;
+            font-family:var(--font-sans);transition:color .2s;
+          " onmouseover="this.style.color='var(--accent2)'" onmouseout="this.style.color='var(--muted)'">
+            Limpar
+          </button>
+        </div>
+        <div class="format-hint" style="margin-top:10px">
+          💡 <strong>Dica:</strong> Credenciais manuais são testadas antes da lista padrão.
+          Use para testar credenciais específicas conhecidas com segurança máxima.
         </div>
       </div>
 
@@ -662,12 +701,13 @@
 
 <script>
 /* ───────────────────────── State ───────────────────────────────── */
-let auditId       = null;
-let selectedUrl   = '';
-let wordlistType  = 'builtin';
+let auditId        = null;
+let selectedUrl    = '';
+let wordlistType   = 'builtin';
 let customWordlist = '';
-let eventSource   = null;
-let stopRequested = false;
+let manualCreds    = '';    // credenciais manuais (textarea)
+let eventSource    = null;
+let stopRequested  = false;
 
 // Live counters
 let liveAttempts = 0, liveHits = 0, liveBlocked = 0, latSum = 0, latCount = 0;
@@ -742,8 +782,27 @@ function switchWordlistTab(tab, btn) {
   document.querySelectorAll('.wl-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.wl-panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById(tab === 'builtin' ? 'wlBuiltin' : 'wlCustom').classList.add('active');
+  const panelMap = { builtin: 'wlBuiltin', manual: 'wlManual', custom: 'wlCustom' };
+  document.getElementById(panelMap[tab] || 'wlBuiltin').classList.add('active');
   wordlistType = tab;
+  validateForm();
+}
+
+/* ───────────────────────── Manual Credentials ───────────────────── */
+function handleManualCreds(val) {
+  manualCreds = val;
+  const lines = val.split('\n').filter(l => l.trim() && !l.trim().startsWith('#'));
+  const el = document.getElementById('manualCount');
+  if (el) el.textContent = `${lines.length} credencial(is)`;
+  validateForm();
+}
+
+function clearManualCreds() {
+  manualCreds = '';
+  const ta = document.getElementById('manualCreds');
+  if (ta) ta.value = '';
+  const el = document.getElementById('manualCount');
+  if (el) el.textContent = '0 credenciais';
   validateForm();
 }
 
@@ -785,7 +844,9 @@ function clearFile() {
 /* ───────────────────────── Validation ──────────────────────────── */
 function validateForm() {
   const hasUrl = selectedUrl.length > 6;
-  const hasWl  = wordlistType === 'builtin' || (wordlistType === 'custom' && customWordlist.length > 0);
+  const hasWl  = wordlistType === 'builtin' ||
+                 (wordlistType === 'manual' && manualCreds.trim().length > 0) ||
+                 (wordlistType === 'custom' && customWordlist.length > 0);
   document.getElementById('btnStart').disabled = !(hasUrl && hasWl);
 }
 
@@ -839,14 +900,25 @@ async function startAttack() {
   log('system', `────────────────────────────────────────────────`);
 
   try {
+    // Determinar o conteúdo da wordlist a enviar
+    let wordlistContent = '';
+    let effectiveWordlistType = wordlistType;
+
+    if (wordlistType === 'manual' && manualCreds.trim()) {
+      wordlistContent = manualCreds;
+      effectiveWordlistType = 'custom'; // engine usa 'custom' para wordlist em texto
+    } else if (wordlistType === 'custom' && customWordlist) {
+      wordlistContent = customWordlist;
+    }
+
     const prepRes = await fetch('/api/bruteforce/prepare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         auditId,
         loginUrl: selectedUrl,
-        wordlistType,
-        wordlistContent: wordlistType === 'custom' ? customWordlist : '',
+        wordlistType:    effectiveWordlistType,
+        wordlistContent,
         delayMs: parseInt(document.getElementById('delaySlider').value),
         stopOnSuccess: document.getElementById('stopOnSuccess').checked,
       }),
@@ -891,8 +963,36 @@ function handleEvent(evt) {
 
   switch (evt.type) {
 
+    case 'log':
+      if (evt.level === 'warn') {
+        log('warn', evt.message || '');
+      } else {
+        log('info', evt.message || '');
+      }
+      break;
+
+    case 'resolved': {
+      const detectedLabel = {
+        supabase:        '🔷 Supabase Auth API',
+        supabase_bundle: '🔷 Supabase (detectado no bundle)',
+        nextjs:          '▲ Next.js / NextAuth',
+        direct:          '🎯 Endpoint direto',
+        fetch_inline:    '🔍 API detectada no HTML',
+        fallback:        '⚠️ Padrão genérico',
+        unknown:         '❓ Desconhecido',
+      }[evt.detected] || evt.detected || '';
+      log('system', `🔍 Endpoint detectado: ${detectedLabel}`);
+      log('system', `   URL original : ${evt.originalUrl}`);
+      log('system', `   URL resolvida: ${evt.resolvedUrl}`);
+      log('system', `   Tipo: ${evt.endpointType}`);
+      // Atualizar o sub-label do running state
+      const runSub = document.getElementById('runSub');
+      if (runSub) runSub.textContent = `${evt.resolvedUrl}`;
+      break;
+    }
+
     case 'start':
-      log('info', `► Iniciando — endpoint: ${evt.endpointType} • delay: ${evt.delayMs}ms`);
+      log('info', `► Iniciando — tipo: ${evt.endpointType} • delay: ${evt.delayMs}ms • ${evt.total} credenciais`);
       break;
 
     case 'attempt': {
