@@ -177,9 +177,9 @@ async function getAuditById(auditId) {
   return { success: false, error: 'Audit not found' };
 }
 
-async function getVulnerabilitiesByAudit(auditId) {
+async function getVulnerabilitiesByAudit(auditDbId) {
   const result = await supabaseFetch(
-    `vulnerabilities?audit_id=eq.${auditId}&order=severity asc`
+    `vulnerabilities?audit_id=eq.${auditDbId}&order=severity.asc`
   );
   return result;
 }

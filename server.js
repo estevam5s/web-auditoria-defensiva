@@ -142,6 +142,7 @@ function createRateLimiter(maxReq, windowMs) {
 const auditLimiter  = createRateLimiter(5, 60_000);   // 5 req/min por IP
 const aiLimiter     = createRateLimiter(20, 60_000);  // 20 req/min por IP
 const osintLimiter  = createRateLimiter(3, 60_000);   // 3 req/min por IP (OSINT é pesado)
+const dbLimiter     = createRateLimiter(30, 60_000);  // 30 req/min por IP (consultas ao DB)
 
 app.use(express.json({ limit: '1mb' }));
 
@@ -248,7 +249,7 @@ app.post('/api/audit', auditLimiter, async (req, res) => {
   const { url, anonKey, options } = req.body;
 
   if (!url || typeof url !== 'string') {
-    return res.status(400).json({ error: 'URL do projeto Supabase é obrigatória' });
+    return res.status(400).json({ error: 'URL do site é obrigatória' });
   }
 
   // Basic input validation — reject obviously invalid or dangerous inputs
@@ -494,19 +495,23 @@ app.get('/api/health', async (req, res) => {
 // ─── Supabase Database Routes ─────────────────────────────────────
 
 // Get audit history from Supabase
-app.get('/api/db/audits', async (req, res) => {
+app.get('/api/db/audits', dbLimiter, async (req, res) => {
   const result = await getAuditHistory(50);
   res.json(result);
 });
 
 // Get specific audit from Supabase
-app.get('/api/db/audit/:id', async (req, res) => {
-  const result = await getAuditById(req.params.id);
+app.get('/api/db/audit/:id', dbLimiter, async (req, res) => {
+  const id = req.params.id;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    return res.status(400).json({ success: false, error: 'Invalid audit ID format' });
+  }
+  const result = await getAuditById(id);
   res.json(result);
 });
 
 // Get combined audit history (local + Supabase)
-app.get('/api/audits/history', async (req, res) => {
+app.get('/api/audits/history', dbLimiter, async (req, res) => {
   try {
     // Get local audits
     const localAudits = [];
@@ -565,10 +570,15 @@ app.get('/api/audits/history', async (req, res) => {
 });
 
 // Get full audit details from Supabase by audit_id
-app.get('/api/audits/db/full/:auditId', async (req, res) => {
+app.get('/api/audits/db/full/:auditId', dbLimiter, async (req, res) => {
   try {
     const { auditId } = req.params;
-    
+
+    // Validate UUID format to prevent injection attacks
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(auditId)) {
+      return res.status(400).json({ success: false, error: 'Invalid audit ID format' });
+    }
+
     // Get main audit data
     const auditResult = await getAuditById(auditId);
     if (!auditResult.success) {
@@ -583,7 +593,7 @@ app.get('/api/audits/db/full/:auditId', async (req, res) => {
 
     // Get individual results
     const resultsResult = await supabaseFetch(
-      `audit_results?audit_id=eq.${audit.id}&select=*&order=severity asc`
+      `audit_results?audit_id=eq.${audit.id}&select=*&order=severity.asc`
     );
 
     // Get vulnerabilities
@@ -1320,9 +1330,10 @@ app.get('/api/bruteforce/info/:id', async (req, res) => {
   });
 
   // Always offer the Supabase auth endpoint for the scanned project
-  const base = (data.projectUrl || '').replace(/\/$/, '');
-  if (base.startsWith('http')) {
-    loginRoutes.unshift(`${base}/auth/v1/token?grant_type=password`);
+  // Use supabaseUrl if auto-detect found one (separate from the website URL), otherwise use projectUrl
+  const supabaseBase = (data.supabaseUrl || data.projectUrl || '').replace(/\/$/, '');
+  if (supabaseBase.startsWith('http')) {
+    loginRoutes.unshift(`${supabaseBase}/auth/v1/token?grant_type=password`);
   }
 
   res.json({

@@ -235,7 +235,7 @@ function drawExecutiveSummary(doc, data) {
   // Summary text
   doc.fontSize(10).font('Helvetica').fillColor(COLORS.white);
   doc.text(
-    `A auditoria de segurança defensiva foi realizada no projeto Supabase "${data.projectUrl}" ` +
+    `A auditoria de segurança defensiva foi realizada no site/aplicação "${data.projectUrl}" ` +
     `em ${formatDate(data.evidence?.timestamp)}. O scan analisou ${data.totalChecks || 0} ` +
     `controles de segurança em ${data.duration || 'N/A'}, cobrindo REST API, RPC, GraphQL, ` +
     `Storage, Edge Functions, Realtime, Auth, RLS, CORS, bundle exposure e análise profunda de dados.`,

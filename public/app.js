@@ -412,7 +412,7 @@ async function startAudit() {
 
   const url = $('#projectUrl').value.trim();
   if (!url) {
-    appendLog('error', 'ERROR', 'Insira a URL do projeto Supabase.');
+    appendLog('error', 'ERROR', 'Insira a URL do site ou aplicação web.');
     return;
   }
 
@@ -1557,7 +1557,7 @@ function showTerms() {
 function showHowItWorks() {
   $('#modalBody').innerHTML = `
     <h2>Como a Auditoria Funciona</h2>
-    <p>O Supabase Guard executa uma série de verificações de segurança não-intrusivas no seu projeto Supabase:</p>
+    <p>O Supabase Guard executa uma série de verificações de segurança não-intrusivas no seu site ou aplicação web:</p>
     
     <h3 style="color: var(--text-secondary); margin-top: 1rem;">Verificações Base</h3>
     <ul>

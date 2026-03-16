@@ -28,7 +28,7 @@ function buildAnalysisPrompt(auditData, userQuestion) {
   const passResults = results?.filter(r => r.status === 'PASS') || [];
 
   let auditSummary = `
-# AUDITORIA SUPABASE — ${projectUrl}
+# AUDITORIA DE SEGURANÇA — ${projectUrl}
 
 ## INFO
 - URL: ${projectUrl}

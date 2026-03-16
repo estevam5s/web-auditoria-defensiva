@@ -385,6 +385,9 @@ async function runFullAudit(config, emit) {
             // _websiteUrl keeps the original website URL for web-focused checks
             config.projectUrl = catalogData.detected.supabaseUrl;
             config._supabaseUrl = catalogData.detected.supabaseUrl;
+            // Also extract and store the project ref from the detected Supabase URL
+            const detectedRef = catalogData.detected.supabaseUrl.match(/https?:\/\/([a-z0-9]+)\.supabase\.co/);
+            if (detectedRef) config.projectRef = detectedRef[1];
           }
           if (catalogData.detected.anonKey) config.anonKey = catalogData.detected.anonKey;
           if (catalogData.detected.serviceRoleKey) config._serviceRoleKey = catalogData.detected.serviceRoleKey;
@@ -412,8 +415,15 @@ async function runFullAudit(config, emit) {
   const duration = ((Date.now() - auditStart) / 1000).toFixed(1);
 
   const summary = {
-    projectUrl: config.projectUrl,
+    // Always use the original website URL entered by the user, not the Supabase API URL
+    // that auto-detect may have set on config.projectUrl for internal checks
+    projectUrl: config._websiteUrl || config.projectUrl,
+    // Keep the Supabase project ref (may have been populated by auto-detect)
     projectRef: config.projectRef,
+    // If auto-detect found a Supabase URL different from the original input, store it separately
+    supabaseUrl: config._supabaseUrl && config._supabaseUrl !== (config._websiteUrl || config.projectUrl)
+      ? config._supabaseUrl
+      : undefined,
     score,
     grade,
     productionReady,
