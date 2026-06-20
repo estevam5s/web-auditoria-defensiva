@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Admin — Supabase Guard</title>
+<style>
+  :root{--bg:#0a0f1c;--panel:#111a2e;--line:#1f2b45;--txt:#e6edf6;--mut:#8aa0bf;--acc:#22d3ee}
+  *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  .top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding:14px 18px}
+  .brand{font-weight:800}.brand b{color:var(--acc)}
+  .wrap{max-width:1100px;margin:0 auto;padding:20px 16px}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+  .tab{cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--mut);padding:8px 13px;border-radius:9px;font-size:14px}
+  .tab.on{background:var(--acc);color:#04121a;font-weight:700;border:none}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  table{width:100%;border-collapse:collapse;font-size:14px}td,th{text-align:left;padding:8px;border-bottom:1px solid var(--line)}
+  input,select,button,textarea{background:#0c1626;border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:9px;font-size:14px}
+  .btn{cursor:pointer;font-weight:600}.btn.p{background:var(--acc);color:#04121a;border:none}
+  .stat{background:#0c1626;border:1px solid var(--line);border-radius:12px;padding:14px}.stat .v{font-size:24px;font-weight:800}.muted{color:var(--mut);font-size:13px}
+  .grid{display:grid;gap:12px}.g4{grid-template-columns:repeat(4,1fr)}@media(max-width:820px){.g4{grid-template-columns:repeat(2,1fr)}}
+  a{color:var(--acc)}
+</style>
+</head>
+<body>
+<div class="top"><div class="brand">🛡️ Supabase <b>Guard</b> · Admin</div><div><a href="/dashboard.html" style="margin-right:12px">Painel do usuário</a><a href="/">← Site</a> <button class="btn" onclick="logout()">Sair</button></div></div>
+<div class="wrap">
+  <div id="gate" class="card">Verificando acesso…</div>
+  <div id="panel" style="display:none">
+    <div class="tabs" id="tabs"></div>
+    <div id="content"></div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const sb=supabase.createClient("https://zvzqeagukvbfpblxenuw.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2enFlYWd1a3ZiZnBibHhlbnV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5MDY0MDUsImV4cCI6MjA5NzQ4MjQwNX0.p_iPIo1syrRHL_LbWNfewkchQZQNltlPNU-PPhGC1vE");
+const fmt=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const token=async()=>(await sb.auth.getSession()).data.session?.access_token;
+async function api(a,b){const r=await fetch('/api/admin',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await token())},body:JSON.stringify({action:a,...b})});const j=await r.json();if(!r.ok)throw new Error(j.error||'erro');return j}
+const TABS=[['dash','Dashboard'],['usuarios','Usuários'],['assinaturas','Assinaturas'],['financeiro','Financeiro'],['suporte','Suporte'],['cancelamentos','Cancelamentos'],['visitantes','Visitantes'],['logs','Logs']];
+let TAB='dash';
+async function logout(){await sb.auth.signOut();location.href='/'}
+async function boot(){
+  const{data:{user}}=await sb.auth.getUser();
+  if(!user){location.href='/dashboard.html';return}
+  const{data:p}=await sb.from('profiles').select('role,email').eq('id',user.id).maybeSingle();
+  if(p?.role!=='admin'){document.getElementById('gate').innerHTML='Acesso restrito ao administrador. <a href="/dashboard.html">Voltar</a>';return}
+  document.getElementById('gate').style.display='none';document.getElementById('panel').style.display='block';
+  document.getElementById('tabs').innerHTML=TABS.map(t=>'<div class="tab" data-k="'+t[0]+'" onclick="go(\''+t[0]+'\')">'+t[1]+'</div>').join('');
+  go('dash');
+}
+function go(k){TAB=k;document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.k===k));render()}
+async function render(){
+  const c=document.getElementById('content');c.innerHTML='<div class="card muted">Carregando…</div>';
+  if(TAB==='dash'){
+    const[u,subs,tic,pays,vis]=await Promise.all([sb.from('profiles').select('id',{count:'exact',head:true}),sb.from('subscriptions').select('plan_slug,status'),sb.from('support_messages').select('id',{count:'exact',head:true}).eq('status','open'),sb.from('payments').select('amount'),sb.from('visitor_events').select('id',{count:'exact',head:true})]);
+    const{data:plans}=await sb.from('plans').select('slug,monthly_price');const price={};(plans||[]).forEach(p=>price[p.slug]=+p.monthly_price);
+    let mrr=0,paying=0,trial=0,canc=0;(subs.data||[]).forEach(s=>{if(['active','trialing'].includes(s.status)&&price[s.plan_slug]){mrr+=price[s.plan_slug];paying++}if(s.status==='trialing')trial++;if(s.status==='canceled')canc++});
+    const rev=(pays.data||[]).reduce((a,p)=>a+ +p.amount,0);
+    c.innerHTML='<div class="grid g4">'+[['MRR',fmt(mrr)],['ARR',fmt(mrr*12)],['Receita',fmt(rev)],['ARPU',fmt(paying?mrr/paying:0)],['Usuários',u.count||0],['Pagantes',paying],['Em teste',trial],['Cancelados',canc],['Chamados abertos',tic.count||0],['Visitas',vis.count||0]].map(s=>'<div class="stat"><div class="muted">'+s[0]+'</div><div class="v">'+s[1]+'</div></div>').join('')+'</div>';
+  } else if(TAB==='usuarios'){
+    const{data}=await sb.from('profiles').select('id,email,full_name,role,plan_slug').order('created_at',{ascending:false});
+    c.innerHTML='<div class="card"><h3>Criar usuário (acesso máximo)</h3><div class="grid" style="grid-template-columns:1fr 1fr 1fr auto"><input id="nu_name" placeholder="Nome"><input id="nu_email" placeholder="E-mail"><input id="nu_pass" placeholder="Senha"><button class="btn p" onclick="createUser()">Criar</button></div></div><div class="card" style="margin-top:12px"><table><tr><th>Usuário</th><th>Papel</th><th>Plano</th><th></th></tr>'+(data||[]).map(u=>'<tr><td>'+(u.full_name||'—')+'<div class="muted">'+u.email+'</div></td><td>'+u.role+'</td><td><select onchange="setPlan(\''+u.id+'\',this.value)">'+['inicial','starter','pro','enterprise'].map(s=>'<option '+(u.plan_slug===s?'selected':'')+'>'+s+'</option>').join('')+'</select></td><td><button class="btn" onclick="delUser(\''+u.id+'\')">🗑️</button></td></tr>').join('')+'</table></div>';
+  } else if(TAB==='assinaturas'){
+    const{data}=await sb.from('subscriptions').select('*, profiles(email)').order('updated_at',{ascending:false});
+    c.innerHTML='<div class="card"><table><tr><th>Usuário</th><th>Plano</th><th>Status</th><th>Ciclo</th><th>Renova</th></tr>'+(data||[]).map(s=>'<tr><td>'+(s.profiles?.email||s.user_id?.slice(0,8))+'</td><td>'+s.plan_slug+'</td><td>'+s.status+'</td><td>'+s.billing_cycle+'</td><td>'+(s.current_period_end?new Date(s.current_period_end).toLocaleDateString('pt-BR'):'—')+'</td></tr>').join('')+'</table></div>';
+  } else if(TAB==='financeiro'){
+    const{data}=await sb.from('payments').select('*, profiles(email)').order('created_at',{ascending:false}).limit(100);
+    const tot=(data||[]).reduce((a,p)=>a+ +p.amount,0);
+    c.innerHTML='<div class="card"><div class="stat" style="margin-bottom:12px"><div class="muted">Total recebido</div><div class="v">'+fmt(tot)+'</div></div><table><tr><th>Data</th><th>Usuário</th><th>Plano</th><th>Valor</th></tr>'+(data||[]).map(p=>'<tr><td>'+new Date(p.created_at).toLocaleDateString('pt-BR')+'</td><td>'+(p.profiles?.email||'—')+'</td><td>'+(p.plan_slug||'—')+'</td><td>'+fmt(p.amount)+'</td></tr>').join('')+'</table></div>';
+  } else if(TAB==='suporte'){
+    const{data}=await sb.from('support_messages').select('*, profiles(email)').order('priority',{ascending:false}).order('created_at',{ascending:false});
+    c.innerHTML='<div class="card">'+(data||[]).map(t=>'<div style="border-bottom:1px solid var(--line);padding:10px 0"><b>'+t.subject+'</b> '+(t.priority?'⚡':'')+' <span class="muted">'+(t.profiles?.email||t.email)+'</span><div style="margin:6px 0">'+t.message+'</div>'+(t.admin_reply?'<div class="muted">↳ '+t.admin_reply+'</div>':'')+'<div style="display:flex;gap:6px;margin-top:6px"><input id="r_'+t.id+'" placeholder="Responder..." style="flex:1"><button class="btn p" onclick="reply(\''+t.id+'\',true)">Responder e resolver</button></div></div>').join('')+'</div>';
+  } else if(TAB==='cancelamentos'){
+    const{data}=await sb.from('cancellation_feedback').select('*').order('created_at',{ascending:false});
+    c.innerHTML='<div class="card"><table><tr><th>Data</th><th>Plano</th><th>Motivo</th><th>Comentário</th></tr>'+(data||[]).map(f=>'<tr><td>'+new Date(f.created_at).toLocaleDateString('pt-BR')+'</td><td>'+f.plan_slug+'</td><td>'+(f.reason||'—')+'</td><td>'+(f.comment||'')+'</td></tr>').join('')+'</table></div>';
+  } else if(TAB==='visitantes'){
+    const{data}=await sb.from('visitor_events').select('*').order('created_at',{ascending:false}).limit(300);
+    const by=k=>{const m={};(data||[]).forEach(r=>{const v=r[k]||'—';m[v]=(m[v]||0)+1});return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8)};
+    c.innerHTML='<div class="grid" style="grid-template-columns:1fr 1fr 1fr">'+[['path','Páginas'],['country','Países'],['browser','Navegadores']].map(x=>'<div class="card"><h4>'+x[1]+'</h4>'+by(x[0]).map(e=>'<div class="muted" style="display:flex;justify-content:space-between"><span>'+e[0]+'</span><span>'+e[1]+'</span></div>').join('')+'</div>').join('')+'</div>';
+  } else if(TAB==='logs'){
+    const{data}=await sb.from('audit_logs').select('*').order('created_at',{ascending:false}).limit(100);
+    c.innerHTML='<div class="card">'+((data||[]).length?(data||[]).map(l=>'<div class="muted" style="padding:5px 0;border-bottom:1px solid var(--line)">['+l.level+'] '+l.action+' · '+(l.actor_email||'')+' → '+(l.target||'')+' <span style="float:right">'+new Date(l.created_at).toLocaleString('pt-BR')+'</span></div>').join('')):'Nenhum evento.')+'</div>';
+  }
+}
+async function createUser(){try{await api('create_user',{email:nu_email.value,password:nu_pass.value,full_name:nu_name.value,plan:'enterprise'});render()}catch(e){alert(e.message)}}
+async function setPlan(id,plan){try{await api('set_plan',{user_id:id,plan})}catch(e){alert(e.message)}}
+async function delUser(id){if(!confirm('Excluir usuário?'))return;try{await api('delete_user',{user_id:id});render()}catch(e){alert(e.message)}}
+async function reply(id,resolve){try{await api('reply_support',{id,reply:document.getElementById('r_'+id).value,resolve});render()}catch(e){alert(e.message)}}
+boot();
+</script>
+</body>
+</html>

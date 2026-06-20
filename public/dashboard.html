@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Painel — Supabase Guard</title>
+<link rel="stylesheet" href="/styles.css" />
+<style>
+  :root{--bg:#0a0f1c;--panel:#111a2e;--line:#1f2b45;--txt:#e6edf6;--mut:#8aa0bf;--acc:#22d3ee;--acc2:#0ea5e9;--ok:#22c55e;--warn:#f59e0b;--bad:#ef4444}
+  *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px 16px}
+  .topbar{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding:14px 16px;position:sticky;top:0;background:rgba(10,15,28,.9);backdrop-filter:blur(8px);z-index:10}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800}.brand b{color:var(--acc)}
+  .btn{cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--txt);padding:9px 14px;border-radius:10px;font-weight:600;font-size:14px}
+  .btn.primary{background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;color:#04121a}
+  .btn.ghost{background:transparent}.btn.bad{border-color:#5b1d1d;color:#fca5a5}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:18px}
+  .grid{display:grid;gap:14px}.g2{grid-template-columns:repeat(2,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:820px){.g2,.g4{grid-template-columns:1fr}}
+  input,select{width:100%;background:#0c1626;border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:11px 12px;font-size:14px}
+  label{display:block;font-size:13px;color:var(--mut);margin:0 0 6px}
+  .badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;background:#0c2230;color:var(--acc);border:1px solid #14384a}
+  .plan{border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;background:#0c1626}
+  .plan.hot{border:2px solid var(--acc)}
+  .price{font-size:30px;font-weight:800;margin:8px 0}
+  .muted{color:var(--mut);font-size:13px}.hidden{display:none}
+  ul.feat{list-style:none;padding:0;margin:10px 0;font-size:14px}ul.feat li{padding:3px 0;color:#cfe0f2}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#0c2230;border:1px solid #14384a;color:var(--txt);padding:12px 18px;border-radius:12px;display:none;z-index:50}
+  a{color:var(--acc)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">🛡️ Supabase <b>Guard</b> · <span class="muted">Painel</span></div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span id="hud" class="badge hidden"></span>
+    <a class="btn ghost" href="/">← Voltar ao site</a>
+    <button class="btn" id="logoutBtn" style="display:none" onclick="logout()">Sair</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <!-- AUTH -->
+  <div id="auth" class="card" style="max-width:440px;margin:40px auto">
+    <h2 style="margin-top:0">Acesse seu painel</h2>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn primary" id="tabLogin" onclick="setMode('login')" style="flex:1">Entrar</button>
+      <button class="btn ghost" id="tabReg" onclick="setMode('register')" style="flex:1">Criar conta</button>
+    </div>
+    <div id="regName" class="hidden" style="margin-bottom:10px"><label>Nome</label><input id="name" placeholder="Seu nome" /></div>
+    <div style="margin-bottom:10px"><label>E-mail</label><input id="email" type="email" placeholder="voce@email.com" /></div>
+    <div style="margin-bottom:10px"><label>Senha</label><input id="password" type="password" placeholder="••••••••" /></div>
+    <div id="regConfirm" class="hidden" style="margin-bottom:10px"><label>Confirmar senha</label><input id="confirm" type="password" placeholder="••••••••" /></div>
+    <div id="regSource" class="hidden" style="margin-bottom:10px"><label>Onde nos encontrou?</label><select id="source"><option value="">Selecione</option><option>Google</option><option>Indicação</option><option>LinkedIn</option><option>YouTube</option><option>Outro</option></select></div>
+    <p id="authErr" style="color:var(--bad);font-size:13px;min-height:18px;margin:4px 0"></p>
+    <button class="btn primary" id="authSubmit" style="width:100%" onclick="submitAuth()">Entrar</button>
+  </div>
+
+  <!-- APP (logado) -->
+  <div id="app" class="hidden">
+    <!-- Iniciar auditoria -->
+    <div class="card">
+      <h2 style="margin-top:0">🔍 Iniciar auditoria defensiva</h2>
+      <p class="muted">Informe a URL do projeto/site para varredura de segurança (RLS, headers, SSL e mais). Limite por plano.</p>
+      <div class="grid g2" style="align-items:end">
+        <div><label>URL do alvo</label><input id="target" placeholder="https://seu-projeto.supabase.co ou https://seusite.com" /></div>
+        <button class="btn primary" id="auditBtn" onclick="runAudit()">Iniciar auditoria</button>
+      </div>
+      <div id="auditOut" class="muted" style="margin-top:12px"></div>
+    </div>
+
+    <!-- Histórico -->
+    <div class="card">
+      <h3 style="margin-top:0">Minhas auditorias</h3>
+      <div id="history" class="muted">Carregando…</div>
+    </div>
+
+    <!-- Planos -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <h3 style="margin:0">Meu plano &amp; assinatura</h3>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="muted">Mensal</span>
+          <label style="display:inline-flex;align-items:center"><input type="checkbox" id="cycle" onchange="renderPlans()" style="width:auto"> </label>
+          <span class="muted">Anual <span class="badge">2 meses grátis</span></span>
+        </div>
+      </div>
+      <div id="curPlan" class="muted" style="margin:8px 0"></div>
+      <div id="manageBtns" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
+      <div id="plans" class="grid g4"></div>
+    </div>
+
+    <!-- Suporte -->
+    <div class="card">
+      <h3 style="margin-top:0">Suporte</h3>
+      <div class="grid g2" style="align-items:end">
+        <div><label>Assunto</label><input id="supSubject" placeholder="Como podemos ajudar?" /></div>
+        <button class="btn" onclick="sendSupport()">Enviar chamado</button>
+      </div>
+      <textarea id="supMsg" rows="3" style="width:100%;margin-top:10px;background:#0c1626;border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:11px" placeholder="Descreva..."></textarea>
+      <div id="supList" class="muted" style="margin-top:12px"></div>
+    </div>
+
+    <!-- Conta / cancelar -->
+    <div class="card">
+      <h3 style="margin-top:0">Conta</h3>
+      <button class="btn bad" onclick="if(confirm('Excluir sua conta? A assinatura será cancelada e os dados removidos.'))deleteAccount()">Excluir minha conta</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SB_URL="https://zvzqeagukvbfpblxenuw.supabase.co";
+const SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2enFlYWd1a3ZiZnBibHhlbnV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5MDY0MDUsImV4cCI6MjA5NzQ4MjQwNX0.p_iPIo1syrRHL_LbWNfewkchQZQNltlPNU-PPhGC1vE";
+const sb=supabase.createClient(SB_URL,SB_ANON);
+let MODE='login', PLANS=[], SUB=null, PROFILE=null;
+const fmt=v=>Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
+const toast=m=>{const t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',3500)};
+const token=async()=>(await sb.auth.getSession()).data.session?.access_token;
+async function api(path,body){const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await token())},body:JSON.stringify(body||{})});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.message||j.error||'Erro');return j}
+
+function setMode(m){MODE=m;document.getElementById('tabLogin').className='btn '+(m==='login'?'primary':'ghost');document.getElementById('tabReg').className='btn '+(m==='register'?'primary':'ghost');['regName','regConfirm','regSource'].forEach(id=>document.getElementById(id).classList.toggle('hidden',m!=='register'));document.getElementById('authSubmit').textContent=m==='login'?'Entrar':'Criar conta';document.getElementById('authErr').textContent=''}
+
+async function submitAuth(){
+  const err=document.getElementById('authErr');err.textContent='';
+  const email=document.getElementById('email').value.trim(), password=document.getElementById('password').value;
+  if(MODE==='login'){const{error}=await sb.auth.signInWithPassword({email,password});if(error)return err.textContent='E-mail ou senha incorretos.';return start()}
+  const name=document.getElementById('name').value.trim(), confirm=document.getElementById('confirm').value, source=document.getElementById('source').value;
+  if(name.length<2)return err.textContent='Informe seu nome.';
+  if(password.length<8)return err.textContent='Senha muito curta (mín. 8).';
+  if(password!==confirm)return err.textContent='As senhas não coincidem.';
+  const chk=await fetch('/api/signup-check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})}).then(r=>r.json()).catch(()=>({ok:true}));
+  if(chk.ok===false)return err.textContent=chk.message;
+  const{data,error}=await sb.auth.signUp({email,password,options:{data:{full_name:name,referral_source:source}}});
+  if(error||!data.user)return err.textContent=error?.message||'Erro ao criar conta.';
+  fetch('/api/signup-check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,mode:'log'})});
+  start();
+}
+async function logout(){await sb.auth.signOut();location.reload()}
+
+async function start(){
+  const{data:{user}}=await sb.auth.getUser();
+  if(!user){document.getElementById('auth').classList.remove('hidden');document.getElementById('app').classList.add('hidden');return}
+  document.getElementById('auth').classList.add('hidden');document.getElementById('app').classList.remove('hidden');
+  document.getElementById('logoutBtn').style.display='inline-block';
+  const[{data:plans},{data:prof},{data:sub}]=await Promise.all([
+    sb.from('plans').select('*').order('sort_order'),
+    sb.from('profiles').select('*').eq('id',user.id).maybeSingle(),
+    sb.from('subscriptions').select('*').eq('user_id',user.id).maybeSingle()]);
+  PLANS=plans||[];PROFILE=prof;SUB=sub;
+  const slug=prof?.role==='admin'?'enterprise':(sub?.plan_slug||'inicial');
+  const hud=document.getElementById('hud');hud.classList.remove('hidden');hud.textContent='Plano '+slug;
+  document.getElementById('curPlan').innerHTML='Plano atual: <b style="color:var(--acc)">'+(PLANS.find(p=>p.slug===slug)?.name||slug)+'</b> · '+(sub?.status||'active');
+  renderManage(slug,sub);renderPlans();loadHistory();loadSupport();
+}
+function renderManage(slug,sub){
+  const el=document.getElementById('manageBtns');el.innerHTML='';
+  if(sub&&sub.plan_slug&&sub.plan_slug!=='inicial'&&PROFILE?.role!=='admin'){
+    el.innerHTML='<button class="btn" onclick="portal()">Gerenciar pagamento</button>'+
+      (sub.cancel_at_period_end?'<button class="btn" onclick="sub_act(\'reactivate\')">Reativar</button>':'<button class="btn ghost" onclick="sub_act(\'cancel\')">Cancelar</button>')+
+      '<button class="btn bad" onclick="sub_act(\'refund\')">Pedir reembolso (7d)</button>';
+  }
+}
+function renderPlans(){
+  const yearly=document.getElementById('cycle').checked, cur=PROFILE?.role==='admin'?'enterprise':(SUB?.plan_slug||'inicial');
+  document.getElementById('plans').innerHTML=PLANS.map(p=>{
+    const price=p.billing_type==='free'?'Grátis':fmt(yearly?p.yearly_price:p.monthly_price)+'<span class="muted">/'+(yearly?'ano':'mês')+'</span>';
+    const feats=(p.features||[]).slice(0,5).map(f=>'<li>✓ '+f+'</li>').join('');
+    const isCur=p.slug===cur;
+    let btn=isCur?'<button class="btn ghost" disabled>Plano atual</button>':p.billing_type==='free'?'<button class="btn ghost" disabled>Grátis</button>':PROFILE?.role==='admin'?'<button class="btn ghost" disabled>Incluído</button>:'<button class="btn primary" onclick="choose(\''+p.slug+'\')">'+(p.cta||'Assinar')+'</button>';
+    return '<div class="plan'+(p.highlight?' hot':'')+'">'+(p.highlight?'<span class="badge">Mais popular</span>':'')+'<h3 style="margin:6px 0">'+p.name+'</h3><div class="price">'+price+'</div><ul class="feat">'+feats+'</ul><div style="margin-top:auto">'+btn+'</div></div>';
+  }).join('');
+}
+async function choose(slug){try{const cycle=document.getElementById('cycle').checked?'yearly':'monthly';if(SUB&&SUB.plan_slug&&SUB.plan_slug!=='inicial'){const r=await api('/api/subscription',{action:'change',plan_slug:slug,cycle});toast(r.message);return start()}const{url}=await api('/api/checkout',{plan_slug:slug,cycle});location.href=url}catch(e){toast(e.message)}}
+async function portal(){try{const{url}=await api('/api/portal',{});location.href=url}catch(e){toast(e.message)}}
+async function sub_act(a){try{let body={action:a};if(a==='cancel'||a==='refund'){body.reason=prompt('Motivo (opcional):')||'';}const r=await api('/api/subscription',body);toast(r.message);start()}catch(e){toast(e.message)}}
+async function deleteAccount(){try{await api('/api/subscription',{action:'delete_account'});await sb.auth.signOut();location.href='/'}catch(e){toast(e.message)}}
+
+async function runAudit(){
+  const target=document.getElementById('target').value.trim();if(!target)return toast('Informe a URL.');
+  const out=document.getElementById('auditOut');const btn=document.getElementById('auditBtn');
+  btn.disabled=true;out.textContent='⏳ Auditando… isso pode levar alguns segundos.';
+  try{
+    // registra a auditoria (valida cota por plano via trigger)
+    const{data:{user}}=await sb.auth.getUser();
+    const{error:qe}=await sb.from('user_audits').insert({target_url:target,status:'running'});
+    if(qe){out.innerHTML='<span style="color:var(--warn)">'+(qe.message||'Limite do plano atingido.')+'</span>';btn.disabled=false;return}
+    const r=await fetch('/api/audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({projectUrl:target})});
+    const j=await r.json().catch(()=>({}));
+    out.innerHTML=r.ok?'✅ Auditoria concluída. <a href="/audit/'+(j.evidence?.auditId||'')+'">Ver relatório</a>':'<span style="color:var(--bad)">'+(j.error||'Falha na auditoria')+'</span>';
+    loadHistory();
+  }catch(e){out.innerHTML='<span style="color:var(--bad)">'+e.message+'</span>'}
+  btn.disabled=false;
+}
+async function loadHistory(){const{data}=await sb.from('user_audits').select('*').order('created_at',{ascending:false}).limit(10);const el=document.getElementById('history');if(!data||!data.length){el.textContent='Nenhuma auditoria ainda.';return}el.innerHTML=data.map(a=>'<div style="padding:7px 0;border-bottom:1px solid var(--line)">🔎 '+(a.target_url||'—')+' <span class="muted">· '+new Date(a.created_at).toLocaleString('pt-BR')+'</span></div>').join('')}
+
+async function sendSupport(){const subject=document.getElementById('supSubject').value.trim(),message=document.getElementById('supMsg').value.trim();if(!subject||!message)return toast('Preencha assunto e mensagem.');const{data:{user}}=await sb.auth.getUser();const isPro=['pro','enterprise'].includes(SUB?.plan_slug)||PROFILE?.role==='admin';await sb.from('support_messages').insert({user_id:user.id,email:user.email,subject,message,priority:isPro});document.getElementById('supSubject').value='';document.getElementById('supMsg').value='';toast('Chamado enviado!');loadSupport()}
+async function loadSupport(){const{data}=await sb.from('support_messages').select('*').order('created_at',{ascending:false}).limit(5);const el=document.getElementById('supList');if(!data||!data.length){el.textContent='';return}el.innerHTML=data.map(t=>'<div style="padding:7px 0;border-bottom:1px solid var(--line)"><b>'+t.subject+'</b> <span class="badge">'+(t.status==='resolved'?'Resolvido':'Aberto')+'</span>'+(t.admin_reply?'<div style="margin-top:5px;color:#cfe0f2">↳ '+t.admin_reply+'</div>':'')+'</div>').join('')}
+
+sb.auth.onAuthStateChange((_e,s)=>{if(s)start()});
+start();
+</script>
+</body>
+</html>

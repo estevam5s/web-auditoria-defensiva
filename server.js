@@ -144,7 +144,11 @@ const aiLimiter     = createRateLimiter(20, 60_000);  // 20 req/min por IP
 const osintLimiter  = createRateLimiter(3, 60_000);   // 3 req/min por IP (OSINT é pesado)
 const dbLimiter     = createRateLimiter(30, 60_000);  // 30 req/min por IP (consultas ao DB)
 
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '1mb', verify: (req, _res, buf) => { req.rawBody = buf; } }));
+
+// ─── Billing / SaaS (Stripe + Supabase) ───────────────────────────
+try { require('./routes/billing').mount(app); console.log('[billing] rotas SaaS montadas'); }
+catch (e) { console.warn('[billing] não montado:', e.message); }
 
 // ─── Security Headers ─────────────────────────────────────────────
 app.use((req, res, next) => {

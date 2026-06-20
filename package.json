@@ -8,6 +8,7 @@
     "dev": "node server.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.108.2",
     "archiver": "^7.0.1",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
@@ -16,6 +17,7 @@
     "node-fetch": "^2.7.0",
     "pdfkit": "^0.17.2",
     "puppeteer": "^24.38.0",
+    "stripe": "^17.7.0",
     "uuid": "^9.0.0",
     "website-scraper": "^6.0.0",
     "website-scraper-puppeteer": "^2.0.0"

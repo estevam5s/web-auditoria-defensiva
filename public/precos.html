@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Planos — Supabase Guard</title>
+<meta name="description" content="Planos do Supabase Guard: auditoria defensiva de segurança. Comece grátis; mensal e anual (2 meses grátis)." />
+<meta property="og:title" content="Planos — Supabase Guard" />
+<meta property="og:description" content="Auditoria defensiva de segurança para projetos web/Supabase. Comece grátis." />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<style>
+  :root{--bg:#0a0f1c;--panel:#111a2e;--line:#1f2b45;--txt:#e6edf6;--mut:#8aa0bf;--acc:#22d3ee;--acc2:#0ea5e9}
+  *{box-sizing:border-box}body{margin:0;background:radial-gradient(1200px 600px at 50% -10%,#0d1a2e,var(--bg));color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  .top{display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:1px solid var(--line)}
+  .brand{font-weight:800}.brand b{color:var(--acc)}
+  .btn{cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--txt);padding:9px 15px;border-radius:10px;font-weight:600;text-decoration:none;font-size:14px}
+  .btn.p{background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;color:#04121a}
+  .wrap{max-width:1100px;margin:0 auto;padding:48px 16px;text-align:center}
+  h1{font-size:34px;margin:0 0 8px}.sub{color:var(--mut);max-width:620px;margin:0 auto 26px}
+  .toggle{display:inline-flex;gap:10px;align-items:center;margin-bottom:28px}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(4,1fr);text-align:left}@media(max-width:900px){.grid{grid-template-columns:1fr 1fr}}@media(max-width:560px){.grid{grid-template-columns:1fr}}
+  .plan{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;display:flex;flex-direction:column}
+  .plan.hot{border:2px solid var(--acc)}
+  .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;background:#0c2230;color:var(--acc);border:1px solid #14384a;margin-bottom:8px}
+  .price{font-size:32px;font-weight:800;margin:6px 0}.muted{color:var(--mut);font-size:13px}
+  ul{list-style:none;padding:0;margin:12px 0;font-size:14px;flex:1}li{padding:4px 0;color:#cfe0f2}
+  a{color:var(--acc)}
+</style>
+</head>
+<body>
+<div class="top"><a class="brand" href="/" style="text-decoration:none;color:inherit">🛡️ Supabase <b>Guard</b></a><a class="btn p" href="/dashboard.html">Entrar no painel</a></div>
+<div class="wrap">
+  <h1>Planos que crescem com a sua segurança</h1>
+  <p class="sub">Comece grátis e faça upgrade quando precisar. No plano anual você ganha <b>2 meses grátis</b>. Cobrança por volume de auditorias — sem limite por GB.</p>
+  <div class="toggle"><span class="muted">Mensal</span><input type="checkbox" id="cycle" onchange="render()"><span class="muted">Anual <span class="badge">2 meses grátis</span></span></div>
+  <div class="grid" id="plans"></div>
+  <p class="muted" style="margin-top:24px">Pagamento seguro via Stripe · 7 dias de teste nos pagos · reembolso em até 7 dias · cancele quando quiser.</p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const sb=supabase.createClient("https://zvzqeagukvbfpblxenuw.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2enFlYWd1a3ZiZnBibHhlbnV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5MDY0MDUsImV4cCI6MjA5NzQ4MjQwNX0.p_iPIo1syrRHL_LbWNfewkchQZQNltlPNU-PPhGC1vE");
+const fmt=v=>Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
+let PLANS=[];
+async function load(){const{data}=await sb.from('plans').select('*').order('sort_order');PLANS=data||[];render()}
+function render(){
+  const y=document.getElementById('cycle').checked;
+  document.getElementById('plans').innerHTML=PLANS.map(p=>{
+    const price=p.billing_type==='free'?'Grátis':fmt(y?p.yearly_price:p.monthly_price)+'<span class="muted">/'+(y?'ano':'mês')+'</span>';
+    return '<div class="plan'+(p.highlight?' hot':'')+'">'+(p.highlight?'<span class="badge">Mais popular</span>':'')+'<h3 style="margin:2px 0">'+p.name+'</h3><div class="muted">'+(p.description||'')+'</div><div class="price">'+price+'</div><ul>'+(p.features||[]).map(f=>'<li>✓ '+f+'</li>').join('')+'</ul><a class="btn p" style="text-align:center" href="/dashboard.html">'+(p.cta||'Assinar')+'</a></div>';
+  }).join('');
+}
+load();
+</script>
+</body>
+</html>
