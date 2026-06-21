@@ -117,6 +117,22 @@ const SB_URL="https://zvzqeagukvbfpblxenuw.supabase.co";
 const SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2enFlYWd1a3ZiZnBibHhlbnV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5MDY0MDUsImV4cCI6MjA5NzQ4MjQwNX0.p_iPIo1syrRHL_LbWNfewkchQZQNltlPNU-PPhGC1vE";
 const sb=supabase.createClient(SB_URL,SB_ANON);
 let MODE='login', PLANS=[], SUB=null, PROFILE=null;
+// 2FA via Telegram (gateway SecSaaS) — só para o admin.
+const TFA_GATEWAY='https://secsaas-gateway.vercel.app', TFA_ADMIN='contato@estevamsouza.com.br';
+function tfaValid(){try{const t=localStorage.getItem('tfa_proof');if(!t)return false;const o=JSON.parse(atob(t.split('.')[0].replace(/-/g,'+').replace(/_/g,'/')));return o.exp&&Date.now()<o.exp}catch(e){return false}}
+async function ensureTwoFactor(email){
+  if(!email||email.toLowerCase()!==TFA_ADMIN||tfaValid())return true;
+  let res;try{res=await(await fetch(TFA_GATEWAY+'/api/request-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({app:'Web Auditoria Defensiva',email})})).json()}catch(e){res=null}
+  if(!res||!res.ok||!res.challenge)return true;
+  return await new Promise(function(resolve){
+    const ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(2,6,23,.92);display:flex;align-items:center;justify-content:center;padding:16px';
+    ov.innerHTML='<div style="max-width:360px;width:100%;background:#111827;border:1px solid #1f2937;border-radius:16px;padding:28px;color:#e5e7eb;font-family:system-ui,sans-serif"><h2 style="margin:0;font-size:20px">🔐 Verificação em duas etapas</h2><p style="color:#9ca3af;font-size:14px">Digite o código de 6 dígitos enviado no seu Telegram (@SecSaaS_Bot).</p><input id="tfaCode" inputmode="numeric" maxlength="6" placeholder="••••••" style="width:100%;box-sizing:border-box;margin-top:10px;padding:12px;text-align:center;font-size:24px;letter-spacing:.5em;background:#0b0f17;border:1px solid #374151;border-radius:10px;color:#fff"><button id="tfaBtn" style="width:100%;margin-top:12px;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-weight:600;cursor:pointer">Entrar com segurança</button><p id="tfaMsg" style="color:#f87171;font-size:13px;min-height:16px;margin:8px 0 0"></p></div>';
+    document.body.appendChild(ov);
+    const inp=ov.querySelector('#tfaCode'),btn=ov.querySelector('#tfaBtn'),msg=ov.querySelector('#tfaMsg');inp.focus();
+    async function go(){const code=(inp.value||'').replace(/\D/g,'');if(code.length!==6)return;btn.disabled=true;btn.textContent='Validando…';let v;try{v=await(await fetch(TFA_GATEWAY+'/api/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({challenge:res.challenge,code})})).json()}catch(e){v=null}if(v&&v.ok&&v.proof){try{localStorage.setItem('tfa_proof',v.proof)}catch(e){}ov.remove();resolve(true)}else{msg.textContent='Código inválido ou expirado.';btn.disabled=false;btn.textContent='Entrar com segurança'}}
+    btn.onclick=go;inp.addEventListener('keydown',function(e){if(e.key==='Enter')go()});
+  });
+}
 const fmt=v=>Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
 const toast=m=>{const t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',3500)};
 const token=async()=>(await sb.auth.getSession()).data.session?.access_token;
@@ -127,7 +143,7 @@ function setMode(m){MODE=m;document.getElementById('tabLogin').className='btn '+
 async function submitAuth(){
   const err=document.getElementById('authErr');err.textContent='';
   const email=document.getElementById('email').value.trim(), password=document.getElementById('password').value;
-  if(MODE==='login'){const{error}=await sb.auth.signInWithPassword({email,password});if(error)return err.textContent='E-mail ou senha incorretos.';return start()}
+  if(MODE==='login'){const{error}=await sb.auth.signInWithPassword({email,password});if(error)return err.textContent='E-mail ou senha incorretos.';if(!(await ensureTwoFactor(email)))return;return start()}
   const name=document.getElementById('name').value.trim(), confirm=document.getElementById('confirm').value, source=document.getElementById('source').value;
   if(name.length<2)return err.textContent='Informe seu nome.';
   if(password.length<8)return err.textContent='Senha muito curta (mín. 8).';
