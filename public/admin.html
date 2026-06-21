@@ -39,11 +39,36 @@ async function api(a,b){const r=await fetch('/api/admin',{method:'POST',headers:
 const TABS=[['dash','Dashboard'],['usuarios','Usuários'],['assinaturas','Assinaturas'],['financeiro','Financeiro'],['suporte','Suporte'],['cancelamentos','Cancelamentos'],['visitantes','Visitantes'],['logs','Logs']];
 let TAB='dash';
 async function logout(){await sb.auth.signOut();location.href='/'}
+// 2FA via Telegram (gateway central SecSaaS). Camada aditiva: só para o admin.
+const TFA_GATEWAY='https://secsaas-gateway.vercel.app';
+function tfaValid(){try{const t=localStorage.getItem('tfa_proof');if(!t)return false;const o=JSON.parse(atob(t.split('.')[0].replace(/-/g,'+').replace(/_/g,'/')));return o.exp&&Date.now()<o.exp}catch(e){return false}}
+async function ensureTwoFactor(email){
+  if(tfaValid())return true;
+  let res;try{res=await(await fetch(TFA_GATEWAY+'/api/request-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({app:'Web Auditoria Defensiva',email})})).json()}catch(e){res=null}
+  if(!res||!res.ok||!res.challenge){return true} // gateway indisponível → não trava o admin
+  const g=document.getElementById('gate');
+  return await new Promise(function(resolve){
+    g.style.display='block';
+    g.innerHTML='<div style="max-width:360px;margin:60px auto;background:#111827;border:1px solid #1f2937;border-radius:16px;padding:28px;color:#e5e7eb"><h2 style="margin:0">🔐 Verificação em duas etapas</h2><p style="color:#9ca3af;font-size:14px">Digite o código de 6 dígitos enviado no seu Telegram (@SecSaaS_Bot).</p><input id="tfa_code" inputmode="numeric" maxlength="6" placeholder="••••••" style="width:100%;margin-top:10px;padding:12px;text-align:center;font-size:24px;letter-spacing:.5em;background:#0b0f17;border:1px solid #374151;border-radius:10px;color:#fff"><button id="tfa_btn" style="width:100%;margin-top:12px;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-weight:600;cursor:pointer">Entrar com segurança</button><p id="tfa_msg" style="color:#f87171;font-size:13px;min-height:16px"></p></div>';
+    const inp=document.getElementById('tfa_code'),btn=document.getElementById('tfa_btn'),msg=document.getElementById('tfa_msg');
+    inp.focus();
+    async function submit(){
+      const code=(inp.value||'').replace(/\D/g,'');if(code.length!==6)return;
+      btn.disabled=true;btn.textContent='Validando…';
+      let v;try{v=await(await fetch(TFA_GATEWAY+'/api/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({challenge:res.challenge,code})})).json()}catch(e){v=null}
+      if(v&&v.ok&&v.proof){try{localStorage.setItem('tfa_proof',v.proof)}catch(e){}resolve(true)}
+      else{msg.textContent='Código inválido ou expirado.';btn.disabled=false;btn.textContent='Entrar com segurança'}
+    }
+    btn.onclick=submit;inp.addEventListener('keydown',function(e){if(e.key==='Enter')submit()});
+  });
+}
 async function boot(){
   const{data:{user}}=await sb.auth.getUser();
   if(!user){location.href='/dashboard.html';return}
   const{data:p}=await sb.from('profiles').select('role,email').eq('id',user.id).maybeSingle();
   if(p?.role!=='admin'){document.getElementById('gate').innerHTML='Acesso restrito ao administrador. <a href="/dashboard.html">Voltar</a>';return}
+  // 2FA via Telegram (gateway SecSaaS) — exige código antes de liberar o painel admin
+  if(!(await ensureTwoFactor(p.email||user.email))){return}
   document.getElementById('gate').style.display='none';document.getElementById('panel').style.display='block';
   document.getElementById('tabs').innerHTML=TABS.map(t=>'<div class="tab" data-k="'+t[0]+'" onclick="go(\''+t[0]+'\')">'+t[1]+'</div>').join('');
   go('dash');
